@@ -1,12 +1,22 @@
 import { createBrowserRouter } from 'react-router-dom'
-import HomePage from '../features/home/HomePage'  // adjust path
+import HomePage from '../features/home/HomePage'
+import LoginPage from '../features/auth/pages/LoginPage'
+import SignupPage from '../features/auth/pages/SignupPage' 
 
-const router = createBrowserRouter([
+const router = createBrowserRouter(
+  [
   {
     path: '/',
     element: <HomePage />,   
   },
-  // add more routes later
+  { 
+    path: '/login', 
+    element: <LoginPage /> 
+  },
+  { 
+    path: '/signup', 
+    element: <SignupPage /> 
+  },
 ])
 
 export default router

@@ -1,24 +1,51 @@
-import React from 'react'
+import TopBar from '../../components/layout/TopBar' 
+import Navbar from '../../components/layout/Navbar' 
 import HeroSection from './components/HeroSection'
 import RecentReports from './components/RecentReports'
 import HowToReport from './components/HowToReport'
-import HowToReportTelegram from './components/HowToReportTelegram'
 import QuickStats from './components/QuickStats'
 import CallToAction from './components/CallToAction'
+import { mockReports } from '../../mock/mockReports'
+import Footer from '../../components/layout/Footer'
 
 const HomePage = () => {
   return (
-    <div className='min-h-screen flex flex-col'>
-      <HeroSection />
-      <main className="grow container mx-auto px-4 py-12 space-y-16 md:space-y-24">
-        <RecentReports />
-        <HowToReport />
-        <HowToReportTelegram />
-        <QuickStats />
-      </main>
-      <CallToAction />
-    </div>
+    <div className='w-full min-h-screen flex flex-col relative'>
+      <TopBar />
+      <header className="sticky top-0 z-100 w-full">
+        
+        <Navbar />
+      </header>
 
+      {/*MAIN CONTENT SECTIONS*/}
+      <main className='w-full flex flex-col'>
+        
+        <div className='w-full'>
+          <HeroSection />
+        </div>
+
+        <div className='w-full'>
+          <HowToReport />
+        </div>
+
+        <div className='w-full'>
+          <RecentReports reports={mockReports} />
+        </div>
+
+        <div className='w-full'>
+          <QuickStats />
+        </div>
+
+        <div className='w-full'>
+          <CallToAction />
+        </div>
+
+        <div className='w-full'>
+          <Footer />
+        </div>
+        
+      </main>
+    </div>
   )
 }
 
