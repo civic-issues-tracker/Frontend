@@ -5,7 +5,7 @@ import Modal from '../../../components/ui/Modal';
 import SignupForm from '../components/SignupForm';
 
 const SignupPage: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(true);
+  const [isModalOpen] = useState(true);
   const navigate = useNavigate();
 
   const handleClose = () => {
