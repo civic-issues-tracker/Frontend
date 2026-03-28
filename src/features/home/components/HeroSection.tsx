@@ -32,7 +32,7 @@ const HeroSection: React.FC = () => {
 
         {/* Right Side: Map Component */}
         {/* Map takes full width on mobile, and fills remaining space on desktop */}
-        <div className='w-full lg:w-full min-h-[400px] h-[500px] lg:h-[550px] bg-slate-100 rounded-3xl overflow-hidden relative border-2 border-primary/20'>
+        <div className='w-full lg:w-full min-h-100 h-125 lg:h-137.5 bg-slate-100 rounded-3xl overflow-hidden relative border-2 border-primary/20'>
             <IssueMapPicker reports={mockReports} />        
         </div>
         
