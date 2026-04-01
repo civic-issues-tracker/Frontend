@@ -8,12 +8,15 @@ import Footer from '../components/layout/Footer';
 
 const DashboardLayout = () => {
   const { user } = useAuth();
+
   const renderSidebar = () => {
     switch (user?.role_name) {
       case 'system_admin':
         return <SidebarAdmin />;
       case 'organization':
         return <SidebarOfficer />;
+      case 'resident':
+        return <SidebarCitizen />;
       default:
         return <SidebarCitizen />;
     }
@@ -26,7 +29,6 @@ const DashboardLayout = () => {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar />
 
-        {/* 3. Main Content Area */}
         <main className="flex-1 overflow-y-auto p-6 lg:p-10">
           <div className="max-w-7xl mx-auto">
             <Outlet /> 
