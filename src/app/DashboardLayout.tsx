@@ -9,7 +9,7 @@ import Footer from '../components/layout/Footer';
 const DashboardLayout = () => {
   const { user } = useAuth();
   const renderSidebar = () => {
-    switch (user?.role) {
+    switch (user?.role_name) {
       case 'system_admin':
         return <SidebarAdmin />;
       case 'organization':
