@@ -34,7 +34,7 @@ const RecentReports = ({ reports }: RecentReportsProps) => {
           {latestReports.map((report) => (
             <div 
               key={report.id} 
-              className="group flex flex-col md:flex-row md:items-center justify-between py-8 border-b border-secondary/5 hover:bg-secondary/[0.02] transition-all px-4 -mx-4 rounded-xl"
+              className="group flex flex-col md:flex-row md:items-center justify-between py-8 border-b border-secondary/5 hover:bg-secondary/2 transition-all px-4 -mx-4 rounded-xl"
             >
               {/* Left Side: Status & Time */}
               <div className="flex items-center gap-4 mb-4 md:mb-0 md:w-48 shrink-0">

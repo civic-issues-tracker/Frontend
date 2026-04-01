@@ -2,23 +2,21 @@ import React, { useState, useEffect } from 'react';
 import LogoIcon from '../../assets/icons/logoIcon';
 import { HashLink as Link } from 'react-router-hash-link';
 import { User, ChevronDown, LogOut } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const toggleMenu = () => setIsOpen(!isOpen);
 
-
-  const token = localStorage.getItem('token');
-  const userName = localStorage.getItem('user_name') || 'User';
-  const isLoggedIn = !!token;
+  const { isAuthenticated: isLoggedIn, user, logout } = useAuth();
+  const userName = user?.full_name || 'User';
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : 'unset';
   }, [isOpen]);
 
   const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = '/';
+    logout(); 
   };
 
   return (
@@ -59,7 +57,7 @@ const Navbar: React.FC = () => {
           <Link to="/" className="hover:opacity-60 transition-opacity">En/Am</Link>
           <Link smooth to="#how-to-report" className="hover:opacity-60 transition-opacity">How to Report</Link>
           <Link to="/report" className="hover:opacity-60 transition-opacity">Report Issue</Link>
-          <Link to="/all-reports" className="hover:opacity-60 transition-opacity">All Reports</Link>
+          <Link to="/local-reports" className="hover:opacity-60 transition-opacity">Local Reports</Link>
           
           {isLoggedIn ? (
             <div className="relative group py-4">
@@ -75,6 +73,13 @@ const Navbar: React.FC = () => {
                   <p className="text-[9px] text-primary/40 mb-1 uppercase tracking-[0.2em]">Authorized Session</p>
                   <p className="text-sm font-bold normal-case text-primary truncate mb-4">{userName}</p>
                   <div className="h-px bg-primary/5 w-full mb-4" />
+                  <Link 
+                    to="/profile"
+                    className="flex items-center gap-3  mb-1 pb-4 text-primary hover:text-secondary transition-colors group/profile"
+                  >
+                    <User size={14} />
+                    <span className="font-black  text-[10px] uppercase tracking-widest">Profile Settings</span>
+                  </Link>
                   <button 
                     onClick={handleLogout}
                     className="flex items-center gap-3 text-red-400 hover:text-red-500 transition-colors group/logout"
@@ -86,7 +91,7 @@ const Navbar: React.FC = () => {
               </div>
             </div>
           ) : (
-            <Link to="/signup" className="bg-primary text-secondary px-5 py-2 rounded-full font-bold hover:scale-105 transition-all">Sign Up</Link>
+            <Link to="/login" className="bg-primary text-secondary px-5 py-2 rounded-full font-bold hover:scale-105 transition-all">Sign In</Link>
           )}
         </div>
       </div>
@@ -101,7 +106,7 @@ const Navbar: React.FC = () => {
           <Link to='/' onClick={toggleMenu} className="text-sm font-bold tracking-widest uppercase">En/Am</Link>
           <Link to="#how-to-report" onClick={toggleMenu} className="text-sm font-bold tracking-widest uppercase">How to Report</Link>
           <Link to="/report" onClick={toggleMenu} className="text-sm font-bold tracking-widest uppercase">Report Issue</Link>
-          <Link to="/all-reports" onClick={toggleMenu} className="text-sm font-bold tracking-widest uppercase">All Reports</Link>
+          <Link to="/local-reports" onClick={toggleMenu} className="text-sm font-bold tracking-widest uppercase">Local Reports</Link>
           
           {isLoggedIn ? (
             <div className="flex flex-col  items-center gap-4 mt-4">
@@ -109,6 +114,13 @@ const Navbar: React.FC = () => {
                 <User size={30} />
               </div>
               <p className="text-sm font-black uppercase tracking-widest">{userName}</p>
+              <Link 
+                to="/profile"
+                className="mt-4 text-primary text-[10px] font-black uppercase tracking-[0.5em] border border-red-500/20 px-8 py-3 rounded-full"
+                
+              >
+                Profile Settings
+              </Link>
               <button 
                 onClick={handleLogout}
                 className="mt-4 text-red-500 text-[10px] font-black uppercase tracking-[0.5em] border border-red-500/20 px-8 py-3 rounded-full"
@@ -118,11 +130,11 @@ const Navbar: React.FC = () => {
             </div>
           ) : (
             <Link 
-              to="/signup" 
+              to="/login" 
               onClick={toggleMenu} 
               className="mt-4 bg-primary text-secondary px-8 py-2 rounded-full text-sm font-black shadow-xl active:scale-95 transition-transform"
             >
-              Sign Up
+              Sign In
             </Link>
           )}
         </div>

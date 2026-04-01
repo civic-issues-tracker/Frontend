@@ -1,0 +1,9 @@
+import React from 'react'
+
+const SidebarAdmin:React.FC = () => {
+  return (
+    <div>SidebarAdmin</div>
+  )
+}
+
+export default SidebarAdmin

@@ -1,123 +1,169 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Send, Mail, CheckCircle2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ArrowRight, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import Input from '../../../../src/components/ui/Input';
 import { Button } from '../../../components/ui/Button';
+import { useAuth } from '../../../hooks/useAuth.ts'; 
+import { authService } from '../../../features/auth/services/authService';
+import Toast from '../../../components/ui/Toast'; 
+import axios from 'axios';
 
-// Validations
-const NAME_REGEX = /^[a-zA-Z\s]*$/;
-const ETH_PHONE_REGEX = /^(?:\+251|0)[1-9]\d{8}$/;
+const signupSchema = z.object({
+  full_name: z.string()
+    .min(1, "Name is required")
+    .refine((val) => val.trim().split(/\s+/).length >= 2, {
+      message: "Please enter both your first and last name",
+    }),
+  phone: z.string()
+    .min(9, "Phone number is too short")
+    .max(13, "Phone number is too long")
+    .refine((val) => /^[0-9+]+$/.test(val), "Enter a valid numeric phone number"),
+  email: z.string()
+    .email("Invalid email address"),
+  password: z.string()
+    .min(8, "Security requires at least 8 characters"),
+});
+
+type SignupData = z.infer<typeof signupSchema>;
 
 const SignupForm: React.FC = () => {
   const [step, setStep] = useState(1);
+  const [tempId, setTempId] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{ show: boolean; msg: string; type: 'error' | 'success' }>({ show: false, msg: '', type: 'error' });
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    password: ''
+  const { login } = useAuth();
+
+  const { register, trigger, getValues, formState: { errors } } = useForm<SignupData>({
+    resolver: zodResolver(signupSchema),
+    mode: "onBlur",
   });
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const validate = () => {
-    const newErrors: { [key: string]: string } = {};
-
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Name is required.";
-    } else if (!NAME_REGEX.test(formData.fullName)) {
-      newErrors.fullName = "Names cannot contain numbers or symbols.";
-    } else if (formData.fullName.trim().split(" ").length < 2) {
-      newErrors.fullName = "Please enter your first and last name.";
-    }
-
-    if (!ETH_PHONE_REGEX.test(formData.phone)) {
-      newErrors.phone = "Enter a valid Ethiopian phone number (09... or +251...).";
-    }
-
-    if (formData.password.length < 8) {
-      newErrors.password = "Security requires at least 8 characters.";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handleContinue = async () => {
+    const isStepValid = await trigger(["full_name", "phone", "password", "email"]);
+    if (isStepValid) setStep(2);
   };
 
-  const handleContinue = () => {
-    if (validate()) setStep(2);
+  const triggerToast = (msg: string, type: 'success' | 'error') => {
+    setToast({ show: true, msg, type });
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 5000);
   };
 
-  const handleChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
-    if (errors[field]) {
-      setErrors({ ...errors, [field]: '' });
-    }
-  };
-
-  // --- NEW MOCK API LOGIC ---
-  const handleSignup = async (method: 'telegram' | 'email') => {
+  const onFinalSubmit = async (method: 'sms' | 'email') => {
+    setLoading(true);
+    const data = getValues();
+    
     try {
-      const response = await fetch('https://81e778cb-ebf8-4faf-bb46-a3412ad570ae.mock.pstmn.io/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          verificationMethod: method
-        }),
+      const result = await authService.register({
+        email: data.email,
+        full_name: data.full_name, 
+        phone: data.phone,
+        password: data.password,
+        confirm_password: data.password, 
+        verification_method: method
       });
 
-      const data = await response.json();
-
-      if (data.access) {
-        localStorage.setItem('token', data.access);
-        localStorage.setItem('user_name', formData.fullName); 
-               
-        console.log(`Signup Success via ${method}! Token saved.`);
-        navigate('/'); 
+      if(result.temp_id) {
+        setTempId(result.temp_id);
+        setStep(3);
+        triggerToast(`OTP sent via ${method === 'sms' ? 'SMS' : 'Email'}.`, "success");
       }
-    } catch (error) {
-      console.error("Mock Server Connection Failed:", error);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 429) {
+          triggerToast("Security: Too many signup attempts. Please wait 60s.", "error");
+        } else {
+          const errorDetail = error.response?.data?.detail || "Registration failed. Please check your data.";
+          triggerToast(errorDetail, "error");
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!tempId || otpCode.length < 4) {
+      triggerToast("Please enter a valid verification code.", "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await authService.verifyOTP({
+        temp_id: tempId,
+        otp_code: otpCode
+      });
+
+      if (result.access && result.user) {
+        triggerToast("Identity verified! Access granted.", "success");
+        
+        setTimeout(() => {
+          login({ access: result.access, user: result.user });
+          const role = result.user.role;
+          if (role === 'system_admin') navigate('/admin-dashboard');
+          else if (role === 'organization') navigate('/organization-dashboard');
+          else navigate('/report');
+        }, 1500);
+      }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const errorDetail = error.response?.data?.detail || "Invalid code. Please try again.";
+        triggerToast(errorDetail, "error");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
+    <>
     <div className="relative overflow-hidden min-h-115">
       <AnimatePresence mode="wait">
-        
         {step === 1 && (
           <motion.div
             key="step1"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.4, ease: "circOut" }}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
             className="space-y-10"
           >
             <div className="space-y-8">
               <Input 
                 label="Full Name" 
                 placeholder="Abebe Balcha"
-                error={errors.fullName}
-                value={formData.fullName}
-                onChange={(e) => handleChange('fullName', e.target.value)}
+                {...register("full_name")}
+                error={errors.full_name?.message}
+              />
+              <Input 
+                label="Email" 
+                placeholder="Abebe@email.com"
+                {...register("email")}
+                error={errors.email?.message}
               />
               <Input 
                 label="Contact / Phone" 
-                placeholder="0911..."
-                error={errors.phone}
-                value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
+                placeholder="+251911..."
+                {...register("phone")}
+                error={errors.phone?.message}
               />
               <Input 
                 label="Secure / Password" 
                 type="password"
                 placeholder="••••••••"
-                error={errors.password}
-                value={formData.password}
-                onChange={(e) => handleChange('password', e.target.value)}
+                {...register("password")}
+                error={errors.password?.message}
               />
             </div>
 
             <button 
+              type="button"
               onClick={handleContinue}
               className="w-full group flex items-center justify-between py-6 border-b border-secondary/10 hover:border-secondary transition-all"
             >
@@ -126,56 +172,53 @@ const SignupForm: React.FC = () => {
               </span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
             </button>
-            <a href="/login" className="text-[9px] font-black uppercase tracking-[0.3em] text-secondary">Already have an account? <span className='border-b boredr-secondary'>Login</span></a>
+            <Link to="/login" className="text-[9px] font-black uppercase tracking-[0.3em] text-secondary">
+                Already have an account? <span className='border-b border-secondary'>Login</span>
+            </Link>
           </motion.div>
         )}
 
-        {/*VERIFICATION PART */}
         {step === 2 && (
           <motion.div
             key="step2"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.4, ease: "circOut" }}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
             className="space-y-12 pt-2"
           >
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-green-500/60">
                 <CheckCircle2 size={12} />
-                <span className="text-[9px] font-black uppercase tracking-[0.3em]">Data Validated</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.3em]">Identity Validated</span>
               </div>
-              <h4 className="text-3xl font-header font-light text-secondary uppercase leading-none tracking-tight">
+              <h4 className="text-3xl font-light text-secondary uppercase leading-none tracking-tight">
                 Security <br />
                 <span className="text-secondary/60 italic lowercase">Verification</span>
               </h4>
-              <p className="text-[11px] text-secondary/70 font-body leading-relaxed max-w-60">
-                Choose an encrypted channel to receive your activation code.
-              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-3">
-              {/* Telegram  */}
               <Button 
-                onClick={() => handleSignup('telegram')}
-                className="flex items-center gap-6 p-6 border border-secondary/5 hover:border-secondary/20 hover:bg-secondary/5 transition-all text-left group"
+                disabled={loading}
+                onClick={() => onFinalSubmit('sms')}
+                className="flex items-center gap-6 p-6 border border-secondary/5 hover:border-secondary/20 transition-all text-left group"
               >
                 <div className="w-10 h-10 rounded-full bg-secondary/5 flex items-center justify-center group-hover:bg-secondary group-hover:text-primary transition-all">
-                  <Send size={16} strokeWidth={1.2} />
+                  {/* {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <Send size={16} strokeWidth={1.2} />} */}
                 </div>
                 <div>
-                  <span className="block text-[10px] font-black uppercase tracking-widest text-primary">Telegram Bot</span>
+                  <span className="block text-[10px] font-black uppercase tracking-widest text-primary">SMS OTP</span>
                   <span className="text-[8px] text-primary/60 uppercase tracking-tighter">Fastest Activation</span>
                 </div>
               </Button>
 
-              {/* Email  */}
               <Button 
-                onClick={() => handleSignup('email')}
-                className="flex items-center gap-6 p-6 border border-secondary/5 hover:border-secondary/20 hover:bg-secondary/5 transition-all text-left group"
+                disabled={loading}
+                onClick={() => onFinalSubmit('email')}
+                className="flex items-center gap-6 p-6 border border-secondary/5 hover:border-secondary/20 transition-all text-left group"
               >
                 <div className="w-10 h-10 rounded-full bg-secondary/5 flex items-center justify-center group-hover:bg-secondary group-hover:text-primary transition-all">
-                  <Mail size={16} strokeWidth={1.2} />
+                  {/* {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <Mail size={16} strokeWidth={1.2} />} */}
                 </div>
                 <div>
                   <span className="block text-[10px] font-black uppercase tracking-widest text-primary">Email SMTP</span>
@@ -184,16 +227,73 @@ const SignupForm: React.FC = () => {
               </Button>
             </div>
 
-            <Button 
+            <button 
               onClick={() => setStep(1)}
               className="group flex items-center gap-2 text-[8px] font-black uppercase tracking-[0.3em] text-primary/20 hover:text-primary transition-colors"
             >
-              <span className="group-hover:-translate-x-1 transition-transform">←</span> Edit Identity
-            </Button>
+              ← Edit Identity
+            </button>
+          </motion.div>
+        )}
+
+        {step === 3 && (
+          <motion.div
+            key="step3"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-10 pt-2"
+          >
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-amber-500/60">
+                <ShieldCheck size={12} />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em]">Awaiting Authorization</span>
+              </div>
+              <h4 className="text-3xl font-light text-secondary uppercase leading-none tracking-tight">
+                Enter <br />
+                <span className="text-secondary/60 italic lowercase">Access Code</span>
+              </h4>
+            </div>
+
+            <div className="space-y-6">
+              <Input 
+                label="Verification Code" 
+                placeholder="000000"
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value)}
+                maxLength={6}
+              />
+              
+              <Button 
+                onClick={handleVerify}
+                disabled={loading || otpCode.length < 4}
+                className="w-full py-6 bg-secondary text-primary hover:bg-secondary/90 transition-all flex items-center justify-center gap-3"
+              >
+                {loading ? <Loader2 className="animate-spin w-4 h-4" /> : (
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em]">Authenticate Account</span>
+                )}
+              </Button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <button 
+                onClick={() => setStep(2)}
+                className="text-left text-[8px] font-black uppercase tracking-[0.3em] text-primary/40 hover:text-primary transition-colors"
+              >
+                ← Change Method
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
+    <Toast 
+      isVisible={toast.show} 
+      message={toast.msg} 
+      type={toast.type} 
+      onClose={() => setToast(prev => ({ ...prev, show: false }))} 
+    />
+    </>
   );
 };
 

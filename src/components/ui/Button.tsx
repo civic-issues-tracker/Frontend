@@ -1,15 +1,15 @@
 import React from 'react';
 
-// 1. Define the custom props
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'outline';
+  isLoading?: boolean;
   children: React.ReactNode;
 }
 
-// 2. Use React.FC (Functional Component) with your Props
 export const Button: React.FC<ButtonProps> = ({ 
   children, 
   variant = 'primary', 
+  isLoading,
   className = '', 
   ...props 
 }) => {
@@ -25,7 +25,14 @@ export const Button: React.FC<ButtonProps> = ({
       className={`${baseStyles} ${variantStyles} ${className}`} 
       {...props}
     >
-      {children}
+      {isLoading ? (
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+          <span>Processing...</span>
+        </div>
+      ) : (
+        children
+      )}
     </button>
   );
 };

@@ -1,21 +1,17 @@
-import TopBar from '../../components/layout/TopBar' 
-import Navbar from '../../components/layout/Navbar' 
 import HeroSection from './components/HeroSection'
 import RecentReports from './components/RecentReports'
 import HowToReport from './components/HowToReport'
 import QuickStats from './components/QuickStats'
 import CallToAction from './components/CallToAction'
 import { mockReports } from '../../mock/mockReports'
-import Footer from '../../components/layout/Footer'
 
 const HomePage = () => {
   return (
     <div className='w-full min-h-screen flex flex-col relative'>
-      <TopBar />
-      <header className="sticky top-0 z-100 w-full">
+      {/* <header className="sticky top-0 z-100 w-full">
         
         <Navbar />
-      </header>
+      </header> */}
 
       {/*MAIN CONTENT SECTIONS*/}
       <main className='w-full flex flex-col'>
@@ -40,9 +36,6 @@ const HomePage = () => {
           <CallToAction />
         </div>
 
-        <div className='w-full'>
-          <Footer />
-        </div>
         
       </main>
     </div>

@@ -1,116 +1,151 @@
 import React, { useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { motion } from 'framer-motion';
+import { LogIn, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Input from '../../../components/ui/Input';
+import axios from 'axios'; 
+import Input from '../../../../src/components/ui/Input';
+import { useAuth } from '../../../hooks/useAuth'; 
+import { authService } from '../../../features/auth/services/authService';
+import Toast, {  type ToastType } from '../../../components/ui/Toast';
 
-const LoginForm = () => {
-  const [formData, setFormData] = useState({ identity: '', password: '' });
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+const loginSchema = z.object({
+  identifier: z.string().min(1, "Phone or Email is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type LoginData = z.infer<typeof loginSchema>;
+
+const LoginForm: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [toast, setToast] = useState<{ show: boolean; msg: string; type: ToastType }>({
+      show: false,
+      msg: '',
+      type: 'info'
+    });
 
-  const validate = () => {
-    const newErrors: { [key: string]: string } = {};
-    const input = formData.identity.trim();
+  const { login } = useAuth();
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^(?:\+251|0)[1-9]\d{8}$/;
-
-    if (!input) {
-      newErrors.identity = "Identity required";
-    } else if (!emailRegex.test(input) && !phoneRegex.test(input)) {
-      newErrors.identity = "Use a valid email or Ethiopian phone";
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Security key required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Minimum 6 characters required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const showToast = (msg: string, type: ToastType) => {
+    setToast({ show: true, msg, type });
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 5000);
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
-  
-  if (validate()) {
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginData>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onLoginSubmit = async (data: LoginData) => {
+    setLoading(true);
+    setServerError(null);
+    
+    // Check if the input is an email or a phone number
+    const isEmail = data.identifier.includes('@');
+    const payload = isEmail 
+      ? { email: data.identifier, password: data.password }
+      : { phone: data.identifier, password: data.password };
+
     try {
-      const response = await fetch('https://81e778cb-ebf8-4faf-bb46-a3412ad570ae.mock.pstmn.io/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
+      const result = await authService.login(payload);
 
-      const data = await response.json();
+      if (result.access && result.user) {
+        login({
+          access: result.access,
+          user: result.user
+        });
 
-      if (data.access) {
-        localStorage.setItem('token', data.access);
-        localStorage.setItem('user_name', data.user?.name || formData.identity);
-        
-        console.log("Success! Authenticated as:", data.user.name);
-        
-        navigate('/'); 
-      } else {
-        setErrors({ identity: "Authentication failed. Check your mock example." });
+        const role = result.user.role_name; 
+        showToast("Login successful!", "success");
+
+        if (role === 'system_admin') {
+          navigate('/admin-dashboard');
+        } else if (role === 'organization') {
+          navigate('/organization-dashboard');
+        } else {
+          navigate('/report');
+        }
       }
-    } catch (error) {
-      console.error("Connection Error: Is the Mock URL correct?", error);
-      setErrors({ identity: "Mock Server Unreachable" });
-    }
-  }
-};
-
-  const handleChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
-    if (errors[field]) {
-      setErrors((prev) => {
-        const updated = { ...prev };
-        delete updated[field];
-        return updated;
-      });
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        if (status === 429) {
+          showToast("Security: Too many attempts. Please wait.", "error");
+        } else if (status === 404) {
+          showToast("User not found.", "error");
+        } else if (status === 401) {
+          showToast("Invalid credentials. Please try again.", "error");
+        } else {
+          showToast(error.response?.data?.detail || "Authentication failed.", "error");
+        }
+      } else {
+        showToast("Connection failed. Check your internet.", "error");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleLogin} className="space-y-10">
-      <div className="space-y-8">
+    <>
+    <motion.form 
+      initial={{ opacity: 0, y: 10 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      onSubmit={handleSubmit(onLoginSubmit)}
+      className="space-y-8"
+    >
+      <div className="space-y-6">
         <Input 
-          label="Email or Phone" 
-          placeholder="abebe@mail.com or 09..."
-          value={formData.identity}
-          onChange={(e) => handleChange('identity', e.target.value)}
-          error={errors.identity}
+          label="Phone or Email" 
+          placeholder="Enter phone or email"
+          {...register("identifier")} 
+          error={errors.identifier?.message} 
         />
         <Input 
           label="Password" 
-          type="password"
+          type="password" 
           placeholder="••••••••"
-          value={formData.password}
-          onChange={(e) => handleChange('password', e.target.value)}
-          error={errors.password}
+          {...register("password")} 
+          error={errors.password?.message} 
         />
       </div>
 
+      {serverError && (
+        <div className="flex items-center gap-2 text-red-500 text-[10px] uppercase tracking-widest bg-red-500/5 p-3 rounded">
+          <AlertCircle size={14} />
+          <span>{serverError}</span>
+        </div>
+      )}
+
       <button 
-        type="submit"
-        className="w-full group flex items-center justify-between py-6 border-b border-secondary/10 hover:border-secondary transition-all"
+        type="submit" 
+        disabled={loading}
+        className="w-full group flex items-center justify-between py-6 border-b border-secondary/10 hover:border-secondary transition-all disabled:opacity-50"
       >
         <span className="text-[10px] font-black uppercase tracking-[0.5em] text-secondary">
-          Login
+          {loading ? "Authenticating..." : "Access Account"}
         </span>
-        <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform" />
+        {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <LogIn size={16} className="group-hover:translate-x-1 transition-transform" />}
       </button>
 
-      <div className="pt-4">
-        <p className="text-[9px] text-secondary/30 uppercase tracking-widest leading-relaxed">
-          Forgot credentials? <br />
-          <span className="text-secondary/60 cursor-pointer hover:text-secondary italic">
-            Initiate Recovery Process
-          </span>
-        </p>
-      </div>
-    </form>
+      <button 
+        type="button"
+        onClick={() => navigate('/signup')}
+        className="text-[9px] font-black uppercase tracking-[0.3em] text-secondary/40 hover:text-secondary transition-colors text-left"
+      >
+        New here? <span className="text-secondary border-b border-secondary/20 ml-1">Create Account</span>
+      </button>
+    </motion.form>
+    <Toast 
+      isVisible={toast.show} 
+      message={toast.msg} 
+      type={toast.type} 
+      onClose={() => setToast(p => ({...p, show: false}))} 
+    />
+    </>
   );
 };
 
