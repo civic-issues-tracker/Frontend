@@ -4,12 +4,16 @@ import { IoLocationSharp, IoCloudUploadOutline, IoCloseCircle } from "react-icon
 import { Button } from '../../components/ui/Button';
 import IssueMapPicker from './components/IssueMapPicker';
 import { privateApi } from '../../features/auth/services/authService';
+import { categoryApi } from '../../features/auth/services/CategorySevice';
+import { subcategoryApi } from '../../features/auth/services/subcategoryService';
 import { useAuth } from '../../hooks/useAuth';
 import { useGeoLocation } from '../../hooks/useGeolocation'; 
 
 interface SubCategory {
   id: string;
   name: string;
+  category_id: string;
+  category?: string; 
 }
 
 interface Category {
@@ -49,7 +53,6 @@ const ReportPage: React.FC = () => {
   const selectedCategoryId = watch("category");
   const photoFile = watch("photo");
 
-  // Robust Geocoder to ensure plain English text
   const fetchAddressName = async (lat: number, lng: number) => {
     try {
       const response = await fetch(
@@ -68,13 +71,10 @@ const ReportPage: React.FC = () => {
   };
 
   const updateLocationData = async (lat: number, lng: number, providedAddress?: string) => {
-    // 1. Update internal state and hidden fields
     setValue("lat", lat);
     setValue("lng", lng);
     setSelectedMapPos({ lat, lng });
     
-    // Determine if we need to fetch a better address name
-    // We fetch if no address was provided OR if the provided address looks like raw coordinates
     const isCoordinateString = /^-?\d+\.\d+/.test(providedAddress || "");
     
     if (providedAddress && !isCoordinateString) {
@@ -92,18 +92,25 @@ const ReportPage: React.FC = () => {
     }
   }, [globalLocation]);
 
-  // Fetch Categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await privateApi.get('/issues/categories/');
-        setCategories(response.data);
-      } catch  {
-        console.warn(`Backend categories not found, using fallback.`);
-        setCategories([
-          { id: '1', name: 'Fire Hazards', subcategories: [{id: '1a', name: 'Safety Violation'}, {id: '1b', name: 'Exposed Flammables'}] },
-          { id: '2', name: 'Water Services', subcategories: [{id: '2a', name: 'Pipe Leakage'}, {id: '2b', name: 'Shortage'}] }
+        const [cats, subs] = await Promise.all([
+          categoryApi.getAll(),
+          subcategoryApi.getAll()
         ]);
+
+        const mergedData: Category[] = cats.map((cat: { id: string; name: string }) => ({
+          ...cat,
+          subcategories: subs.filter((sub: SubCategory) => 
+            String(sub.category_id) === String(cat.id) || String(sub.category) === String(cat.id)
+          )
+        }));
+
+        setCategories(mergedData);
+      } catch (error) {
+        console.error("Endpoint sync failed", error);
+        setCategories([]);
       } finally {
         setFetchingCats(false);
       }
@@ -111,7 +118,6 @@ const ReportPage: React.FC = () => {
     fetchCategories();
   }, []);
 
-  // Photo Preview Logic
   useEffect(() => {
     if (photoFile && photoFile.length > 0) {
       const file = photoFile[0];
@@ -183,7 +189,7 @@ const ReportPage: React.FC = () => {
               >
                 <option value="">Select Detail</option>
                 {categories
-                  .find(c => c.id === selectedCategoryId)
+                  .find(c => String(c.id) === String(selectedCategoryId))
                   ?.subcategories.map(sub => (
                     <option key={sub.id} value={sub.id}>{sub.name}</option>
                   ))

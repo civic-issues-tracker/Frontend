@@ -3,8 +3,6 @@ import { useAuth } from '../hooks/useAuth';
 import SidebarAdmin from '../components/layout/SidebarAdmin';
 import SidebarCitizen from '../components/layout/SidebarCitizen';
 import SidebarOfficer from '../components/layout/SidebarOfficer';
-import TopBar from '../components/layout/TopBar';
-import Footer from '../components/layout/Footer';
 
 const DashboardLayout = () => {
   const { user } = useAuth();
@@ -27,15 +25,13 @@ const DashboardLayout = () => {
       {renderSidebar()}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <TopBar />
 
-        <main className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <main className="flex-1 overflow-y-auto px-2 custom-scrollbar">
           <div className="max-w-7xl mx-auto">
             <Outlet /> 
           </div>
         </main>
 
-        <Footer />
       </div>
     </div>
   );

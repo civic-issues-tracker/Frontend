@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Loader2, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import Input from '../../../../src/components/ui/Input';
 import { Button } from '../../../components/ui/Button';
@@ -35,6 +35,7 @@ const SignupForm: React.FC = () => {
   const [tempId, setTempId] = useState<string | null>(null);
   const [otpCode, setOtpCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); 
   const [toast, setToast] = useState<{ show: boolean; msg: string; type: 'error' | 'success' }>({ show: false, msg: '', type: 'error' });
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -137,7 +138,7 @@ const SignupForm: React.FC = () => {
             <div className="space-y-8">
               <Input 
                 label="Full Name" 
-                placeholder="Abebe Balcha"
+                placeholder="Hebron Enyew"
                 {...register("full_name")}
                 error={errors.full_name?.message}
               />
@@ -153,13 +154,22 @@ const SignupForm: React.FC = () => {
                 {...register("phone")}
                 error={errors.phone?.message}
               />
-              <Input 
-                label="Secure / Password" 
-                type="password"
-                placeholder="••••••••"
-                {...register("password")}
-                error={errors.password?.message}
-              />
+              <div className="relative">
+                <Input 
+                  label="Secure / Password" 
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  {...register("password")}
+                  error={errors.password?.message}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-10 text-secondary/30 hover:text-secondary transition-colors"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
 
             <button 
@@ -204,7 +214,6 @@ const SignupForm: React.FC = () => {
                 className="flex items-center gap-6 p-6 border border-secondary/5 hover:border-secondary/20 transition-all text-left group"
               >
                 <div className="w-10 h-10 rounded-full bg-secondary/5 flex items-center justify-center group-hover:bg-secondary group-hover:text-primary transition-all">
-                  {/* {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <Send size={16} strokeWidth={1.2} />} */}
                 </div>
                 <div>
                   <span className="block text-[10px] font-black uppercase tracking-widest text-primary">SMS OTP</span>
@@ -218,7 +227,6 @@ const SignupForm: React.FC = () => {
                 className="flex items-center gap-6 p-6 border border-secondary/5 hover:border-secondary/20 transition-all text-left group"
               >
                 <div className="w-10 h-10 rounded-full bg-secondary/5 flex items-center justify-center group-hover:bg-secondary group-hover:text-primary transition-all">
-                  {/* {loading ? <Loader2 className="animate-spin w-4 h-4" /> : <Mail size={16} strokeWidth={1.2} />} */}
                 </div>
                 <div>
                   <span className="block text-[10px] font-black uppercase tracking-widest text-primary">Email SMTP</span>

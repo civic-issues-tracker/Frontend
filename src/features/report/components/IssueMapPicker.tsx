@@ -1,9 +1,9 @@
 import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+import { useTranslation } from 'react-i18next'; // Added
 import 'leaflet/dist/leaflet.css';
 
-//  Icon Generator
 const createLocationIcon = (color: string, isUser: boolean = false) => {
   return L.divIcon({
     html: `
@@ -34,7 +34,8 @@ export interface Report {
   location_lat: number;
   location_long: number;
   title: string;
-  status: 'submitted' | 'under_review' | 'in_progress' | 'resolved' | 'rejected';
+  status: string;
+  created_at: string;
 }
 
 interface MapProps {
@@ -55,6 +56,7 @@ const MapEvents = ({ onLocationSelect }: { onLocationSelect?: (lat: number, lng:
 };
 
 const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selectedLocation }) => {
+  const { t } = useTranslation(); 
   const defaultCenter: [number, number] = [9.0192, 38.7525];
   
   const mapCenter: [number, number] = selectedLocation 
@@ -69,9 +71,8 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
         className="h-full w-full z-0"
         scrollWheelZoom={true}
       >
-        {/* CHANGED: Swapped light_all for voyager to get Google Maps style colors */}
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          url={import.meta.env.VITE_MAP_TILE_URL}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 
@@ -85,7 +86,7 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
             <Tooltip direction="top" offset={[0, -30]} opacity={1} permanent>
               <div className="p-1">
                 <span className="text-[10px] uppercase font-black text-secondary">
-                  Selected Location
+                  {t('map.selectedLocation')}
                 </span>
               </div>
             </Tooltip>
@@ -93,7 +94,6 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
         )}
 
         {reports
-          .filter(report => report.status === 'submitted')
           .map((report) => (
             <Marker 
               key={report.id}
@@ -103,7 +103,7 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
               <Popup>
                 <div className="p-1 min-w-30">
                   <h4 className="font-header font-bold text-secondary text-sm leading-tight">
-                    {report.title}
+                    {t(report.title)}
                   </h4>
                   <div className="mt-2 flex items-center gap-1.5">
                     <div 
@@ -111,7 +111,7 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
                       style={{ backgroundColor: STATUS_COLORS[report.status] }}
                     />
                     <span className="text-[10px] uppercase font-black tracking-wider text-secondary/60">
-                      {report.status.replace('_', ' ')}
+                      {t(`reports.status.${report.status}`)}
                     </span>
                   </div>
                 </div>
@@ -123,7 +123,7 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
       <div className="absolute bottom-4 left-4 z-10 bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl border border-secondary/10 text-[10px] font-black text-secondary uppercase tracking-widest shadow-xl">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          Live Map: Addis Ababa
+          {t('map.liveStatus')}
         </div>
       </div>
     </div>

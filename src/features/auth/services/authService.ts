@@ -1,21 +1,48 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://yeabsiraamare.pythonanywhere.com/api/v1';
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 // Public Client (No token needed)
 export const publicApi = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  // withCredentials: true, 
+  withCredentials: true, 
 });
 
 // Private Client (Needs Access Token)
 export const privateApi = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  // withCredentials: true,
+  withCredentials: true,
 });
 
+privateApi.interceptors.request.use(
+  (config) => {
+    const token = sessionStorage.getItem('token'); 
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+//  Response Interceptor: Catches 401 errors globally
+privateApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      console.warn("Session expired or unauthorized. Logging out...");
+      localStorage.removeItem('token');
+      localStorage.removeItem('user'); 
+      window.location.href = '/login'; 
+    }
+    return Promise.reject(error);
+  }
+);
 
 interface LoginCredentials {
   email?: string; 
@@ -86,6 +113,23 @@ export const authService = {
 
   logout: async () => {
     await privateApi.post('/auth/logout/');
+  },
+  // Forgot Password
+  forgotPassword: async (data: { email?: string; phone?: string }) => {
+    const response = await publicApi.post('/auth/forgot-password/', data);
+    return response.data;
+  },
+
+  // Reset via Email Link/Code
+  resetPasswordConfirm: async (data: { token: string; new_password: string }) => {
+    const response = await publicApi.post('/auth/password-reset-confirm/', data);
+    return response.data;
+  },
+
+  //The SMS Flow: Confirming the reset using an OTP code sent to phone
+  verifyResetOTP: async (data: { phone: string; otp_code: string; new_password: string }) => {
+    const response = await publicApi.post('/auth/verify-reset-otp/', data);
+    return response.data;
   },
 
   refreshToken: async () => {

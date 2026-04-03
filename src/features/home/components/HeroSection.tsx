@@ -5,9 +5,11 @@ import { IoLocationSharp } from "react-icons/io5";
 import IssueMapPicker from '../../report/components/IssueMapPicker';
 import { mockReports } from '../../../mock/mockReports';
 import { useGeoLocation } from '../../../hooks/useGeolocation'; 
+import { useTranslation } from 'react-i18next';
 
 const HeroSection: React.FC = () => {
-  const { location, requestLocation, isLoading } = useGeoLocation(); // Get location data
+  const { t } = useTranslation();
+  const { location, requestLocation, isLoading } = useGeoLocation(); 
 
   return (
     <div className="w-full flex flex-col">      
@@ -15,16 +17,16 @@ const HeroSection: React.FC = () => {
         
         <div className='w-full lg:max-w-2xl text-center lg:text-left flex flex-col items-center lg:items-start'>
           <h1 className='text-4xl md:text-5xl lg:text-6xl text-secondary font-header font-bold leading-tight'>
-            Report & View Local <span className='text-secondary/85'>Problems</span>
+            {t('hero.title')} <span className='text-secondary/85'>{t('hero.titleHighlight')}</span>
           </h1>
           
           <p className='font-body text-base md:text-lg opacity-80 mt-6 max-w-lg'>
-            Like fire hazards, water-related issues, electricity-related problems, and road damage.
+            {t('hero.description')}
           </p>
           
           <div className='flex flex-col sm:flex-row justify-center lg:justify-start items-center gap-4 mt-8 w-full sm:w-auto'>
             <Button variant='primary' className="w-full sm:w-auto px-8">
-              <Link to="/report">Report Issue</Link>
+              <Link to="/report">{t('hero.buttons.report')}</Link>
             </Button>
             {/* Added onClick and loading text */}
             <Button 
@@ -33,7 +35,7 @@ const HeroSection: React.FC = () => {
               className='flex items-center justify-center gap-2 w-full sm:w-auto px-6'
             >
               <IoLocationSharp className='text-secondary size-5' />
-              {isLoading ? "Locating..." : "Use current location"}
+              {isLoading ? t('hero.buttons.locating') : t('hero.buttons.useLocation')}
             </Button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useCallback, useLayoutEffect } from 'react';
+import React, { createContext, useState, useCallback, useLayoutEffect, useRef } from 'react';
 import { privateApi } from '../features/auth/services/authService';
 import Toast, { type ToastType } from '../components/ui/Toast'; 
 
@@ -26,7 +26,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize state from sessionStorage to handle page refreshes
   const [user, setUser] = useState<User | null>(() => {
     const savedUser = sessionStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
@@ -39,10 +38,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, msg: '', type: 'info' as ToastType });
 
-  const showToast = (msg: string, type: ToastType) => {
+  // Use a Ref to track if we are already in the middle of a logout
+  const isLoggingOut = useRef(false);
+
+  const showToast = useCallback((msg: string, type: ToastType) => {
     setToast({ show: true, msg, type });
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 5000);
-  };
+  }, []);
 
   const login = useCallback((data: { access: string; user: User }) => {
     setAccessToken(data.access);
@@ -58,6 +60,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAccessToken(newToken);
     sessionStorage.setItem('accessToken', newToken);
   }, []);
+
+  const logout = useCallback(async () => {
+  if (isLoggingOut.current) return;
+  isLoggingOut.current = true;
+
+  try {
+    const refreshToken = sessionStorage.getItem('refreshToken') || localStorage.getItem('refreshToken');
+
+    if (refreshToken) {
+      await privateApi.post('/auth/logout/', { refresh: refreshToken });
+    } else {
+      await privateApi.post('/auth/logout/');
+    }
+  } catch  {
+    // This catches the 400 error so the app doesn't crash
+    console.warn("Server logout request failed (expected if token expired)");
+  } finally {
+    setAccessToken(null);
+    setUser(null);
+    
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('user');
+    localStorage.removeItem('refreshToken'); 
+    
+    isLoggingOut.current = false;
+  }
+}, [showToast]);
 
   // Interceptors for API logic
   useLayoutEffect(() => {
@@ -78,7 +108,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           showToast("Security: Too many requests. Please slow down.", "error");
         }
 
-        if (error.response?.status === 401) {
+        // If we get a 401 and we're NOT already logging out, trigger logout
+        if (error.response?.status === 401 && !isLoggingOut.current) {
           logout();
         }
         
@@ -90,22 +121,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       privateApi.interceptors.request.eject(requestIntercept);
       privateApi.interceptors.response.eject(responseIntercept);
     };
-  }, [accessToken]); 
-
-  const logout = async () => {
-    try {
-      await privateApi.post('/auth/logout/'); 
-      showToast("Logged out safely", "info");
-    } catch (error) {
-      console.error("Logout error", error);
-    } finally {
-      setAccessToken(null);
-      setUser(null);
-      // Clear session storage
-      sessionStorage.removeItem('accessToken');
-      sessionStorage.removeItem('user');
-    }
-  };
+  }, [accessToken, logout, showToast]); 
 
   return (
     <AuthContext.Provider value={{ 

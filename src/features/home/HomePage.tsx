@@ -5,6 +5,7 @@ import QuickStats from './components/QuickStats'
 import CallToAction from './components/CallToAction'
 import { mockReports } from '../../mock/mockReports'
 
+
 const HomePage = () => {
   return (
     <div className='w-full min-h-screen flex flex-col relative'>
