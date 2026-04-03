@@ -8,7 +8,7 @@ export const organizationApi = {
   },
 
   // Create a new organization (System Admin Only)
-  create: async (orgData: { name: string; email: string; phone: string }) => {
+  create: async (orgData: { name: string; contact_email: string; contact_phone: string }) => {
     const response = await privateApi.post('/organizations/', orgData);
     return response.data;
   },
