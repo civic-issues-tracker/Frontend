@@ -233,14 +233,15 @@ const SignupForm: React.FC = () => {
                   <span className="text-[8px] text-primary/60 uppercase tracking-tighter">Standard OTP Route</span>
                 </div>
               </Button>
-            </div>
-
-            <button 
+              <button 
               onClick={() => setStep(1)}
-              className="group flex items-center gap-2 text-[8px] font-black uppercase tracking-[0.3em] text-primary/20 hover:text-primary transition-colors"
+              className="group flex items-center gap-2 text-[10px] font-header uppercase tracking-[0.3em] text-secondary hover:text-secondary/90 transition-colors"
             >
               ← Edit Identity
             </button>
+            </div>
+
+            
           </motion.div>
         )}
 

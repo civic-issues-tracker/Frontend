@@ -150,7 +150,6 @@ export const authService = {
   },
 
   createOrgAdmin: async (data: CreateOrgAdminPayload) => {
-    //only system admin can call this
     const response = await privateApi.post('/auth/admin/create-org-admin/', data);
     return response.data;
   },
