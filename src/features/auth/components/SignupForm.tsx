@@ -107,7 +107,7 @@ const SignupForm: React.FC = () => {
         
         setTimeout(() => {
           login({ access: result.access, user: result.user });
-          const role = result.user.role;
+          const role = result.user.role_name;
           if (role === 'system_admin') navigate('/admin-dashboard');
           else if (role === 'organization') navigate('/organization-dashboard');
           else navigate('/report');
@@ -287,7 +287,7 @@ const SignupForm: React.FC = () => {
             <div className="flex flex-col gap-4">
               <button 
                 onClick={() => setStep(2)}
-                className="text-left text-[8px] font-black uppercase tracking-[0.3em] text-primary/40 hover:text-primary transition-colors"
+                className="text-left text-[8px] font-black uppercase tracking-[0.3em] text-secondary/90 hover:text-secondary transition-colors"
               >
                 ← Change Method
               </button>
