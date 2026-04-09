@@ -61,7 +61,7 @@ const LoginForm: React.FC = () => {
         ? { email: forgotIdentifier } 
         : { phone: forgotIdentifier };
 
-      await authService.forgotPassword(payload); 
+      const result = await authService.forgotPassword(payload); 
       
       const successMsg = forgotMethod === 'email' 
         ? "Reset link sent to your email!" 
@@ -70,7 +70,11 @@ const LoginForm: React.FC = () => {
       showToast(successMsg, "success");
       
       if (forgotMethod === 'sms') {
-        setTimeout(() => navigate(`/reset-password?phone=${forgotIdentifier}`), 2000);
+        if (!result?.temp_id) {
+          showToast("Reset session not returned by server. Try again.", "error");
+          return;
+        }
+        setTimeout(() => navigate(`/reset-password?temp_id=${result.temp_id}&phone=${forgotIdentifier}`), 2000);
       }
     } catch  {
       showToast("User not found or request failed.", "error");

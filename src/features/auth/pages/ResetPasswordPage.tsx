@@ -25,6 +25,8 @@ const ResetPasswordPage: React.FC = () => {
   const { token: urlToken } = useParams<{ token: string }>(); 
   const [searchParams] = useSearchParams();
   const tokenFromQuery = searchParams.get('token');
+  const tempIdFromQuery = searchParams.get('temp_id');
+  const phoneFromQuery = searchParams.get('phone');
   
   // Final token check (from URL path or Query string)
   const activeToken = urlToken || tokenFromQuery;
@@ -66,18 +68,20 @@ const ResetPasswordPage: React.FC = () => {
         }
         await authService.resetPasswordConfirm({
           token: activeToken,
-          new_password: data.password
+          password: data.password,
+          confirm_password: data.confirmPassword
         });
       } else {
-        if (!data.otp_code || !data.phone) {
-          showToast("Phone and OTP code are required.", "error");
+        if (!tempIdFromQuery || !data.otp_code) {
+          showToast("Missing reset session or OTP code. Start forgot password again.", "error");
           setLoading(false);
           return;
         }
         await authService.verifyResetOTP({
-          phone: data.phone,
+          temp_id: tempIdFromQuery,
           otp_code: data.otp_code,
-          new_password: data.password
+          new_password: data.password,
+          confirm_password: data.confirmPassword
         });
       }
 
@@ -149,6 +153,7 @@ const ResetPasswordPage: React.FC = () => {
                     placeholder="+251..."
                     {...register("phone")} 
                     error={errors.phone?.message} 
+                    defaultValue={phoneFromQuery ?? ''}
                   />
                   <Input 
                     label="OTP Code" 

@@ -120,14 +120,14 @@ export const authService = {
     return response.data;
   },
 
-  // Reset via Email Link/Code
-  resetPasswordConfirm: async (data: { token: string; new_password: string }) => {
-    const response = await publicApi.post('/auth/password-reset-confirm/', data);
+  // Reset via Email Link
+  resetPasswordConfirm: async (data: { token: string; password: string; confirm_password: string }) => {
+    const response = await publicApi.post('/auth/reset-password/', data);
     return response.data;
   },
 
-  //The SMS Flow: Confirming the reset using an OTP code sent to phone
-  verifyResetOTP: async (data: { phone: string; otp_code: string; new_password: string }) => {
+  // SMS reset flow: confirm OTP and set a new password
+  verifyResetOTP: async (data: { temp_id: string; otp_code: string; new_password: string; confirm_password: string }) => {
     const response = await publicApi.post('/auth/verify-reset-otp/', data);
     return response.data;
   },
