@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast'; 
 import LogoIcon from '../../../src/assets/icons/logoIcon';
+import { hasAllowedRole } from '../../lib/roleUtils';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,7 +15,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   const location = useLocation();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && allowedRoles && user && !allowedRoles.includes(user.role_name)) {
+    if (!isLoading && isAuthenticated && allowedRoles && user && !hasAllowedRole(user.role_name, allowedRoles)) {
       toast.error("You don't have permission to access this area.", {
         id: 'unauthorized-toast', 
       });
@@ -35,7 +36,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && user && !allowedRoles.includes(user.role_name)) {
+  if (allowedRoles && user && !hasAllowedRole(user.role_name, allowedRoles)) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#FDFBF7] p-4">
       <div className="max-w-md w-full text-center space-y-8 p-10 bg-white rounded-[40px] shadow-2xl shadow-secondary/5 border border-secondary/5 relative overflow-hidden">
