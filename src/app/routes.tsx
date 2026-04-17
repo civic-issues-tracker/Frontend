@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { Navigate, createBrowserRouter } from 'react-router-dom'
 import HomePage from '../features/home/HomePage'
 import LoginPage from '../features/auth/pages/LoginPage'
 import SignupPage from '../features/auth/pages/SignupPage' 
@@ -17,6 +17,13 @@ import AdminAnalyticsPage from '../features/dashboard-admin/pages/AdminAnalytics
 import AdminUsersPage from '../features/dashboard-admin/pages/AdminUsersPage'
 import AdminAiMonitoringPage from '../features/dashboard-admin/pages/AdminAiMonitoringPage'
 import AdminSettingsPage from '../features/dashboard-admin/pages/AdminSettingsPage'
+import OfficerDashboardLayout from '../features/dashboard-officer/OfficerDashboardLayout'
+import OfficerDashboardPage from '../features/dashboard-officer/pages/OfficerDashboardPage'
+import OfficerIssuesPage from '../features/dashboard-officer/pages/OfficerIssuesPage'
+import OfficerAnalyticsPage from '../features/dashboard-officer/pages/OfficerAnalyticsPage'
+import OfficerNotificationsPage from '../features/dashboard-officer/pages/OfficerNotificationsPage'
+import OfficerSettingsPage from '../features/dashboard-officer/pages/OfficerSettingsPage'
+import OfficerAlertsPage from '../features/dashboard-officer/pages/OfficerAlertsPage'
 
 
 
@@ -91,6 +98,46 @@ const router = createBrowserRouter([
         element: <AdminSettingsPage /> 
       },
     ]
+  },
+
+  // --- OFFICER DASHBOARD ---
+  {
+    path: '/officer',
+    element: (
+      <ProtectedRoute allowedRoles={['officer']}>
+        <OfficerDashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <Navigate to="dashboard" replace />,
+      },
+      {
+        path: 'dashboard',
+        element: <OfficerDashboardPage />,
+      },
+      {
+        path: 'map',
+        element: <OfficerIssuesPage />,
+      },
+      {
+        path: 'resolved',
+        element: <OfficerAnalyticsPage />,
+      },
+      {
+        path: 'messages',
+        element: <OfficerNotificationsPage />,
+      },
+      {
+        path: 'settings',
+        element: <OfficerSettingsPage />,
+      },
+      {
+        path: 'notifications',
+        element: <OfficerAlertsPage />,
+      },
+    ],
   }
 ]);
 

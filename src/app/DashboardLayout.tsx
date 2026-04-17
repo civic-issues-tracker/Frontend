@@ -3,15 +3,16 @@ import { useAuth } from '../hooks/useAuth';
 import SidebarAdmin from '../components/layout/SidebarAdmin';
 import SidebarCitizen from '../components/layout/SidebarCitizen';
 import SidebarOfficer from '../components/layout/SidebarOfficer';
+import { normalizeRole } from '../lib/roleUtils';
 
 const DashboardLayout = () => {
   const { user } = useAuth();
 
   const renderSidebar = () => {
-    switch (user?.role_name) {
+    switch (normalizeRole(user?.role_name)) {
       case 'system_admin':
         return <SidebarAdmin />;
-      case 'organization':
+      case 'officer':
         return <SidebarOfficer />;
       case 'resident':
         return <SidebarCitizen />;

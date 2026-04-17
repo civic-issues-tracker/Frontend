@@ -11,6 +11,16 @@ import { useAuth } from '../../../hooks/useAuth.ts';
 import { authService } from '../../../features/auth/services/authService';
 import Toast from '../../../components/ui/Toast'; 
 import axios from 'axios';
+import { isOfficerRole } from '../../../lib/roleUtils';
+
+const normalizeEthiopianPhone = (value: string) => {
+  const clean = value.replace(/[\s-]/g, '');
+  if (clean.startsWith('+251')) return clean;
+  if (clean.startsWith('251')) return `+${clean}`;
+  if (clean.startsWith('0') && clean.length === 10) return `+251${clean.slice(1)}`;
+  if (clean.startsWith('9') && clean.length === 9) return `+251${clean}`;
+  return clean;
+};
 
 const signupSchema = z.object({
   full_name: z.string()
@@ -21,7 +31,7 @@ const signupSchema = z.object({
   phone: z.string()
     .min(9, "Phone number is too short")
     .max(13, "Phone number is too long")
-    .refine((val) => /^[0-9+]+$/.test(val), "Enter a valid numeric phone number"),
+    .refine((val) => /^(?:\+251|251|0)?9\d{8}$/.test(val.replace(/[\s-]/g, '')), "Use a valid Ethiopian number (e.g. +2519XXXXXXXX)"),
   email: z.string()
     .email("Invalid email address"),
   password: z.string()
@@ -60,10 +70,11 @@ const SignupForm: React.FC = () => {
     const data = getValues();
     
     try {
+      const normalizedPhone = normalizeEthiopianPhone(data.phone);
       const result = await authService.register({
         email: data.email,
         full_name: data.full_name, 
-        phone: data.phone,
+        phone: normalizedPhone,
         password: data.password,
         confirm_password: data.password, 
         verification_method: method
@@ -80,7 +91,15 @@ const SignupForm: React.FC = () => {
         if (status === 429) {
           triggerToast("Security: Too many signup attempts. Please wait 60s.", "error");
         } else {
-          const errorDetail = error.response?.data?.detail || "Registration failed. Please check your data.";
+          const responseData = error.response?.data;
+          const fieldError = responseData && typeof responseData === 'object'
+            ? Object.values(responseData)[0]
+            : null;
+          const errorDetail =
+            responseData?.detail ||
+            responseData?.error ||
+            (Array.isArray(fieldError) ? String(fieldError[0]) : typeof fieldError === 'string' ? fieldError : null) ||
+            "Registration failed. Please check your data.";
           triggerToast(errorDetail, "error");
         }
       }
@@ -109,7 +128,7 @@ const SignupForm: React.FC = () => {
           login({ access: result.access, user: result.user });
           const role = result.user.role_name;
           if (role === 'system_admin') navigate('/admin-dashboard');
-          else if (role === 'organization') navigate('/organization-dashboard');
+          else if (isOfficerRole(role)) navigate('/officer/dashboard');
           else navigate('/report');
         }, 1500);
       }
