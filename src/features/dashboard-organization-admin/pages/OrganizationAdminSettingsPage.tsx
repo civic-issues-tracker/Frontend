@@ -1,11 +1,11 @@
-import { Search, ShieldCheck, SlidersHorizontal } from 'lucide-react';
+import { MoreHorizontal, Search, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 
-const OfficerSettingsPage = () => {
+const OrganizationAdminSettingsPage = () => {
 	return (
 		<section>
 			<header className="mb-3 flex items-start justify-between">
 				<div>
-					<h2 className="text-[36px] font-black leading-tight text-[#3E2B1F]">Officer Settings</h2>
+					<h2 className="text-[36px] font-black leading-tight text-[#3E2B1F]">Organization Admin Settings</h2>
 					<p className="text-sm text-[#857060]">Manage dispatch preferences, shift defaults, and account controls.</p>
 				</div>
 				<div className="flex items-center gap-2">
@@ -13,7 +13,9 @@ const OfficerSettingsPage = () => {
 						<Search size={14} className="mr-1 text-[#9D8A78]" />
 						<input placeholder="Search settings..." className="w-56 bg-transparent text-xs outline-none" />
 					</div>
-					<button className="rounded-full border border-[#DDCFC0] bg-[#F8F6F2] p-2 text-[#8B7B69]" title="More options" aria-label="More options">◯</button>
+					<button type="button" className="rounded-full border border-[#DDCFC0] bg-[#F8F6F2] p-2 text-[#8B7B69]" title="More options" aria-label="More options">
+						<MoreHorizontal size={14} />
+					</button>
 				</div>
 			</header>
 
@@ -91,4 +93,4 @@ const OfficerSettingsPage = () => {
 	);
 };
 
-export default OfficerSettingsPage;
+export default OrganizationAdminSettingsPage;

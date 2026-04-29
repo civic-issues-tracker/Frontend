@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import { buildOfficerWorkspace } from '../officerWorkspace';
+import { getOrganizationAdminWorkspace } from '../organizationAdminWorkspace';
 
 const kpis = [
 	{ label: 'Resolved (30d)', value: '84' },
@@ -10,15 +10,29 @@ const kpis = [
 	{ label: 'Escalations', value: '3' },
 ];
 
-const OfficerAnalyticsPage = () => {
+const OrganizationAdminAnalyticsPage = () => {
 	const { user } = useAuth();
-	const workspace = useMemo(
-		() => buildOfficerWorkspace(user?.email ?? user?.id ?? user?.full_name),
-		[user?.email, user?.id, user?.full_name],
-	);
-	const [activeReportId, setActiveReportId] = useState<string | null>(workspace.resolvedTickets[0]?.id ?? null);
+	const seed = user?.email ?? user?.id ?? user?.full_name;
+	const workspace = useMemo(() => getOrganizationAdminWorkspace(seed), [seed]);
+	const [activeReportId, setActiveReportId] = useState<string | null>(null);
+	const [searchQuery, setSearchQuery] = useState('');
+	const [reportFilter, setReportFilter] = useState('');
+	const [showFilterInput, setShowFilterInput] = useState(false);
+	const filteredReports = useMemo(() => {
+		const q = `${searchQuery} ${reportFilter}`.trim().toLowerCase();
+		if (!q) return workspace.resolvedTickets;
+		return workspace.resolvedTickets.filter((ticket) => {
+			return (
+				ticket.id.toLowerCase().includes(q) ||
+				ticket.title.toLowerCase().includes(q) ||
+				ticket.location.toLowerCase().includes(q) ||
+				(ticket.category ?? '').toLowerCase().includes(q) ||
+				(ticket.resolutionDate ?? '').toLowerCase().includes(q)
+			);
+		});
+	}, [reportFilter, searchQuery, workspace.resolvedTickets]);
 	const activeReport = activeReportId
-		? workspace.resolvedTickets.find((ticket) => ticket.id === activeReportId) ?? null
+		? filteredReports.find((ticket) => ticket.id === activeReportId) ?? workspace.resolvedTickets.find((ticket) => ticket.id === activeReportId) ?? null
 		: null;
 
 	return (
@@ -31,9 +45,11 @@ const OfficerAnalyticsPage = () => {
 				<div className="flex items-center gap-2">
 					<div className="flex items-center rounded-full border border-[#DDCFC0] bg-[#F8F6F2] px-3 py-1.5">
 						<Search size={14} className="mr-1 text-[#9D8A78]" />
-						<input placeholder="Search ticket ID or address..." className="w-56 bg-transparent text-xs outline-none" />
+						<input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search resolved tickets..." className="w-56 bg-transparent text-xs outline-none" />
 					</div>
-					<button className="rounded-full border border-[#DDCFC0] bg-[#F8F6F2] p-2 text-[#8B7B69]">◯</button>
+					<button type="button" onClick={() => setSearchQuery('')} className="rounded-full border border-[#DDCFC0] bg-[#F8F6F2] p-2 text-[#8B7B69]" aria-label="Clear search">
+						<X size={14} />
+					</button>
 				</div>
 			</header>
 
@@ -50,12 +66,34 @@ const OfficerAnalyticsPage = () => {
 				<div className="mb-3 flex items-center justify-between">
 					<div>
 						<h3 className="text-xl font-bold text-[#3C2A1D]">Archived & Resolved</h3>
-						<p className="text-sm text-[#8B7868]">Review past issues and view their resolution reports for {user?.full_name || 'the current officer'}.</p>
+						<p className="text-sm text-[#8B7868]">Review past issues and view their resolution reports for {user?.full_name || 'the current organization admin'}.</p>
 					</div>
 					<div className="flex gap-2 text-xs">
-						<button className="rounded-full border border-[#D8CCBD] bg-white px-3 py-1">Filter by Date</button>
-						<button className="rounded-full bg-[#6A4834] px-3 py-1 text-white">Export Report</button>
-					</div>
+							<div className="relative">
+								<button onClick={() => setShowFilterInput((s) => !s)} className="rounded-full border border-[#D8CCBD] bg-white px-3 py-1">Filter</button>
+								{showFilterInput ? (
+									<div className="absolute right-0 mt-2 w-56 rounded-md border bg-white p-2">
+										<input value={reportFilter} onChange={(e) => setReportFilter(e.target.value)} placeholder="Filter by resolution text (e.g., Oct)" className="w-full border p-1 text-sm" />
+										<div className="mt-2 flex justify-end gap-2">
+											<button onClick={() => setReportFilter('')} className="rounded-full border px-2 py-1 text-xs">Clear</button>
+											<button onClick={() => setShowFilterInput(false)} className="rounded-full bg-[#6A4834] px-2 py-1 text-xs text-white">Done</button>
+										</div>
+									</div>
+								) : null}
+							</div>
+							<button onClick={() => {
+								const rows = filteredReports;
+								const header = ['id','title','location','category','resolutionDate'];
+								const csv = [header.join(',')].concat(rows.map(r => [r.id, `"${(r.title ?? '').replace(/"/g,'""')}"`, `"${(r.location ?? '').replace(/"/g,'""')}"`, `"${(r.category ?? '')}"`, `"${(r.resolutionDate ?? '')}"`].join(','))).join('\n');
+								const blob = new Blob([csv], { type: 'text/csv' });
+								const url = URL.createObjectURL(blob);
+								const a = document.createElement('a');
+								a.href = url;
+								a.download = 'organization_admin_resolved_tickets.csv';
+								a.click();
+								URL.revokeObjectURL(url);
+							}} className="rounded-full bg-[#6A4834] px-3 py-1 text-white">Export Report</button>
+						</div>
 				</div>
 
 				<div className="overflow-hidden rounded-xl border border-[#DDD0C2] bg-white">
@@ -70,7 +108,7 @@ const OfficerAnalyticsPage = () => {
 							</tr>
 						</thead>
 						<tbody>
-							{workspace.resolvedTickets.map((ticket) => (
+							{filteredReports.map((ticket) => (
 								<tr key={ticket.id} className="border-t border-[#EFE4D8] text-[#3B2A1E]">
 									<td className="px-4 py-3 font-bold">{ticket.id}</td>
 									<td className="px-4 py-3 font-semibold">{ticket.title}</td>
@@ -88,6 +126,11 @@ const OfficerAnalyticsPage = () => {
 									</td>
 								</tr>
 							))}
+							{filteredReports.length === 0 ? (
+								<tr>
+									<td className="px-4 py-6 text-sm text-[#7D6958]" colSpan={5}>No resolved tickets match your search or filter.</td>
+								</tr>
+							) : null}
 						</tbody>
 					</table>
 				</div>
@@ -123,9 +166,9 @@ const OfficerAnalyticsPage = () => {
 									<p className="mt-1 text-sm text-[#6B5646]">Category: {activeReport.category}</p>
 								</div>
 								<div className="rounded-2xl border border-[#E6D8C8] bg-white p-4 md:col-span-2">
-									<p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#8B7868]">Officer Notes</p>
+									<p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#8B7868]">Organization Admin Notes</p>
 									<p className="mt-2 text-sm text-[#5E4A3A]">
-										This report view is currently driven by officer dashboard data. When backend reports are available, this panel should open the resolved issue record with photos, timeline, crew assignments, and public feedback.
+										This report view is currently driven by organization-admin dashboard data. When backend reports are available, this panel should open the resolved issue record with photos, timeline, crew assignments, and public feedback.
 									</p>
 								</div>
 							</div>
@@ -137,4 +180,4 @@ const OfficerAnalyticsPage = () => {
 	);
 };
 
-export default OfficerAnalyticsPage;
+export default OrganizationAdminAnalyticsPage;

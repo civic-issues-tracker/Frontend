@@ -71,6 +71,7 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
         className="h-full w-full z-0"
         scrollWheelZoom={true}
       >
+        {/* Map tiles are configured via VITE_MAP_TILE_URL in .env */}
         <TileLayer
           url={import.meta.env.VITE_MAP_TILE_URL}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -106,9 +107,8 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
                     {t(report.title)}
                   </h4>
                   <div className="mt-2 flex items-center gap-1.5">
-                    <div 
-                      className="w-2 h-2 rounded-full" 
-                      style={{ backgroundColor: STATUS_COLORS[report.status] }}
+                    <div
+                      className={`w-2 h-2 rounded-full ${report.status === 'submitted' ? 'bg-[#ef4444]' : report.status === 'under_review' ? 'bg-[#f59e0b]' : report.status === 'in_progress' ? 'bg-[#3b82f6]' : report.status === 'resolved' ? 'bg-[#22c55e]' : 'bg-[#94a3b8]'}`}
                     />
                     <span className="text-[10px] uppercase font-black tracking-wider text-secondary/60">
                       {t(`reports.status.${report.status}`)}

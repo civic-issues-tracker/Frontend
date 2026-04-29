@@ -1,17 +1,18 @@
-export type CanonicalRole = 'resident' | 'system_admin' | 'officer' | 'unknown';
+export type CanonicalRole = 'resident' | 'system_admin' | 'organization_admin' | 'unknown';
 
-// Backend and historical aliases that should map to the officer experience.
-const OFFICER_ALIASES = new Set(['officer', 'organization', 'organization_admin']);
+// Backend and historical aliases that should map to the organization admin experience.
+const ORGANIZATION_ADMIN_ALIASES = new Set(['officer', 'organization', 'organization_admin']);
 
 export const normalizeRole = (roleName?: string | null): CanonicalRole => {
   if (!roleName) return 'unknown';
   if (roleName === 'system_admin') return 'system_admin';
   if (roleName === 'resident') return 'resident';
-  if (OFFICER_ALIASES.has(roleName)) return 'officer';
+  if (ORGANIZATION_ADMIN_ALIASES.has(roleName)) return 'organization_admin';
   return 'unknown';
 };
 
-export const isOfficerRole = (roleName?: string | null): boolean => normalizeRole(roleName) === 'officer';
+export const isOrganizationAdminRole = (roleName?: string | null): boolean => normalizeRole(roleName) === 'organization_admin';
+export const isOfficerRole = isOrganizationAdminRole;
 
 export const hasAllowedRole = (roleName: string | null | undefined, allowedRoles?: string[]): boolean => {
   if (!allowedRoles || allowedRoles.length === 0) return true;

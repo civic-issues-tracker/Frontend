@@ -10,7 +10,7 @@ import Input from '../../../../src/components/ui/Input';
 import { useAuth } from '../../../hooks/useAuth'; 
 import { authService } from '../../../features/auth/services/authService';
 import Toast, {  type ToastType } from '../../../components/ui/Toast';
-import { isOfficerRole } from '../../../lib/roleUtils';
+import { isOrganizationAdminRole } from '../../../lib/roleUtils';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Phone or Email is required"),
@@ -107,8 +107,8 @@ const LoginForm: React.FC = () => {
 
         if (role === 'system_admin') {
           navigate('/admin-dashboard');
-        } else if (isOfficerRole(role)) {
-          navigate('/officer/dashboard');
+        } else if (isOrganizationAdminRole(role)) {
+          navigate('/organization-admin/dashboard');
         } else {
           navigate('/report');
         }

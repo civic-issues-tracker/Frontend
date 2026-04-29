@@ -2,7 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import SidebarAdmin from '../components/layout/SidebarAdmin';
 import SidebarCitizen from '../components/layout/SidebarCitizen';
-import SidebarOfficer from '../components/layout/SidebarOfficer';
+import SidebarOrganizationAdmin from '../components/layout/SidebarOrganizationAdmin';
 import { normalizeRole } from '../lib/roleUtils';
 
 const DashboardLayout = () => {
@@ -12,8 +12,8 @@ const DashboardLayout = () => {
     switch (normalizeRole(user?.role_name)) {
       case 'system_admin':
         return <SidebarAdmin />;
-      case 'officer':
-        return <SidebarOfficer />;
+      case 'organization_admin':
+        return <SidebarOrganizationAdmin />;
       case 'resident':
         return <SidebarCitizen />;
       default:

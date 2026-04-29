@@ -11,7 +11,7 @@ import { useAuth } from '../../../hooks/useAuth.ts';
 import { authService } from '../../../features/auth/services/authService';
 import Toast from '../../../components/ui/Toast'; 
 import axios from 'axios';
-import { isOfficerRole } from '../../../lib/roleUtils';
+import { isOrganizationAdminRole } from '../../../lib/roleUtils';
 
 const normalizeEthiopianPhone = (value: string) => {
   const clean = value.replace(/[\s-]/g, '');
@@ -128,7 +128,7 @@ const SignupForm: React.FC = () => {
           login({ access: result.access, user: result.user });
           const role = result.user.role_name;
           if (role === 'system_admin') navigate('/admin-dashboard');
-          else if (isOfficerRole(role)) navigate('/officer/dashboard');
+          else if (isOrganizationAdminRole(role)) navigate('/organization-admin/dashboard');
           else navigate('/report');
         }, 1500);
       }

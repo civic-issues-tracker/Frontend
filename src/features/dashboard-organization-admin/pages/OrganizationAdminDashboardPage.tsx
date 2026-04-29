@@ -1,8 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, MapPin, MoreVertical, Search, Send, TriangleAlert } from 'lucide-react';
-import { type OfficerTicket } from '../officerMockData';
-import { buildOfficerWorkspace } from '../officerWorkspace';
+import { BarChart3, MapPin, MoreHorizontal, MoreVertical, Search, Send, TriangleAlert } from 'lucide-react';
+import { type OrganizationAdminTicket } from '../organizationAdminMockData';
+import {
+	getOrganizationAdminWorkspace,
+	updateTicketStatus,
+	assignTicket,
+} from '../organizationAdminWorkspace';
 import { useAuth } from '../../../hooks/useAuth';
 
 const priorityTone: Record<string, string> = {
@@ -27,22 +31,31 @@ const weekly = [
 	{ day: 'Sun', heightClass: 'h-2' },
 ];
 
-const OfficerDashboardPage = () => {
+const OrganizationAdminDashboardPage = () => {
 	const { user, showToast } = useAuth();
 	const navigate = useNavigate();
-	const workspace = useMemo(
-		() => buildOfficerWorkspace(user?.email ?? user?.id ?? user?.full_name),
-		[user?.email, user?.id, user?.full_name],
-	);
-	const [selectedId, setSelectedId] = useState(() => workspace.officerTickets[0]?.id ?? '');
+	const seed = user?.email ?? user?.id ?? user?.full_name;
+	const [searchQuery, setSearchQuery] = useState('');
+	const workspace = useMemo(() => getOrganizationAdminWorkspace(seed), [seed]);
+
+	const filteredTickets = workspace.organizationAdminTickets.filter((t) => {
+		const q = searchQuery.trim().toLowerCase();
+		if (!q) return true;
+		return (
+			t.id.toLowerCase().includes(q) ||
+			(t.location ?? '').toLowerCase().includes(q) ||
+			(t.title ?? '').toLowerCase().includes(q)
+		);
+	});
+	const [selectedId, setSelectedId] = useState(() => workspace.organizationAdminTickets[0]?.id ?? '');
 	const [note, setNote] = useState('');
-	const [statusMap, setStatusMap] = useState<Record<string, OfficerTicket['status']>>(() =>
-		Object.fromEntries(workspace.officerTickets.map((ticket) => [ticket.id, ticket.status])),
+	const [statusMap, setStatusMap] = useState<Record<string, OrganizationAdminTicket['status']>>(() =>
+		Object.fromEntries(workspace.organizationAdminTickets.map((ticket) => [ticket.id, ticket.status])),
 	);
 
 	const selected = useMemo(
-		() => workspace.officerTickets.find((ticket) => ticket.id === selectedId) ?? workspace.officerTickets[0],
-		[selectedId, workspace.officerTickets],
+		() => workspace.organizationAdminTickets.find((ticket) => ticket.id === selectedId) ?? workspace.organizationAdminTickets[0],
+		[selectedId, workspace.organizationAdminTickets],
 	);
 	const selectedStatus = statusMap[selected.id] ?? selected.status;
 
@@ -50,22 +63,30 @@ const OfficerDashboardPage = () => {
 		selectedStatus === 'new' ? 'New' : selectedStatus === 'in_progress' ? 'In Progress' : 'Resolved';
 
 	const cycleStatus = () => {
-		const order: OfficerTicket['status'][] = ['new', 'in_progress', 'resolved'];
+		const order: OrganizationAdminTicket['status'][] = ['new', 'in_progress', 'resolved'];
 		setStatusMap((prev) => {
 			const current = prev[selected.id] ?? selected.status;
 			const next = order[(order.indexOf(current) + 1) % order.length];
+			updateTicketStatus(seed, selected.id, next);
 			showToast(`Status updated to ${next.replace('_', ' ')} for ${selected.id}.`, 'success');
 			return { ...prev, [selected.id]: next };
 		});
 	};
 
 	const openDirections = () => {
-		navigate('/officer/map');
+		navigate('/organization-admin/map');
 		showToast(`Opened the Bole map for ${selected.id}.`, 'success');
 	};
 
 	const assignCrew = () => {
-		showToast(`Crew assignment queued for ${selected.id}.`, 'success');
+		const unit = 'Unit 4';
+		const updated = assignTicket(seed, selected.id, unit);
+		if (updated) {
+			showToast(`Assigned ${unit} to ${selected.id}.`, 'success');
+			setStatusMap((prev) => ({ ...prev }));
+		} else {
+			showToast('Could not assign unit.', 'error');
+		}
 	};
 
 	const requestEquipment = () => {
@@ -83,20 +104,24 @@ const OfficerDashboardPage = () => {
 			<header className="mb-3 flex items-start justify-between gap-3">
 				<div>
 					<h2 className="text-[56px] font-black leading-[0.95] text-[#3E2B1F]">Issue Queue</h2>
-						<p className="text-sm text-[#857060]">Review, update, and dispatch assigned civic issues.</p>
-						<p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#B08E6A]">
-							Assigned to {user?.full_name || workspace.displayName} • {workspace.departmentLabel}
-						</p>
+					<p className="text-sm text-[#857060]">Review, update, and dispatch assigned civic issues.</p>
+					<p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#B08E6A]">
+						Assigned to {user?.full_name || workspace.displayName} • {workspace.departmentLabel}
+					</p>
 				</div>
 				<div className="flex items-center gap-2">
 					<div className="flex items-center rounded-full border border-[#DDCFC0] bg-[#F8F6F2] px-3 py-1.5">
 						<Search size={14} className="mr-1 text-[#9D8A78]" />
 						<input
 							placeholder="Search ticket ID or address..."
+							value={searchQuery}
+							onChange={(e) => setSearchQuery(e.target.value)}
 							className="w-56 bg-transparent text-xs outline-none"
 						/>
 					</div>
-					<button className="rounded-full border border-[#DDCFC0] bg-[#F8F6F2] p-2 text-[#8B7B69]">◯</button>
+					<button type="button" className="rounded-full border border-[#DDCFC0] bg-[#F8F6F2] p-2 text-[#8B7B69]" aria-label="More options">
+						<MoreHorizontal size={14} />
+					</button>
 				</div>
 			</header>
 
@@ -120,10 +145,10 @@ const OfficerDashboardPage = () => {
 					<div className="min-h-[72vh] rounded-2xl border border-[#DFD3C5] bg-[#F9F6F2] p-3">
 						<div className="mb-2 flex items-center justify-between">
 							<h3 className="text-lg font-bold text-[#4A3628]">Assigned Tickets</h3>
-							<span className="rounded-full bg-[#E9DED2] px-2 py-0.5 text-xs text-[#705A47]">{workspace.officerTickets.length} Total</span>
+							<span className="rounded-full bg-[#E9DED2] px-2 py-0.5 text-xs text-[#705A47]">{filteredTickets.length} Total</span>
 						</div>
 						<div className="space-y-2">
-							{workspace.officerTickets.map((ticket) => (
+							{filteredTickets.map((ticket) => (
 								<button
 									type="button"
 									key={ticket.id}
@@ -229,4 +254,4 @@ const OfficerDashboardPage = () => {
 	);
 };
 
-export default OfficerDashboardPage;
+export default OrganizationAdminDashboardPage;

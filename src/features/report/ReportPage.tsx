@@ -154,7 +154,6 @@ const ReportPage: React.FC = () => {
   return (
     <div className="flex flex-col lg:flex-row gap-8 min-h-[85vh] px-6 lg:px-20 my-8 md:my-14 animate-in fade-in duration-500">
       
-      {/* FORM SECTION */}
       <div className="w-full lg:w-1/2 bg-tertiary p-6 md:p-10 rounded-[2.5rem] border border-secondary/5 shadow-2xl shadow-secondary/5">
         <header className="mb-10 text-center lg:text-left">
           <h1 className="font-header text-4xl font-black text-secondary tracking-tighter uppercase">
@@ -209,6 +208,8 @@ const ReportPage: React.FC = () => {
               <button 
                 type="button"
                 onClick={requestLocation}
+                title="Use current location"
+                aria-label="Use current location"
                 className="bg-secondary text-primary px-5 rounded-2xl hover:scale-95 transition-transform flex items-center justify-center shadow-lg shadow-secondary/10"
               >
                 <IoLocationSharp size={20} className={isLocating ? "animate-bounce" : ""} />
@@ -236,6 +237,8 @@ const ReportPage: React.FC = () => {
                 <button 
                   type="button" 
                   onClick={() => { setPreviewUrl(null); resetField("photo"); }}
+                  title="Remove uploaded photo"
+                  aria-label="Remove uploaded photo"
                   className="absolute top-3 right-3 text-white bg-black/40 backdrop-blur-md rounded-full p-1"
                 >
                   <IoCloseCircle size={22} />
@@ -256,7 +259,6 @@ const ReportPage: React.FC = () => {
         </form>
       </div>
 
-      {/* MAP SECTION */}
       <div className="w-full lg:w-1/2 min-h-125 bg-secondary/5 rounded-[2.5rem] overflow-hidden border border-secondary/5 relative shadow-inner">
         <div className="absolute top-8 left-8 z-10 bg-tertiary/80 backdrop-blur-xl px-5 py-3 rounded-full border border-secondary/5 shadow-2xl">
           <div className="flex items-center gap-3">

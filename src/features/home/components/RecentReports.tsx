@@ -44,7 +44,6 @@ const RecentReports = ({ reports }: RecentReportsProps) => {
                 </div>
               </div>
               <div className="flex-1 md:px-8">
-                {/* FIX: Wrap the dynamic report title key in t() */}
                 <h3 className="text-lg font-black text-secondary group-hover:text-secondary/90 transition-colors duration-300 font-header">
                   {t(report.title)}
                 </h3>
