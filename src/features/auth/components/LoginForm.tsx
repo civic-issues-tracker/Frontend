@@ -112,6 +112,9 @@ const LoginForm: React.FC = () => {
         } else {
           navigate('/report');
         }
+        } else {
+          navigate('/report');
+        }
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
