@@ -97,12 +97,13 @@ const LoginForm: React.FC = () => {
       const result = await authService.login(payload);
 
       if (result.access && result.user) {
+        const role = result.user.role_name;
+
         login({
           access: result.access,
           user: result.user
         });
 
-        const role = result.user.role_name; 
         showToast("Login successful!", "success");
 
         if (role === 'system_admin') {
@@ -112,10 +113,10 @@ const LoginForm: React.FC = () => {
         } else {
           navigate('/report');
         }
-        } else {
-          navigate('/report');
-        }
+      } else {
+        navigate('/report');
       }
+    
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
