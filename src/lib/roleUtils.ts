@@ -1,7 +1,6 @@
 export type CanonicalRole = 'resident' | 'system_admin' | 'organization_admin' | 'unknown';
 
 // Backend and historical aliases that should map to the organization admin experience.
-// NOTE: 'officer' alias removed to avoid granting org-admin access to legacy officer role values.
 const ORGANIZATION_ADMIN_ALIASES = new Set(['organization', 'organization_admin']);
 
 export const normalizeRole = (roleName?: string | null): CanonicalRole => {
