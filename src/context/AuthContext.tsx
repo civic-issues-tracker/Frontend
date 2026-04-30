@@ -7,7 +7,7 @@ interface User {
   email?: string; 
   phone: string; 
   full_name: string; 
-  role_name: 'resident' | 'system_admin' | 'organization' | 'organization_admin' | 'officer'; 
+  role_name: 'resident' | 'system_admin' | 'organization' | 'organization_admin'; 
   organizationId?: string;
   emailVerified?: boolean;
 }

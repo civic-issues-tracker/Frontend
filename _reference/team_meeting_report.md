@@ -2,18 +2,18 @@
 
 ## Summary
 
-This report captures the frontend work completed so far, with emphasis on the organization admin dashboard (previously "officer") and the reporting flow, plus the backend routes currently used, the current testing status, and the items that still need team decisions in tomorrow's meeting.
+This report captures the frontend work completed so far, with emphasis on the organization admin dashboard and the reporting flow, plus the backend routes currently used, the current testing status, and the items that still need team decisions in tomorrow's meeting.
 
 ## Frontend Work Completed
 
-### Organization Admin Dashboard (previously Officer)
+### Organization Admin Dashboard
 
-The organization admin area (previously named "officer") now has a dedicated route group under `/organization-admin` with its own layout and sidebar.
+The organization admin area now has a dedicated route group under `/organization-admin` with its own layout and sidebar.
 
 What was built (UI surface, now mapped to organization admin):
-- `OrganizationAdminDashboardLayout` (wrapper for the existing officer layout) and a dedicated organization admin sidebar.
+-- `OrganizationAdminDashboardLayout` (wrapper for the existing dashboard layout) and a dedicated organization admin sidebar.
 - `SidebarOrganizationAdmin` navigation for the main operational sections.
-- Dashboard, map, analytics, messages, settings, and alerts pages (UI previously under `dashboard-officer/*`).
+- Dashboard, map, analytics, messages, settings, and alerts pages (UI under `dashboard-organization-admin/*`).
 - `organizationAdminWorkspace.ts` (re-exports the existing workspace seeding logic) to seed tickets, resolved tickets, and chat threads from the signed-in user.
 
 What the organization admin UI currently does:
@@ -129,12 +129,12 @@ Current state:
 
 That means the report submit request currently depends on a frontend call path that does not yet have a matching backend endpoint.
 
-### Officer Backend
+### Organization Admin Backend
 
-There is no real backend API yet for officer dashboard operations.
+There is no real backend API yet for organization admin dashboard operations.
 
 Current state:
-- Officer queue data is seeded from the frontend workspace helper.
+- Organization admin queue data is seeded from the frontend workspace helper.
 - Status changes are local-only.
 - Message sending is local-only.
 - Alerts, analytics, and settings are frontend UI only.
@@ -143,20 +143,20 @@ Current state:
 
 ### What Exists
 
-- Backend Postman collection and guide for auth, organizations, categories, subcategories, and admin setup.
-- Manual frontend validation for the officer dashboard and the report flow.
+-- Backend Postman collection and guide for auth, organizations, categories, subcategories, and admin setup.
+-- Manual frontend validation for the organization admin dashboard and the report flow.
 
 ### What Is Missing
 
-- No real frontend automated tests were found for officer or report flows.
+-- No real frontend automated tests were found for organization admin or report flows.
 - Backend test files are still placeholders in the affected apps.
 - No backend endpoint exists yet for issue submission.
-- No backend endpoints exist yet for officer actions, messages, notifications, or analytics.
+-- No backend endpoints exist yet for organization admin actions, messages, notifications, or analytics.
 
 ### Manual Testing We Can Report
 
-Officer dashboard:
-- Dashboard loads under `/officer/dashboard`.
+Organization admin dashboard:
+- Dashboard loads under `/organization-admin/dashboard`.
 - Ticket selection switches the active ticket.
 - Status button cycles ticket state locally.
 - Directions action navigates to the map view.
@@ -173,28 +173,28 @@ Report flow:
 - Image preview works for photo upload.
 - Submit path exists in frontend, but backend endpoint support is still incomplete.
 
-## What We Still Need For The Meeting
+### What We Still Need For The Meeting
 
 ### Backend Decisions Needed
 
 - Confirm the final endpoint for issue submission.
 - Confirm the shape of the report payload.
-- Confirm whether officer status updates should be separate endpoints or part of a single workflow API.
-- Confirm where officer messages, alerts, and resolved-history data will live in the backend.
+- Confirm whether organization admin status updates should be separate endpoints or part of a single workflow API.
+- Confirm where organization admin messages, alerts, and resolved-history data will live in the backend.
 
 ### Frontend Decisions Needed
 
-- Decide whether to keep the officer dashboard seeded until the backend is ready.
+- Decide whether to keep the organization admin dashboard seeded until the backend is ready.
 - Decide whether to block report submission until the real issues endpoint is added.
-- Decide the naming and route shape for the final issue and officer APIs.
+- Decide the naming and route shape for the final issue and organization admin APIs.
 
 ### Team Actions Needed
 
 - Add backend support for `/issues/report/`.
-- Add backend endpoints for officer queue, map, message, alerts, and resolved-report data.
-- Add automated tests for auth, organization/category APIs, report submission, and officer workflow endpoints.
-- Align the Postman collection with the final report and officer routes.
+-- Add backend endpoints for organization admin queue, map, message, alerts, and resolved-report data.
+-- Add automated tests for auth, organization/category APIs, report submission, and organization admin workflow endpoints.
+-- Align the Postman collection with the final report and organization admin routes.
 
 ## Short Version For The Meeting
 
-The frontend officer dashboard is built and usable, but it is still seeded and not fully backend-driven. The report page is partly backend-connected for categories and subcategories, but issue submission still needs a real backend endpoint. Auth and organization/category APIs already exist and are usable. The biggest blockers are the missing issues endpoint and the missing officer backend APIs.
+The frontend organization admin dashboard is built and usable, but it is still seeded and not fully backend-driven. The report page is partly backend-connected for categories and subcategories, but issue submission still needs a real backend endpoint. Auth and organization/category APIs already exist and are usable. The biggest blockers are the missing issues endpoint and the missing organization admin backend APIs.
