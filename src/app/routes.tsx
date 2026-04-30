@@ -17,7 +17,6 @@ import AdminAnalyticsPage from '../features/dashboard-admin/pages/AdminAnalytics
 import AdminUsersPage from '../features/dashboard-admin/pages/AdminUsersPage'
 import AdminAiMonitoringPage from '../features/dashboard-admin/pages/AdminAiMonitoringPage'
 import AdminSettingsPage from '../features/dashboard-admin/pages/AdminSettingsPage'
-<<<<<<< HEAD
 import OrganizationAdminDashboardLayout from '../features/dashboard-organization-admin/OrganizationAdminDashboardLayout'
 import OrganizationAdminDashboardPage from '../features/dashboard-organization-admin/pages/OrganizationAdminDashboardPage'
 import OrganizationAdminIssuesPage from '../features/dashboard-organization-admin/pages/OrganizationAdminIssuesPage'
@@ -25,15 +24,6 @@ import OrganizationAdminAnalyticsPage from '../features/dashboard-organization-a
 import OrganizationAdminNotificationsPage from '../features/dashboard-organization-admin/pages/OrganizationAdminNotificationsPage'
 import OrganizationAdminSettingsPage from '../features/dashboard-organization-admin/pages/OrganizationAdminSettingsPage'
 import OrganizationAdminAlertsPage from '../features/dashboard-organization-admin/pages/OrganizationAdminAlertsPage'
-=======
-import OfficerDashboardLayout from '../features/dashboard-officer/OfficerDashboardLayout'
-import OfficerDashboardPage from '../features/dashboard-officer/pages/OfficerDashboardPage'
-import OfficerIssuesPage from '../features/dashboard-officer/pages/OfficerIssuesPage'
-import OfficerAnalyticsPage from '../features/dashboard-officer/pages/OfficerAnalyticsPage'
-import OfficerNotificationsPage from '../features/dashboard-officer/pages/OfficerNotificationsPage'
-import OfficerSettingsPage from '../features/dashboard-officer/pages/OfficerSettingsPage'
-import OfficerAlertsPage from '../features/dashboard-officer/pages/OfficerAlertsPage'
->>>>>>> origin/master
 
 
 
@@ -110,19 +100,12 @@ const router = createBrowserRouter([
     ]
   },
 
-      // --- ORGANIZATION ADMIN DASHBOARD ---
+  // --- ORGANIZATION ADMIN DASHBOARD ---
   {
     path: '/organization-admin',
     element: (
       <ProtectedRoute allowedRoles={['organization_admin']}>
         <OrganizationAdminDashboardLayout />
-  // --- OFFICER DASHBOARD ---
-  {
-    path: '/officer',
-    element: (
-      <ProtectedRoute allowedRoles={['officer']}>
-        <OfficerDashboardLayout />
-      
       </ProtectedRoute>
     ),
     children: [
@@ -132,7 +115,6 @@ const router = createBrowserRouter([
       },
       {
         path: 'dashboard',
-<<<<<<< HEAD
         element: <OrganizationAdminDashboardPage />,
       },
       {
@@ -154,29 +136,6 @@ const router = createBrowserRouter([
       {
         path: 'notifications',
         element: <OrganizationAdminAlertsPage />,
-=======
-        element: <OfficerDashboardPage />,
-      },
-      {
-        path: 'map',
-        element: <OfficerIssuesPage />,
-      },
-      {
-        path: 'resolved',
-        element: <OfficerAnalyticsPage />,
-      },
-      {
-        path: 'messages',
-        element: <OfficerNotificationsPage />,
-      },
-      {
-        path: 'settings',
-        element: <OfficerSettingsPage />,
-      },
-      {
-        path: 'notifications',
-        element: <OfficerAlertsPage />,
->>>>>>> origin/master
       },
     ],
   }

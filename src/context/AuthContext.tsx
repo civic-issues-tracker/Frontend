@@ -7,11 +7,7 @@ interface User {
   email?: string; 
   phone: string; 
   full_name: string; 
-<<<<<<< HEAD
   role_name: 'resident' | 'system_admin' | 'organization' | 'organization_admin'; 
-=======
-  role_name: 'resident' | 'system_admin' | 'organization' | 'organization_admin'; 
->>>>>>> origin/master
   organizationId?: string;
   emailVerified?: boolean;
 }
