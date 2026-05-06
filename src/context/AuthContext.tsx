@@ -20,7 +20,7 @@ interface AuthContextType {
   accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (data: { access: string; user: User }) => void;
+  login: (data: { access: string; refresh?: string; user: User }) => void;
   logout: () => Promise<void>;
   updateToken: (newToken: string) => void;
   showToast: (msg: string, type: ToastType) => void;
@@ -49,12 +49,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 5000);
   }, []);
 
-  const login = useCallback((data: { access: string; user: User }) => {
+  const login = useCallback((data: { access: string; refresh?: string; user: User }) => {
     setAccessToken(data.access);
     setUser(data.user);
     
     sessionStorage.setItem('accessToken', data.access);
     sessionStorage.setItem('user', JSON.stringify(data.user));
+    if (data.refresh) {
+      sessionStorage.setItem('refreshToken', data.refresh);
+    } else {
+      sessionStorage.removeItem('refreshToken');
+    }
     
     setIsLoading(false);
   }, []);

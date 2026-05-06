@@ -1,14 +1,34 @@
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import {
   Bell,
   CheckSquare,
   ClipboardList,
+  LogOut,
   Map,
   MessageSquare,
   Settings,
+  X
 } from 'lucide-react';
 
-const SidebarOrganizationAdmin = () => {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+const SidebarOrganizationAdmin = ({ onClose }: SidebarProps) => {
+  const { logout, user } = useAuth();
+  const userName = user?.full_name?.trim() || 'Organization Admin';
+  const initials = userName
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  const isVerified = user?.is_verified ?? false;
+  const statusLabel = isVerified ? 'Verified' : 'Pending Verification';
+  const statusTextClass = isVerified ? 'text-[#7DE2A7]' : 'text-[#F2B1B1]';
+  const statusDotClass = isVerified ? 'bg-[#2BD96B]' : 'bg-[#E05A5A]';
+
   const navItems = [
     { label: 'My Queue', to: '/organization-admin/dashboard', icon: ClipboardList, badge: 2 },
     { label: 'District Map', to: '/organization-admin/map', icon: Map },
@@ -17,22 +37,29 @@ const SidebarOrganizationAdmin = () => {
   ];
 
   return (
-    <aside className="sticky top-0 flex h-screen w-72 shrink-0 flex-col overflow-hidden rounded-r-[4rem] bg-[#6E4B33] py-8 text-[#F6EEE3] shadow-md">
-      <div className="mb-12 px-8 border-b border-white/10 pb-4">
-        <h1 className="text-[32px] font-extrabold leading-none tracking-tight">CivicWorks</h1>
-        <p className="text-xs text-[#E9D6C0]">Organization Admin Dashboard</p>
+    <aside className="flex h-screen w-72 shrink-0 flex-col overflow-y-auto rounded-r-[2rem] md:rounded-r-[4rem] bg-[#6E4B33] py-8 text-[#F6EEE3] shadow-xl">
+      <div className="mb-8 px-8 border-b border-white/10 pb-4 flex justify-between items-start">
+        <div>
+          <h1 className="text-[32px] font-extrabold leading-none tracking-tight">CivicWorks</h1>
+          <p className="text-xs text-[#E9D6C0] mt-1">Organization Admin</p>
+        </div>
+        {onClose && (
+          <button onClick={onClose} className="md:hidden p-1 text-white/70 hover:text-white bg-white/10 rounded-full">
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       <div className="mb-6 mx-4 rounded-2xl bg-[#5D3F2C] p-4">
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#7D5A42] text-xs font-bold">
-            JD
+            {initials}
           </span>
           <div>
-            <p className="text-sm font-semibold">Admin J. Doe</p>
-            <p className="flex items-center gap-1 text-[11px] text-[#7DE2A7]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#2BD96B]" />
-              On Duty
+            <p className="text-sm font-semibold">{userName}</p>
+            <p className={`flex items-center gap-1 text-[11px] ${statusTextClass}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${statusDotClass}`} />
+              {statusLabel}
             </p>
           </div>
         </div>
@@ -65,21 +92,7 @@ const SidebarOrganizationAdmin = () => {
         })}
       </nav>
 
-      <div className="mx-4 mt-auto mb-4 rounded-2xl border border-white/10 bg-[#5D3F2C] px-4 py-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#E7D6C2]">Shift Snapshot</p>
-        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-[#F3E5D7]">
-          <div className="rounded-xl bg-white/5 px-3 py-2">
-            <p className="text-[#D7BFA8]">Active</p>
-            <p className="mt-1 font-bold">4 tickets</p>
-          </div>
-          <div className="rounded-xl bg-white/5 px-3 py-2">
-            <p className="text-[#D7BFA8]">Area</p>
-            <p className="mt-1 font-bold">Bole</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-1 px-4 pb-3">
+      <div className="space-y-1 px-4 pb-3 mt-auto">
         <NavLink
           to="/organization-admin/settings"
           className={({ isActive }) =>
@@ -102,6 +115,17 @@ const SidebarOrganizationAdmin = () => {
           <Bell size={14} />
           Notifications
         </NavLink>
+        <button
+          type="button"
+          onClick={() => {
+            logout();
+            onClose?.();
+          }}
+          className="flex w-full items-center gap-2 rounded-lg px-4 py-3 text-sm text-[#F8C6C6] transition hover:bg-[#5D3F2C]/70"
+        >
+          <LogOut size={14} />
+          Logout
+        </button>
       </div>
     </aside>
   );

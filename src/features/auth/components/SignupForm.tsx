@@ -125,7 +125,7 @@ const SignupForm: React.FC = () => {
         triggerToast("Identity verified! Access granted.", "success");
         
         setTimeout(() => {
-          login({ access: result.access, user: result.user });
+          login({ access: result.access, refresh: result.refresh, user: result.user });
           const role = result.user.role_name;
           if (role === 'system_admin') navigate('/admin-dashboard');
           else if (isOrganizationAdminRole(role)) navigate('/organization-admin/dashboard');

@@ -101,6 +101,7 @@ const LoginForm: React.FC = () => {
 
         login({
           access: result.access,
+          refresh: result.refresh,
           user: result.user
         });
 
