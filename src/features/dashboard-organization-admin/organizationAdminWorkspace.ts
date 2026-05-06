@@ -1,9 +1,10 @@
 import {
-  chatThreads,
-  organizationAdminTickets,
-  resolvedOrganizationAdminTickets,
-  type OrganizationAdminConversation,
-  type OrganizationAdminTicket,
+	chatThreads,
+	organizationAdminIssues,
+	resolvedOrganizationAdminIssues,
+	toOrganizationAdminTicket,
+	type OrganizationAdminConversation,
+	type OrganizationAdminTicket,
 } from './organizationAdminMockData';
 
 export interface OrganizationAdminWorkspace {
@@ -37,16 +38,18 @@ const sliceCount = (base: number, available: number, seed: number) => {
 export const buildOrganizationAdminWorkspace = (seedValue?: string | null): OrganizationAdminWorkspace => {
 	const seed = seedValue?.trim() || 'organization-admin-default';
 	const seedHash = hashSeed(seed);
-	const ticketCount = sliceCount(2, organizationAdminTickets.length, seedHash % organizationAdminTickets.length);
-	const resolvedCount = sliceCount(4, resolvedOrganizationAdminTickets.length, (seedHash >> 2) % resolvedOrganizationAdminTickets.length);
+	const ticketCount = sliceCount(2, organizationAdminIssues.length, seedHash % organizationAdminIssues.length);
+	const resolvedCount = sliceCount(4, resolvedOrganizationAdminIssues.length, (seedHash >> 2) % resolvedOrganizationAdminIssues.length);
 	const threadCount = sliceCount(3, chatThreads.length, (seedHash >> 3) % chatThreads.length);
+	const tickets = organizationAdminIssues.map(toOrganizationAdminTicket);
+	const resolvedTickets = resolvedOrganizationAdminIssues.map(toOrganizationAdminTicket);
 
 	return {
 		seed,
 		displayName: seed,
 		departmentLabel: 'Bole Operations',
-		organizationAdminTickets: rotateList(organizationAdminTickets, seedHash).slice(0, ticketCount),
-		resolvedTickets: rotateList(resolvedOrganizationAdminTickets, seedHash >> 1).slice(0, resolvedCount),
+		organizationAdminTickets: rotateList(tickets, seedHash).slice(0, ticketCount),
+		resolvedTickets: rotateList(resolvedTickets, seedHash >> 1).slice(0, resolvedCount),
 		chatThreads: rotateList(chatThreads, seedHash >> 2).slice(0, threadCount),
 	};
 };

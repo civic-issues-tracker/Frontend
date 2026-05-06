@@ -18,10 +18,14 @@ export const privateApi = axios.create({
 
 privateApi.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem('token'); 
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const accessToken =
+      sessionStorage.getItem('accessToken') ||
+      localStorage.getItem('accessToken') ||
+      sessionStorage.getItem('token') ||
+      localStorage.getItem('token');
+
+    if (accessToken) {
+	  config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
@@ -36,6 +40,9 @@ privateApi.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       console.warn("Session expired or unauthorized. Logging out...");
+      sessionStorage.removeItem('accessToken');
+      localStorage.removeItem('accessToken');
+      sessionStorage.removeItem('token');
       localStorage.removeItem('token');
       localStorage.removeItem('user'); 
       window.location.href = '/login'; 

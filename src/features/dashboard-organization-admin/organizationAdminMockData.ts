@@ -1,11 +1,31 @@
-export type Priority = 'high' | 'medium' | 'low';
+export type IssuePriority = 'High' | 'Medium' | 'Low';
+export type IssueStatus = 'Submitted' | 'In Progress' | 'Resolved' | 'Rejected';
+
+export interface OrganizationAdminIssue {
+  id: string;
+  issue_number: string;
+  description: string;
+  category_name?: string;
+  subcategory_name?: string;
+  resident_name?: string;
+  priority: IssuePriority;
+  status: IssueStatus;
+  location_address: string;
+  location_lat?: number | null;
+  location_long?: number | null;
+  created_at: string;
+  images?: { id: string; image: string; created_at: string }[];
+  internal_notes?: string;
+  status_history?: { old: string; new: string; date: string; note?: string }[];
+}
 
 export interface OrganizationAdminTicket {
   id: string;
+  issueNumber: string;
   title: string;
   location: string;
-  priority: Priority;
-  status: 'new' | 'in_progress' | 'resolved';
+  priority: IssuePriority;
+  status: IssueStatus;
   assignedUnit?: string;
   summary?: string;
   timeAgo?: string;
@@ -15,6 +35,9 @@ export interface OrganizationAdminTicket {
   resolutionDate?: string;
   lat?: number;
   lng?: number;
+  createdAt?: string;
+  internalNotes?: string;
+  images?: { id: string; image: string; created_at: string }[];
 }
 
 export interface OrganizationAdminMessage {
@@ -35,137 +58,137 @@ export interface OrganizationAdminConversation {
   messages: OrganizationAdminMessage[];
 }
 
-export const organizationAdminTickets: OrganizationAdminTicket[] = [
+const buildTitleFromDescription = (description: string) => {
+  const cleaned = description.replace(/\s+/g, ' ').trim();
+  if (!cleaned) return 'Reported issue';
+  const sentence = cleaned.split(/[.!?]/)[0]?.trim() ?? cleaned;
+  return sentence.length > 64 ? `${sentence.slice(0, 61)}...` : sentence;
+};
+
+export const organizationAdminIssues: OrganizationAdminIssue[] = [
   {
-    id: 'ISS-4921',
-    title: 'Deep Pothole on North Ave',
-    location: '1400 North Ave, District 4',
-    priority: 'high',
-    status: 'new',
-    summary:
-      'There is a very large, deep pothole in the right lane going northbound. Several cars have hit it and it seems to be getting worse with the rain.',
-    timeAgo: '2 hours ago',
-    reporter: 'Sarah Jenkins',
-    reporterPhone: '(555) 019-2831',
-    category: 'Roads & Infrastructure',
-    lat: 34.0522,
-    lng: -118.2437,
+    id: '9f8a7d06-3e4c-4ff0-a6e6-5a1b6f2c9b21',
+    issue_number: 'CIV-4921ABCD',
+    description:
+      'Deep pothole in the right lane going northbound. Several cars hit it and it grows after rain.',
+    category_name: 'Roads & Infrastructure',
+    resident_name: 'Sarah Jenkins',
+    priority: 'High',
+    status: 'Submitted',
+    location_address: '1400 North Ave, District 4',
+    created_at: '2024-10-18T10:30:00Z',
   },
   {
-    id: 'ISS-4918',
-    title: 'Offensive Graffiti on Park Wall',
-    location: 'Centennial Park, South Entrance',
-    priority: 'medium',
-    status: 'in_progress',
-    timeAgo: '5 hours ago',
-    reporter: 'Marcus Reed',
-    reporterPhone: '(555) 889-4471',
-    category: 'Vandalism',
-    lat: 34.0409,
-    lng: -118.2278,
+    id: 'b4e7d4b5-7f55-4eb5-9c45-1c2dd75d0c1f',
+    issue_number: 'CIV-4918EFGH',
+    description: 'Offensive graffiti on the south entrance wall of Centennial Park.',
+    category_name: 'Vandalism',
+    resident_name: 'Marcus Reed',
+    priority: 'Medium',
+    status: 'In Progress',
+    location_address: 'Centennial Park, South Entrance',
+    created_at: '2024-10-18T07:10:00Z',
   },
   {
-    id: 'ISS-4915',
-    title: 'Broken Streetlight at Intersection',
-    location: 'Corner of 5th St and Elm St',
-    priority: 'medium',
-    status: 'new',
-    timeAgo: '1 day ago',
-    reporter: 'Paula Brown',
-    reporterPhone: '(555) 201-5567',
-    category: 'Lighting',
-    lat: 34.0386,
-    lng: -118.2361,
+    id: '67b2d7a0-6cb1-4c34-9cf9-cc5a8a10a17a',
+    issue_number: 'CIV-4915IJKL',
+    description: 'Broken streetlight at the intersection; area gets dark at night.',
+    category_name: 'Lighting',
+    resident_name: 'Paula Brown',
+    priority: 'Medium',
+    status: 'Submitted',
+    location_address: 'Corner of 5th St and Elm St',
+    created_at: '2024-10-17T09:05:00Z',
   },
   {
-    id: 'ISS-4902',
-    title: 'Illegal Dumping in Alley',
-    location: 'Alley behind 890 West Blvd',
-    priority: 'low',
-    status: 'resolved',
-    timeAgo: '3 days ago',
-    reporter: 'Public Works Crew 3',
-    category: 'Sanitation',
-    resolutionDate: 'Oct 10, 2023',
-    lat: 34.0298,
-    lng: -118.2511,
+    id: 'a7e10ef2-9b73-4cb6-81cf-63cdd9f1aa6e',
+    issue_number: 'CIV-4902MNOP',
+    description: 'Illegal dumping in the alley; debris blocks access for deliveries.',
+    category_name: 'Sanitation',
+    resident_name: 'Public Works Crew 3',
+    priority: 'Low',
+    status: 'Resolved',
+    location_address: 'Alley behind 890 West Blvd',
+    created_at: '2024-10-15T15:40:00Z',
   },
 ];
 
-export const resolvedOrganizationAdminTickets: OrganizationAdminTicket[] = [
+export const resolvedOrganizationAdminIssues: OrganizationAdminIssue[] = [
   {
-    id: 'ISS-4895',
-    title: 'Pothole Repaired on Main St',
-    location: 'Main St',
-    priority: 'high',
-    status: 'resolved',
-    category: 'Roads & Infrastructure',
-    resolutionDate: 'Oct 15, 2023',
+    id: '65c7b1d2-2b9a-4c46-80be-3d28c4a1a2e2',
+    issue_number: 'CIV-4895QRST',
+    description: 'Pothole on Main St repaired and patched.',
+    category_name: 'Roads & Infrastructure',
+    resident_name: 'Dispatch Center',
+    priority: 'High',
+    status: 'Resolved',
+    location_address: 'Main St',
+    created_at: '2024-10-15T08:10:00Z',
   },
   {
-    id: 'ISS-4892',
-    title: 'Graffiti Removed at Central Park',
-    location: 'Central Park',
-    priority: 'medium',
-    status: 'resolved',
-    category: 'Vandalism',
-    resolutionDate: 'Oct 14, 2023',
+    id: '31f860d2-2e68-45cb-9f1c-fc851d9f2b0f',
+    issue_number: 'CIV-4892UVWX',
+    description: 'Graffiti removed at Central Park entrance.',
+    category_name: 'Vandalism',
+    resident_name: 'City Clean-Up',
+    priority: 'Medium',
+    status: 'Resolved',
+    location_address: 'Central Park',
+    created_at: '2024-10-14T11:45:00Z',
   },
   {
-    id: 'ISS-4888',
-    title: 'Streetlight Bulb Replaced (5th & Elm)',
-    location: '5th & Elm',
-    priority: 'medium',
-    status: 'resolved',
-    category: 'Lighting',
-    resolutionDate: 'Oct 12, 2023',
+    id: '19de2f06-7fda-4dd5-9691-8a4ec3d6a3a9',
+    issue_number: 'CIV-4888YZ12',
+    description: 'Streetlight bulb replaced at 5th & Elm.',
+    category_name: 'Lighting',
+    resident_name: 'Ops Supervisor',
+    priority: 'Medium',
+    status: 'Resolved',
+    location_address: '5th & Elm',
+    created_at: '2024-10-12T17:25:00Z',
   },
   {
-    id: 'ISS-4881',
-    title: 'Cleared Illegal Dumping in Alley',
-    location: 'West Blvd Alley',
-    priority: 'low',
-    status: 'resolved',
-    category: 'Sanitation',
-    resolutionDate: 'Oct 10, 2023',
-  },
-  {
-    id: 'ISS-4876',
-    title: 'Fallen Tree Branch Removed',
-    location: 'Park Zone 2',
-    priority: 'medium',
-    status: 'resolved',
-    category: 'Parks',
-    resolutionDate: 'Oct 09, 2023',
-  },
-  {
-    id: 'ISS-4870',
-    title: 'Fixed Broken Hydrant on West Blvd',
-    location: 'West Blvd',
-    priority: 'high',
-    status: 'resolved',
-    category: 'Water & Utilities',
-    resolutionDate: 'Oct 05, 2023',
-  },
-  {
-    id: 'ISS-4865',
-    title: 'Repainted Crosswalk at 1st Ave',
-    location: '1st Ave',
-    priority: 'low',
-    status: 'resolved',
-    category: 'Roads & Infrastructure',
-    resolutionDate: 'Oct 02, 2023',
-  },
-  {
-    id: 'ISS-4859',
-    title: 'Replaced Damaged Stop Sign',
-    location: '4th & Pine',
-    priority: 'medium',
-    status: 'resolved',
-    category: 'Traffic',
-    resolutionDate: 'Sep 28, 2023',
+    id: '7a9f7a3e-5a3e-4c3b-8e9c-8f6dc9ebc0a7',
+    issue_number: 'CIV-4881AB34',
+    description: 'Illegal dumping cleared from West Blvd alley.',
+    category_name: 'Sanitation',
+    resident_name: 'Cleanup Team',
+    priority: 'Low',
+    status: 'Resolved',
+    location_address: 'West Blvd Alley',
+    created_at: '2024-10-10T10:00:00Z',
   },
 ];
+
+const buildTimeAgo = (isoDate?: string) => {
+  if (!isoDate) return undefined;
+  const ms = Date.now() - new Date(isoDate).getTime();
+  if (!Number.isFinite(ms) || ms <= 0) return 'just now';
+  const minutes = Math.floor(ms / 60000);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+};
+
+export const toOrganizationAdminTicket = (issue: OrganizationAdminIssue): OrganizationAdminTicket => ({
+  id: issue.id,
+  issueNumber: issue.issue_number,
+  title: buildTitleFromDescription(issue.description),
+  location: issue.location_address,
+  priority: issue.priority,
+  status: issue.status,
+  summary: issue.description,
+  reporter: issue.resident_name,
+  category: issue.category_name,
+  timeAgo: buildTimeAgo(issue.created_at),
+  createdAt: issue.created_at,
+  lat: issue.location_lat ?? undefined,
+  lng: issue.location_long ?? undefined,
+  internalNotes: issue.internal_notes,
+  images: issue.images,
+});
 
 export const chatThreads: OrganizationAdminConversation[] = [
   {

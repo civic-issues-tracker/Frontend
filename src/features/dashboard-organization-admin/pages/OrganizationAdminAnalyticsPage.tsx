@@ -1,39 +1,69 @@
 import { useMemo, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
-import { getOrganizationAdminWorkspace } from '../organizationAdminWorkspace';
-
-const kpis = [
-	{ label: 'Resolved (30d)', value: '84' },
-	{ label: 'Avg Resolve Time', value: '1.9d' },
-	{ label: 'Citizen Satisfaction', value: '92%' },
-	{ label: 'Escalations', value: '3' },
-];
+import { useOrganizationAdminIssues } from '../hooks/useOrganizationAdminIssues';
 
 const OrganizationAdminAnalyticsPage = () => {
 	const { user } = useAuth();
 	const seed = user?.email ?? user?.id ?? user?.full_name;
-	const workspace = useMemo(() => getOrganizationAdminWorkspace(seed), [seed]);
+	const { tickets, resolvedTickets, isLoading } = useOrganizationAdminIssues(seed);
 	const [activeReportId, setActiveReportId] = useState<string | null>(null);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [reportFilter, setReportFilter] = useState('');
 	const [showFilterInput, setShowFilterInput] = useState(false);
+
+	const kpis = useMemo(() => {
+		const highPriority = tickets.filter(t => t.priority === 'High').length;
+		
+		let totalResolveTimeMs = 0;
+		let ticketsWithTime = 0;
+		resolvedTickets.forEach(t => {
+			if (t.createdAt && t.resolutionDate) {
+				const start = new Date(t.createdAt).getTime();
+				const end = new Date(t.resolutionDate).getTime();
+				if (end > start) {
+					totalResolveTimeMs += (end - start);
+					ticketsWithTime++;
+				}
+			}
+		});
+		const avgTimeDays = ticketsWithTime > 0 
+			? (totalResolveTimeMs / ticketsWithTime / (1000 * 60 * 60 * 24)).toFixed(1) + 'd'
+			: 'N/A';
+
+		return [
+			{ label: 'Total Resolved', value: resolvedTickets.length.toString() },
+			{ label: 'Avg Resolve Time', value: avgTimeDays },
+			{ label: 'Active Issues', value: tickets.length.toString() },
+			{ label: 'High Priority (Active)', value: highPriority.toString() },
+		];
+	}, [tickets, resolvedTickets]);
 	const filteredReports = useMemo(() => {
 		const q = `${searchQuery} ${reportFilter}`.trim().toLowerCase();
-		if (!q) return workspace.resolvedTickets;
-		return workspace.resolvedTickets.filter((ticket) => {
+		if (!q) return resolvedTickets;
+		return resolvedTickets.filter((ticket) => {
 			return (
-				ticket.id.toLowerCase().includes(q) ||
+				ticket.issueNumber.toLowerCase().includes(q) ||
 				ticket.title.toLowerCase().includes(q) ||
 				ticket.location.toLowerCase().includes(q) ||
 				(ticket.category ?? '').toLowerCase().includes(q) ||
 				(ticket.resolutionDate ?? '').toLowerCase().includes(q)
 			);
 		});
-	}, [reportFilter, searchQuery, workspace.resolvedTickets]);
+	}, [reportFilter, searchQuery, resolvedTickets]);
 	const activeReport = activeReportId
-		? filteredReports.find((ticket) => ticket.id === activeReportId) ?? workspace.resolvedTickets.find((ticket) => ticket.id === activeReportId) ?? null
+		? filteredReports.find((ticket) => ticket.id === activeReportId) ?? resolvedTickets.find((ticket) => ticket.id === activeReportId) ?? null
 		: null;
+
+	if (isLoading && resolvedTickets.length === 0) {
+		return (
+			<section>
+				<div className="rounded-2xl border border-[#D8CCBD] bg-[#F6F2EC] p-4 text-sm text-[#857060]">
+					Loading resolved issues...
+				</div>
+			</section>
+		);
+	}
 
 	return (
 		<section>
@@ -82,9 +112,9 @@ const OrganizationAdminAnalyticsPage = () => {
 								) : null}
 							</div>
 							<button onClick={() => {
-								const rows = filteredReports;
-								const header = ['id','title','location','category','resolutionDate'];
-								const csv = [header.join(',')].concat(rows.map(r => [r.id, `"${(r.title ?? '').replace(/"/g,'""')}"`, `"${(r.location ?? '').replace(/"/g,'""')}"`, `"${(r.category ?? '')}"`, `"${(r.resolutionDate ?? '')}"`].join(','))).join('\n');
+										const rows = filteredReports;
+										const header = ['issueNumber','title','location','category','resolutionDate'];
+										const csv = [header.join(',')].concat(rows.map(r => [r.issueNumber, `"${(r.title ?? '').replaceAll('"', '""')}"`, `"${(r.location ?? '').replaceAll('"', '""')}"`, `"${(r.category ?? '')}"`, `"${(r.resolutionDate ?? '')}"`].join(','))).join('\n');
 								const blob = new Blob([csv], { type: 'text/csv' });
 								const url = URL.createObjectURL(blob);
 								const a = document.createElement('a');
@@ -110,7 +140,7 @@ const OrganizationAdminAnalyticsPage = () => {
 						<tbody>
 							{filteredReports.map((ticket) => (
 								<tr key={ticket.id} className="border-t border-[#EFE4D8] text-[#3B2A1E]">
-									<td className="px-4 py-3 font-bold">{ticket.id}</td>
+									<td className="px-4 py-3 font-bold">{ticket.issueNumber}</td>
 									<td className="px-4 py-3 font-semibold">{ticket.title}</td>
 									<td className="px-4 py-3">
 										<span className="rounded-full bg-[#EEE6DB] px-2 py-1 text-xs">{ticket.category}</span>
@@ -148,7 +178,7 @@ const OrganizationAdminAnalyticsPage = () => {
 							<div className="flex items-start justify-between gap-4 border-b border-[#E8DCCD] pb-3">
 								<div>
 									<p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#8E7A69]">Resolution Report</p>
-									<h3 className="mt-1 text-2xl font-black text-[#3E2B1F]">{activeReport.id}</h3>
+									<h3 className="mt-1 text-2xl font-black text-[#3E2B1F]">{activeReport.issueNumber}</h3>
 								</div>
 								<button onClick={() => setActiveReportId('')} className="rounded-full border border-[#D8CCBD] bg-white p-2 text-[#7D6A59]" aria-label="Close report">
 									<X size={16} />

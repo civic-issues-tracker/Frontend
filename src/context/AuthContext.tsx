@@ -4,12 +4,15 @@ import Toast, { type ToastType } from '../components/ui/Toast';
 
 interface User {
   id: string;
-  email?: string; 
-  phone: string; 
-  full_name: string; 
-  role_name: 'resident' | 'system_admin' | 'organization' | 'organization_admin'; 
-  organizationId?: string;
-  emailVerified?: boolean;
+  user_number?: string;
+  email?: string;
+  phone?: string;
+  full_name: string;
+  role_name: 'resident' | 'system_admin' | 'organization' | 'organization_admin';
+  email_verified?: boolean;
+  sms_verified?: boolean;
+  is_verified?: boolean;
+  created_at?: string;
 }
 
 interface AuthContextType {
