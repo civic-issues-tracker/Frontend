@@ -23,13 +23,13 @@ interface Category {
 }
 
 interface ReportFormData {
-  category: string;
-  subcategory: string;
-  locationName: string;
-  lat: number;
-  lng: number;
   description: string;
-  photo: FileList;
+  location_address: string; 
+  location_lat: number;      
+  location_long: number;     
+  category: string;          
+  images?: File[];  
+  subcategory: string;            
 }
 
 const ReportPage: React.FC = () => {
@@ -39,7 +39,7 @@ const ReportPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [fetchingCats, setFetchingCats] = useState(true);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string[]>([]);
   const [selectedMapPos, setSelectedMapPos] = useState<{lat: number, lng: number} | null>(null);
 
   const { 
@@ -51,7 +51,7 @@ const ReportPage: React.FC = () => {
   } = useForm<ReportFormData>();
 
   const selectedCategoryId = watch("category");
-  const photoFile = watch("photo");
+  const photoFile = watch("images");
 
   const fetchAddressName = async (lat: number, lng: number) => {
     try {
@@ -71,18 +71,18 @@ const ReportPage: React.FC = () => {
   };
 
   const updateLocationData = async (lat: number, lng: number, providedAddress?: string) => {
-    setValue("lat", lat);
-    setValue("lng", lng);
+    setValue("location_lat", lat);
+    setValue("location_long", lng);
     setSelectedMapPos({ lat, lng });
     
     const isCoordinateString = /^-?\d+\.\d+/.test(providedAddress || "");
     
     if (providedAddress && !isCoordinateString) {
-      setValue("locationName", providedAddress);
+      setValue("location_address", providedAddress);
     } else {
-      setValue("locationName", "Fetching location name...");
+      setValue("location_address", "Fetching location name...");
       const address = await fetchAddressName(lat, lng);
-      setValue("locationName", address);
+      setValue("location_address", address);
     }
   };
 
@@ -119,37 +119,60 @@ const ReportPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (photoFile && photoFile.length > 0) {
-      const file = photoFile[0];
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-      return () => URL.revokeObjectURL(url);
-    }
-  }, [photoFile]);
+  if (photoFile && photoFile.length > 0) {
+    const filesArray = Array.from(photoFile);
+    const urls = filesArray.map(file => URL.createObjectURL(file));
+    setPreviewUrl(urls); // Store all URLs
+    return () => urls.forEach(url => URL.revokeObjectURL(url));
+  } else {
+    setPreviewUrl([]);
+  }
+}, [photoFile]);
 
   const handleMapClick = (lat: number, lng: number) => {
     updateLocationData(lat, lng);
   };
 
   const onSubmit = async (data: ReportFormData) => {
-    setLoading(true);
-    try {
-      const formData = new FormData();
-      formData.append('category_id', data.category);
-      formData.append('subcategory_id', data.subcategory);
-      formData.append('description', data.description);
-      formData.append('latitude', data.lat.toString());
-      formData.append('longitude', data.lng.toString());
-      if (data.photo?.[0]) formData.append('image', data.photo[0]);
+  setLoading(true);
+  try {
+    const formData = new FormData();
+    formData.append('description', data.description);
+    
+    formData.append('location_address', data.location_address);
+    formData.append('location_lat', data.location_lat.toString());
+    formData.append('location_long', data.location_long.toString());
 
-      await privateApi.post('/issues/report/', formData);
-      showToast("Report submitted successfully!", "success");
-    } catch  {
-      showToast("Failed to submit report.", "error");
-    } finally {
-      setLoading(false);
+    if (data.category) {
+      formData.append('category', data.category);
     }
-  };
+    
+    
+    if (data.subcategory) {
+      formData.append('subcategory', data.subcategory);
+    }
+
+    if (data.images && data.images.length > 0) {
+      formData.append('image', data.images[0]);
+
+      if (data.images.length > 1) {
+        const extraFiles = Array.from(data.images).slice(1);
+        extraFiles.forEach((file) => {
+          formData.append('extra_images', file);
+        });
+      }
+    }
+
+    await privateApi.post('/issues/submit/', formData);
+    
+    showToast("Report submitted successfully!", "success");
+  } catch (error) {
+    console.error("Submission Error:", error);
+    showToast("Failed to submit report.", "error");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 min-h-[85vh] px-6 lg:px-20 my-8 md:my-14 animate-in fade-in duration-500">
@@ -201,7 +224,7 @@ const ReportPage: React.FC = () => {
             <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">Location</label>
             <div className="flex gap-2">
               <input 
-                {...register("locationName", { required: true })}
+                {...register("location_address", { required: true })}
                 placeholder={isLocating ? "Locating..." : "Click map or GPS icon..."}
                 className="flex-1 bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 font-body text-sm text-secondary outline-none focus:bg-primary transition-all"
               />
@@ -215,8 +238,8 @@ const ReportPage: React.FC = () => {
                 <IoLocationSharp size={20} className={isLocating ? "animate-bounce" : ""} />
               </button>
             </div>
-            <input type="hidden" {...register("lat")} />
-            <input type="hidden" {...register("lng")} />
+            <input type="hidden" {...register("location_lat")} />
+            <input type="hidden" {...register("location_long")} />
           </div>
 
           <div className="flex flex-col gap-2">
@@ -230,28 +253,48 @@ const ReportPage: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">Photo Proof</label>
-            {previewUrl ? (
-              <div className="relative w-full h-44 rounded-2xl overflow-hidden border-2 border-secondary/5">
-                <img src={previewUrl} alt="Issue Preview" className="w-full h-full object-cover" />
-                <button 
-                  type="button" 
-                  onClick={() => { setPreviewUrl(null); resetField("photo"); }}
-                  title="Remove uploaded photo"
-                  aria-label="Remove uploaded photo"
-                  className="absolute top-3 right-3 text-white bg-black/40 backdrop-blur-md rounded-full p-1"
-                >
-                  <IoCloseCircle size={22} />
-                </button>
-              </div>
-            ) : (
-              <label className="w-full border-2 border-dashed border-secondary/10 rounded-2xl py-12 flex flex-col items-center justify-center gap-3 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-all group">
-                <input type="file" className="hidden" {...register("photo")} accept="image/*" />
-                <IoCloudUploadOutline size={36} className="text-secondary/20 group-hover:text-secondary/40 transition-colors" />
-                <span className="font-body text-[9px] uppercase tracking-[0.3em] font-black text-secondary/30">Upload Photo Evidence</span>
-              </label>
-            )}
+  <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">
+    Photo Proof {previewUrl && previewUrl.length > 0 && `(${previewUrl.length})`}
+  </label>
+  
+  {previewUrl && previewUrl.length > 0 ? (
+    <div className="relative w-full">
+      <div className={`grid gap-2 ${previewUrl.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+        {previewUrl.map((url, index) => (
+          <div key={index} className="relative h-44 rounded-2xl overflow-hidden border-2 border-secondary/5">
+            <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
           </div>
+        ))}
+      </div>
+
+      <button 
+        type="button" 
+        onClick={() => { setPreviewUrl([]); resetField("images"); }}
+        className="absolute -top-2 -right-2 text-white bg-red-500 shadow-lg rounded-full p-1 z-10 hover:scale-110 transition-transform"
+      >
+        <IoCloseCircle size={22} />
+      </button>
+    </div>
+  ) : (
+    <label className="w-full border-2 border-dashed border-secondary/10 rounded-2xl py-12 flex flex-col items-center justify-center gap-3 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-all group">
+      <input 
+        type="file" 
+        className="hidden" 
+        {...register("images")} 
+        accept="image/*" 
+        multiple 
+        onChange={(e) => {
+          const files = Array.from(e.target.files || []);
+          setValue("images", files);
+        }}
+      />
+      <IoCloudUploadOutline size={36} className="text-secondary/20 group-hover:text-secondary/40 transition-colors" />
+      <span className="font-body text-[9px] uppercase tracking-[0.3em] font-black text-secondary/30">
+        Upload Photo Evidence
+      </span>
+    </label>
+  )}
+</div>
 
           <Button variant="primary" type="submit" isLoading={loading} className="w-full py-5 rounded-2xl text-[11px] uppercase tracking-[0.5em] font-black shadow-2xl">
             Submit Report
