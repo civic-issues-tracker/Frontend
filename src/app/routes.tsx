@@ -1,4 +1,4 @@
-import { Navigate, createBrowserRouter } from 'react-router-dom'
+import {  createBrowserRouter } from 'react-router-dom'
 import HomePage from '../features/home/HomePage'
 import LoginPage from '../features/auth/pages/LoginPage'
 import SignupPage from '../features/auth/pages/SignupPage' 
@@ -7,8 +7,6 @@ import LocalReports from '../features/report/components/LocalReports'
 import PublicLayout from './PublicLayout'
 import ProtectedRoute from '../features/auth/ProtectedAuth'     
 import ResetPasswordPage from '../features/auth/pages/ResetPasswordPage'
-import DashboardLayout from './DashboardLayout' 
-import { mockReports } from '../../src/mock/mockReports';
 
 
 const router = createBrowserRouter([
