@@ -77,7 +77,7 @@ const Navbar: React.FC = () => {
                   <p className="text-sm font-bold normal-case text-primary truncate mb-4">{userName}</p>
                   <div className="h-px bg-primary/5 w-full mb-4" />
                   <Link 
-                    to="/"
+                    to="/profile"
                     className="flex items-center gap-3  mb-1 pb-4 text-primary transition-colors group/profile"
                   >
                     <User size={14} />

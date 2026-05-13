@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { type Report } from '../../report/components/IssueMapPicker';
 import { ArrowRight, Clock, MapPin, ChevronRight } from 'lucide-react';
 
@@ -8,6 +9,7 @@ interface RecentReportsProps {
 
 const RecentReports = ({ reports }: RecentReportsProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const latestReports = reports.slice(0, 3);
 
   return (
@@ -22,7 +24,10 @@ const RecentReports = ({ reports }: RecentReportsProps) => {
               {t('recentReports.subtitle')}
             </p>
           </div>
-          <button className="group flex items-center gap-2 text-secondary font-black text-[10px] uppercase tracking-[0.2em] hover:opacity-70 transition-all">
+          <button 
+            onClick={() => navigate('/all-reports')}
+            className="group flex items-center gap-2 text-secondary font-black text-[10px] uppercase tracking-[0.2em] hover:opacity-70 transition-all"
+          >
             {t('recentReports.viewAll')}
             <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
           </button>
@@ -44,6 +49,7 @@ const RecentReports = ({ reports }: RecentReportsProps) => {
                 </div>
               </div>
               <div className="flex-1 md:px-8">
+                {/* FIX: Wrap the dynamic report title key in t() */}
                 <h3 className="text-lg font-black text-secondary group-hover:text-secondary/90 transition-colors duration-300 font-header">
                   {t(report.title)}
                 </h3>

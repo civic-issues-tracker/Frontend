@@ -4,7 +4,12 @@ import LoginPage from '../features/auth/pages/LoginPage'
 import SignupPage from '../features/auth/pages/SignupPage' 
 import ReportFormPage from '../features/report/ReportPage'
 import LocalReports from '../features/report/components/LocalReports'
+import ProfilePage from '../features/dashboard-citizen/pages/ProfilePage'
+import MyReportsPage from '../features/dashboard-citizen/pages/MyReportsPage'
+import IssueDetailPage from '../features/issue-detail/IssueDetailPage'
+import AllReportsPage from '../features/home/pages/AllReportsPage'
 import PublicLayout from './PublicLayout'
+
 import ProtectedRoute from '../features/auth/ProtectedAuth'     
 import ResetPasswordPage from '../features/auth/pages/ResetPasswordPage'
 
@@ -28,6 +33,14 @@ const router = createBrowserRouter([
         ) 
       },
       {
+        path: 'all-reports',
+        element: (
+          <ProtectedRoute>
+            <AllReportsPage />
+          </ProtectedRoute>
+        )
+      },
+      {
         path: 'local-reports', 
         element: (
           
@@ -37,6 +50,32 @@ const router = createBrowserRouter([
       },
     ]
   },
+  {
+    path: '/profile',
+    element: (
+      <ProtectedRoute>
+        <ProfilePage />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: '/reports',
+    element: (
+      <ProtectedRoute>
+        <MyReportsPage />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: '/reports/:id',
+    element: (
+      <ProtectedRoute>
+        <IssueDetailPage />
+      </ProtectedRoute>
+    )
+  },
+  
+  
 
   // // --- ADMIN DASHBOARD ---
   // {
