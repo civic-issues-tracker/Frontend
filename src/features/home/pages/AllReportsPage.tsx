@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter } from 'lucide-react';
-import { privateApi } from '../../auth/services/authService';
+import { publicApi } from '../../auth/services/authService';
 import Table from '../../../components/ui/Table';
 
 interface Report {
@@ -78,7 +78,7 @@ const AllReportsPage = () => {
         setLoading(true);
         setError(null);
         // Fetch all issues from the database
-        const res = await privateApi.get('/issues/');
+        const res = await publicApi.get('/issues/');
         // Handle both flat array and paginated response formats
         const data = Array.isArray(res.data) ? res.data : (res.data.results ?? []);
         setReports(data);

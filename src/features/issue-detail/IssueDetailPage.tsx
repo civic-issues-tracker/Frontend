@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { privateApi } from '../auth/services/authService';
+import { publicApi } from '../auth/services/authService';
 
 interface StatusHistoryItem {
     old: string;
@@ -55,6 +55,7 @@ const formatDate = (value: string) => {
 
 const IssueDetailPage = () => {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const [issue, setIssue] = useState<IssueDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -66,7 +67,7 @@ const IssueDetailPage = () => {
             setError(null);
 
             try {
-                const response = await privateApi.get(`/issues/${id}/`);
+                const response = await publicApi.get(`/issues/${id}/`);
                 setIssue(response.data);
             } catch (err: any) {
                 console.error('Error loading issue detail:', err);
@@ -97,12 +98,12 @@ const IssueDetailPage = () => {
     return (
             <div className="flex flex-col w-full p-4 md:p-12">
                 <div className="mb-6">
-                    <Link
-                        to="/reports"
+                    <button
+                        onClick={() => navigate(-1)}
                         className="inline-flex items-center gap-2 text-sm text-[#4A3728] hover:text-[#2f1f17]"
                     >
-                        <ArrowLeft size={16} /> Back to my reports
-                    </Link>
+                        <ArrowLeft size={16} /> Back
+                    </button>
                 </div>
 
                 <div className="mx-auto w-full max-w-6xl rounded-[2rem] border border-[#4A3728]/20 bg-white p-6 shadow-sm md:p-10">

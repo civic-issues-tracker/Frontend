@@ -150,6 +150,11 @@ export const authService = {
     return response.data;
   },
 
+  updateProfile: async (data: { full_name?: string; phone?: string; email?: string }) => {
+    const response = await privateApi.patch('/auth/profile/', data);
+    return response.data;
+  },
+
   // Admin Management
   registerSystemAdmin: async (data: SystemAdminRegister) => {
     const response = await publicApi.post('/auth/register/system-admin/', data);

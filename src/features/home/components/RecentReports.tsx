@@ -1,16 +1,63 @@
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { type Report } from '../../report/components/IssueMapPicker';
+import { publicApi } from '../../auth/services/authService';
 import { ArrowRight, Clock, MapPin, ChevronRight } from 'lucide-react';
 
-interface RecentReportsProps {
-  reports: Report[];
+interface Report {
+  id: string;
+  issue_number: string;
+  category_name: string;
+  location_address: string;
+  status: string;
+  status_display: string;
+  created_at: string;
 }
 
-const RecentReports = ({ reports }: RecentReportsProps) => {
+const RecentReports = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const latestReports = reports.slice(0, 3);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const timeAgo = (date: string) => {
+    const now = new Date();
+    const created = new Date(date);
+    const diffMs = now.getTime() - created.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
+    if (diffDay > 0) return `${diffDay} day${diffDay > 1 ? 's' : ''} ago`;
+    if (diffHour > 0) return `${diffHour} hour${diffHour > 1 ? 's' : ''} ago`;
+    if (diffMin > 0) return `${diffMin} minute${diffMin > 1 ? 's' : ''} ago`;
+    return 'Just now';
+  };
+
+  useEffect(() => {
+    const fetchRecentReports = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await publicApi.get('/issues/');
+        const data = Array.isArray(res.data) ? res.data : res.data.results ?? [];
+        const sortedReports = [...data].sort(
+          (a: Report, b: Report) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        setReports(sortedReports.slice(0, 3));
+      } catch (error: any) {
+        console.error('Error fetching recent reports:', error);
+        setError(error?.response?.data?.detail || error?.message || 'Failed to load recent reports.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecentReports();
+  }, []);
+
+  const latestReports = reports;
 
   return (
     <section className="bg-primary/40 pt-16 pb-24">
@@ -34,34 +81,42 @@ const RecentReports = ({ reports }: RecentReportsProps) => {
         </div>
 
         <div className="flex flex-col">
-          {latestReports.map((report) => (
+          {loading ? (
+            <div className="px-4 py-6 text-sm text-secondary/60">Loading recent reports...</div>
+          ) : error ? (
+            <div className="px-4 py-6 text-sm text-red-500">{error}</div>
+          ) : latestReports.length === 0 ? (
+            <div className="px-4 py-6 text-sm text-secondary/60">No recent reports available.</div>
+          ) : latestReports.map((report) => (
             <div key={report.id} className="group flex flex-col md:flex-row md:items-center justify-between py-8 border-b border-secondary/5 hover:bg-secondary/2 transition-all px-4 -mx-4 rounded-xl">
               <div className="flex items-center gap-4 mb-4 md:mb-0 md:w-48 shrink-0">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <div className="flex flex-col">
                   <span className="text-[12px] font-black text-secondary uppercase tracking-widest">
-                    {t(report.status)}
+                    {report.status_display || report.status}
                   </span>
                   <div className="flex items-center gap-1 text-secondary/40 text-[9px] font-bold">
                     <Clock className="w-2.5 h-2.5" />
-                    <span>{t('recentReports.timeAgo')}</span>
+                    <span>{timeAgo(report.created_at)}</span>
                   </div>
                 </div>
               </div>
               <div className="flex-1 md:px-8">
-                {/* FIX: Wrap the dynamic report title key in t() */}
                 <h3 className="text-lg font-black text-secondary group-hover:text-secondary/90 transition-colors duration-300 font-header">
-                  {t(report.title)}
+                  {report.category_name} - {report.issue_number}
                 </h3>
                 <div className="flex items-center gap-1.5 text-secondary/50 mt-1">
                   <MapPin className="w-3 h-3" />
                   <p className="text-[11px] font-medium tracking-tight">
-                    {t('recentReports.near')} {report.location_lat.toFixed(3)}, {report.location_long.toFixed(3)}
+                    {t('recentReports.near')} {report.location_address}
                   </p>
                 </div>
               </div>
               <div className="mt-6 md:mt-0 flex items-center gap-4">
-                <button className="text-[10px] font-black text-secondary/40 group-hover:text-secondary uppercase tracking-widest transition-all">
+                <button 
+                  onClick={() => navigate(`/reports/${report.id}`)}
+                  className="text-[10px] font-black text-secondary/40 group-hover:text-secondary uppercase tracking-widest transition-all cursor-pointer"
+                >
                   {t('recentReports.viewDetails')}
                 </button>
                 <div className="w-10 h-10 rounded-full border border-secondary/10 flex items-center justify-center group-hover:bg-secondary group-hover:text-primary transition-all duration-300">

@@ -23,6 +23,7 @@ interface AuthContextType {
   login: (data: { access: string; refresh?: string; user: User }) => void;
   logout: () => Promise<void>;
   updateToken: (newToken: string) => void;
+  setUser: (user: User | null) => void;
   showToast: (msg: string, type: ToastType) => void;
 }
 
@@ -140,6 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login, 
       logout,
       updateToken,
+      setUser,
       showToast
     }}>
       {children}
