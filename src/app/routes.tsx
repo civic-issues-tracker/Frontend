@@ -1,4 +1,4 @@
-import {  createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, isRouteErrorResponse, useRouteError, Link } from 'react-router-dom'
 import HomePage from '../features/home/HomePage'
 import LoginPage from '../features/auth/pages/LoginPage'
 import SignupPage from '../features/auth/pages/SignupPage' 
@@ -12,6 +12,35 @@ import PublicLayout from './PublicLayout'
 
 import ProtectedRoute from '../features/auth/ProtectedAuth'     
 import ResetPasswordPage from '../features/auth/pages/ResetPasswordPage'
+
+const RouteErrorPage = () => {
+  const error = useRouteError();
+
+  let title = 'Unexpected Error'
+  let message = 'Sorry, something went wrong.'
+
+  if (isRouteErrorResponse(error)) {
+    title = error.status === 404 ? 'Page Not Found' : `Error ${error.status}`
+    message = error.statusText || 'An unexpected error occurred.'
+  } else if (error instanceof Error) {
+    message = error.message
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-primary px-6 py-12 text-center">
+      <h1 className="text-4xl font-black text-secondary mb-4">{title}</h1>
+      <p className="max-w-xl text-secondary/80 mb-8">{message}</p>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Link to="/" className="px-6 py-3 rounded-full bg-secondary text-primary font-semibold uppercase tracking-widest">
+          Go Home
+        </Link>
+        <Link to="/login" className="px-6 py-3 rounded-full border border-secondary text-secondary font-semibold uppercase tracking-widest">
+          Sign In
+        </Link>
+      </div>
+    </div>
+  )
+}
 
 
 const router = createBrowserRouter([
@@ -34,21 +63,18 @@ const router = createBrowserRouter([
       },
       {
         path: 'all-reports',
-        element: (
-          <ProtectedRoute>
-            <AllReportsPage />
-          </ProtectedRoute>
-        )
+        element: <AllReportsPage />
       },
       {
-        path: 'local-reports', 
-        element: (
-          
-            <LocalReports /> 
-        
-        )
+        path: 'local-reports',
+        element: <LocalReports />
       },
-    ]
+      {
+        path: 'reports/:id',
+        element: <IssueDetailPage />
+      },
+    ],
+    errorElement: <RouteErrorPage />
   },
   {
     path: '/profile',
@@ -63,14 +89,6 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <MyReportsPage />
-      </ProtectedRoute>
-    )
-  },
-  {
-    path: '/reports/:id',
-    element: (
-      <ProtectedRoute>
-        <IssueDetailPage />
       </ProtectedRoute>
     )
   },

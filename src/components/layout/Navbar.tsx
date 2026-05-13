@@ -61,7 +61,7 @@ const Navbar: React.FC = () => {
           
           <Link smooth to="#how-to-report" className="hover:opacity-60 transition-opacity">{t('navbar.links.howTo')}</Link>
           <Link to="/report" className="hover:opacity-60 transition-opacity">{t('navbar.links.report')}</Link>
-          <Link to="/local-reports" className="hover:opacity-60 transition-opacity">{t('navbar.links.local')}</Link>
+          <Link to="/all-reports" className="hover:opacity-60 transition-opacity">{t('navbar.links.local')}</Link>
           
           {isLoggedIn ? (
             <div className="relative group py-4">
@@ -116,7 +116,7 @@ const Navbar: React.FC = () => {
             <Link to="/report" onClick={toggleMenu} className="text-primary text-xs font-black tracking-widest uppercase">
               {t('navbar.links.report')}
             </Link>
-            <Link to="/local-reports" onClick={toggleMenu} className="text-primary text-xs font-black tracking-widest uppercase">
+            <Link to="/all-reports" onClick={toggleMenu} className="text-primary text-xs font-black tracking-widest uppercase">
               {t('navbar.links.local')}
             </Link>
           </div>
