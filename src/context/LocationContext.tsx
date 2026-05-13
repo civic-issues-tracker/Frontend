@@ -10,6 +10,7 @@ interface LocationContextType {
   location: LocationData | null;
   isLoading: boolean;
   requestLocation: () => void;
+  searchLocations: (query: string) => Promise<any[]>;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -43,31 +44,25 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const requestLocation = () => {
-    if (!("geolocation" in navigator)) {
-      console.error("Geolocation is not supported by this browser.");
-      return;
-    }
-    
-    setIsLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        const address = await fetchAddress(latitude, longitude);
-        
-        setLocation({ 
-          lat: latitude, 
-          lng: longitude, 
-          address 
-        });
-        setIsLoading(false);
-      },
-      (error) => {
-        console.warn("Location access denied or timed out:", error.message);
-        setIsLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
+  if (!("geolocation" in navigator)) return;
+  
+  setIsLoading(true);
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const { latitude, longitude } = position.coords;
+      const address = await fetchAddress(latitude, longitude);
+      
+      setLocation({ lat: latitude, lng: longitude, address });
+      
+      setIsLoading(false);
+    },
+    (error) => {
+      console.warn(error.message);
+      setIsLoading(false);
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+};
 
   useEffect(() => {
     if (!location) {
@@ -75,8 +70,27 @@ export const LocationProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
+  const searchLocations = async (query: string) => {
+  if (query.length < 3) return []; // Don't search for tiny strings
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${query}&format=jsonv2&addressdetails=1&limit=10&viewbox=38.6,8.8,38.9,9.1&bounded=1&countrycodes=et`,
+      {
+        headers: {
+          'User-Agent': 'YegnaFix_App_v1_contact_hebronenyeww@gmail.com' 
+        }
+      }
+    );
+    if (!response.ok) return [];
+    return await response.json();
+  } catch (error) {
+    console.error("Search failed:", error);
+    return [];
+  }
+};
+
   return (
-    <LocationContext.Provider value={{ location, isLoading, requestLocation }}>
+    <LocationContext.Provider value={{ location, isLoading, requestLocation, searchLocations }}>
       {children}
     </LocationContext.Provider>
   );
