@@ -202,7 +202,12 @@ const ReportPage: React.FC = () => {
   };
 
   const onSubmit = async (data: ReportFormData) => {
-    setLoading(true);
+    if (!data.images || data.images.length === 0) {
+    showToast("Please upload at least one photo proof.", "error");
+    return;
+  }
+
+  setLoading(true);
     try {
       const formData = new FormData();
       formData.append('description', data.description);
@@ -217,7 +222,12 @@ const ReportPage: React.FC = () => {
         Array.from(data.images as File[]).slice(1).forEach(file => formData.append('extra_images', file));
       }
 
-      await privateApi.post('/issues/submit/', formData);
+      await privateApi.post('/issues/submit/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        transformRequest: [(data) => data]
+      });
       showToast("Report submitted successfully!", "success");
     } catch (error) {
       showToast("Failed to submit report.", "error");
@@ -306,7 +316,7 @@ const ReportPage: React.FC = () => {
               )}
               {previewUrl.length < 3 && (
                 <label className="w-full border-2 border-dashed border-secondary/10 rounded-2xl py-8 flex flex-col items-center justify-center gap-3 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-all">
-                  <input type="file" className="hidden" accept="image/*" multiple onChange={(e) => {
+                  <input type="file" className="hidden" accept="image/* required" multiple onChange={(e) => {
                     const combined = [...Array.from(watch("images") || []), ...Array.from(e.target.files || [])].slice(0, 3);
                     setValue("images", combined);
                   }} />
