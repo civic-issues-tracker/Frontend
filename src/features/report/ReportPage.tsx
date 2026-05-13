@@ -11,7 +11,7 @@ import { subcategoryApi } from '../../features/auth/services/subcategoryService'
 import { useAuth } from '../../hooks/useAuth';
 import { useGeoLocation } from '../../hooks/useGeolocation';
 
-// --- ZOD SCHEMA ---
+// ZOD SCHEMA
 const reportSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters"),
   location_address: z.string().min(1, "Location is required"),
@@ -68,7 +68,7 @@ const ReportPage: React.FC = () => {
   const selectedCategoryId = watch("category");
   const photoFile = watch("images");
 
-  // --- LOCATION SEARCH LOGIC ---
+  // LOCATION SEARCH LOGIC
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (locationInput && locationInput.length > 2 && !isLocationSelected) {
@@ -92,7 +92,7 @@ const ReportPage: React.FC = () => {
         setSuggestions([]);
         setShowDropdown(false);
       }
-    }, 200);
+    }, 500);
   };
 
   const handleSelectSuggestion = (item: any) => {
@@ -100,15 +100,20 @@ const ReportPage: React.FC = () => {
     const lon = parseFloat(item.lon);
     const address = item.display_name;
 
-    // 1. Force value into input and validate
-    setValue("location_address", address, { shouldValidate: true, shouldDirty: true });
-    setValue("location_lat", lat, { shouldValidate: true });
-    setValue("location_long", lon, { shouldValidate: true });
+    setIsLocationSelected(true);   
 
-    // 2. Sync Map Pin
+    // Force value into input and validate
+    setValue("location_address", address, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue("location_lat", lat);
+    setValue("location_long", lon);
+
+    // Sync Map Pin
     setSelectedMapPos({ lat, lng: lon });
 
-    // 3. UI Cleanup
+    // UI Cleanup
     setIsLocationSelected(true);
     setShowDropdown(false);
     setSuggestions([]);
@@ -136,19 +141,27 @@ const ReportPage: React.FC = () => {
     if (providedAddress && !/^-?\d+\.\d+/.test(providedAddress)) {
       setValue("location_address", providedAddress, { shouldValidate: true });
     } else {
-      setValue("location_address", "Fetching location name...");
+      setValue("location_address", "Fetching address...");
       const address = await fetchAddressName(lat, lng);
       setValue("location_address", address, { shouldValidate: true });
     }
   };
 
-  useEffect(() => {
-    if (globalLocation?.lat && globalLocation?.lng && !selectedMapPos) {
-      updateLocationData(globalLocation.lat, globalLocation.lng, globalLocation.address);
-    }
-  }, [globalLocation]);
+  const handleGpsClick = async () => {
+  await requestLocation(); 
 
-  // --- CATEGORY FETCHING ---
+  if (globalLocation?.lat && globalLocation?.lng) {
+    updateLocationData(
+      globalLocation.lat, 
+      globalLocation.lng, 
+      globalLocation.address
+    );
+    setIsLocationSelected(true);
+  }
+};
+    console.log("Global Location Updated:", globalLocation); 
+
+  // CATEGORY FETCHING 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -226,7 +239,7 @@ const ReportPage: React.FC = () => {
             <div className="flex flex-col gap-2">
               <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">Category</label>
               <select {...register("category")} className="bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 text-sm text-secondary outline-none">
-                <option value="">{fetchingCats ? "Loading..." : "Select Category"}</option>
+                <option value="" className="text-secondary ">{fetchingCats ? "Loading..." : "Select Category"}</option>
                 {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
               </select>
               {errors.category && <span className="text-[10px] text-red-500 ml-2 uppercase font-bold">{errors.category.message}</span>}
@@ -248,10 +261,10 @@ const ReportPage: React.FC = () => {
                 {...register("location_address")}
                 onChange={(e) => { setIsLocationSelected(false); register("location_address").onChange(e); }}
                 onBlur={handleInputBlur}
-                placeholder={isLocating ? "Locating..." : "Type area or click map..."}
+                placeholder={isLocating ? "Locating..." : "Type area or click button to use your current location..."}
                 className="flex-1 bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 text-sm text-secondary outline-none"
               />
-              <button type="button" onClick={requestLocation} className="bg-secondary text-primary px-5 rounded-2xl hover:scale-95 transition-transform flex items-center justify-center">
+              <button type="button" onClick={handleGpsClick} className="bg-secondary text-primary px-5 rounded-2xl hover:scale-95 transition-transform flex items-center justify-center">
                 <IoLocationSharp size={20} className={isLocating ? "animate-bounce" : ""} />
               </button>
             </div>
@@ -260,7 +273,11 @@ const ReportPage: React.FC = () => {
             {showDropdown && suggestions.length > 0 && (
               <ul className="absolute top-full left-0 w-full bg-tertiary border border-secondary/10 rounded-2xl mt-2 overflow-hidden z-999 shadow-2xl">
                 {suggestions.map((item) => (
-                  <li key={item.place_id} onClick={() => handleSelectSuggestion(item)} className="px-5 py-3 text-xs text-secondary/80 hover:bg-primary cursor-pointer border-b border-secondary/5 last:border-none">
+                  // onClick={() => handleSelectSuggestion(item)}
+                  <li key={item.place_id}  onMouseDown={(e)=> {
+                    e.preventDefault();
+                    handleSelectSuggestion(item);
+                  }} className="px-5 py-3 text-xs text-secondary/80 hover:bg-primary cursor-pointer border-b border-secondary/5 last:border-none">
                     {item.display_name}
                   </li>
                 ))}
@@ -300,16 +317,29 @@ const ReportPage: React.FC = () => {
             </div>
           </div>
 
-          <Button variant="primary" type="submit" isLoading={loading} className="w-full py-5 rounded-2xl text-[11px] uppercase tracking-[0.5em] font-black shadow-2xl">Submit Report</Button>
+          <Button variant="primary" type="submit" isLoading={loading} className="w-full py-5 rounded-2xl text-[9px] uppercase tracking-[0.5em] font-black shadow-2xl">Submit Report</Button>
         </form>
       </div>
 
-      <div className="w-full lg:w-1/2 min-h-112.5 bg-secondary/5 rounded-[2.5rem] overflow-hidden border border-secondary/5 relative">
-        <div className="absolute top-8 left-8 z-10 bg-tertiary/80 backdrop-blur-xl px-5 py-3 rounded-full border border-secondary/5">
-          <p className="font-body text-[9px] uppercase tracking-[0.2em] font-black text-secondary">Click Map to Pin Location</p>
+      <div className="w-full lg:w-1/2 flex-1 min-h-[400px] md:min-h-[500px] lg:min-h-full bg-secondary/5 rounded-[2.5rem] overflow-hidden border border-secondary/5 relative shadow-inner">
+  
+      <div className="absolute top-8 left-8 z-[50] bg-tertiary/80 backdrop-blur-xl px-5 py-3 rounded-full border border-secondary/5">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <p className="font-body text-[9px] uppercase tracking-[0.2em] font-black text-secondary">
+            Click Map to Pin Location
+          </p>
         </div>
-        <IssueMapPicker onLocationSelect={handleMapClick} selectedLocation={selectedMapPos} reports={[]} />
       </div>
+
+      <div className="absolute inset-0 w-full h-full">
+        <IssueMapPicker 
+          onLocationSelect={handleMapClick} 
+          selectedLocation={selectedMapPos} 
+          reports={[]} 
+        /> 
+      </div>
+    </div>
     </div>
   );
 };

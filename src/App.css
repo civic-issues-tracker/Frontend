@@ -2,6 +2,10 @@
 @import url('https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,300,400&display=swap');
 @import "tailwindcss";
 
+/* option:checked {
+  background-color: #2C0901 !important;
+  color: #FFF4E8 !important;
+} */
 @theme {
     --font-header: "Satoshi", sans-serif;
     --font-body: "Poppins", sans-serif;
