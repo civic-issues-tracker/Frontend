@@ -135,6 +135,82 @@
     "language": {
       "title": "Language"
     }
+  },
+  "profilePage": {
+    "title": "Your Profile",
+    "subtitle": "Update your account details and stay connected.",
+    "sectionTitle": "Profile Details",
+    "sectionDescription": "Manage your contact information for official notifications and report tracking.",
+    "labels": {
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "phone": "Phone Number"
+    },
+    "placeholders": {
+      "fullName": "Enter your full name",
+      "email": "Enter your email address"
+    },
+    "phoneLockTitle": "Phone number cannot be changed",
+    "buttons": {
+      "editProfile": "Edit Profile",
+      "cancel": "Cancel",
+      "saveUpdates": "Save Updates",
+      "saving": "Saving..."
+    },
+    "messages": {
+      "updateSuccess": "Profile updated successfully!",
+      "updateError": "Failed to update profile. Please try again."
+    },
+    "loading": {
+      "title": "Loading your profile...",
+      "subtitle": "Please wait while we fetch your account details."
+    }
+  },
+  "reportsPage": {
+    "pageTitle": "My Reports",
+    "pageSubtitle": "Track the status and history of issues you've reported.",
+    "searchPlaceholder": "Search your reports...",
+    "filterButton": "Filter",
+    "loading": "Loading reports...",
+    "noReports": "No reports found.",
+    "errorFallback": "Unable to load your reports. Please try again.",
+    "scrollRight": "Scroll table right",
+    "tableHeaders": {
+      "issueId": "Issue #",
+      "category": "Category",
+      "location": "Location",
+      "status": "Status",
+      "date": "Date"
+    }
+  },
+  "issueDetailPage": {
+    "backToReports": "Back to my reports",
+    "pageTitle": "Issue Detail",
+    "issueId": "Issue ID",
+    "category": "Category",
+    "priority": "Priority",
+    "status": "Status",
+    "submitted": "Submitted",
+    "description": "Description",
+    "statusTimeline": "Status Timeline",
+    "statusTimelineSubtitle": "Track the progress of your report",
+    "noTimeline": "No timeline history available.",
+    "issuePhoto": "Issue Photo",
+    "reopenIssue": "Reopen Issue",
+    "noDescription": "No description available.",
+    "loading": "Loading issue details...",
+    "notFound": "Issue not found."
+  },
+  "dashboardCitizen": {
+    "portalTitle": "Citizen Portal",
+    "officialAccess": "Official Access",
+    "userFallbackName": "Citizen User",
+    "userFallbackEmail": "user@example.com",
+    "links": {
+      "profile": "Profile",
+      "reports": "My Reports",
+      "settings": "Settings"
+    },
+    "logout": "Logout Account"
   }
 }
-

@@ -135,5 +135,82 @@
     "language": {
       "title": "ቋንቋ"
     }
+  },
+  "profilePage": {
+    "title": "መገለጫዎ",
+    "subtitle": "የመገለጫ መረጃዎን ያዘምኑ እና ይገናኙ.",
+    "sectionTitle": "የመገለጫ ዝርዝሮች",
+    "sectionDescription": "ለህጋዊ ማሳወቂያዎች እና ሪፖርት እይታ የሚያስፈልጉ የእርስዎን የማውጫ መረጃ ያስተካክሉ.",
+    "labels": {
+      "fullName": "ሙሉ ስም",
+      "email": "የኢሜይል አድራሻ",
+      "phone": "የስልክ ቁጥር"
+    },
+    "placeholders": {
+      "fullName": "ሙሉ ስምዎን ያስገቡ",
+      "email": "የኢሜይል አድራሻዎን ያስገቡ"
+    },
+    "phoneLockTitle": "የስልክ ቁጥር ማቀየር አይቻልም",
+    "buttons": {
+      "editProfile": "መገለጫ አርትዕ",
+      "cancel": "ሰንሰለት",
+      "saveUpdates": "ማሻሻያዎችን አስቀምጥ",
+      "saving": "በማስቀመጥ..."
+    },
+    "messages": {
+      "updateSuccess": "መገለጫዎ በተሳካ ሁኔታ ተዘምኗል!",
+      "updateError": "መገለጫዎን ማሻሻል አልተቻለም። እባክዎ ደግመው ይሞክሩ."
+    },
+    "loading": {
+      "title": "መገለጫዎን እንሰቅላለን...",
+      "subtitle": "የአካውንት ዝርዝሮችዎን ሲወስድ እባክዎን ይጠብቁ."
+    }
+  },
+  "reportsPage": {
+    "pageTitle": "የእኔ ሪፖርቶች",
+    "pageSubtitle": "የሪፖርትዎን ሁኔታ እና ታሪክ ይከታተሉ.",
+    "searchPlaceholder": "የሪፖርቶችን ይፈልጉ...",
+    "filterButton": "አጣራ",
+    "loading": "ሪፖርቶችን እንጫናለን...",
+    "noReports": "ሪፖርት አልተገኙም።",
+    "errorFallback": "ሪፖርቶችን ማንበብ አልተቻለም። እባክዎን ደግመው ይሞክሩ.",
+    "scrollRight": "ሰንጠረዡን ወደ ቀኝ ይመለሱ",
+    "tableHeaders": {
+      "issueId": "የችግር ቁጥር",
+      "category": "ምድብ",
+      "location": "ቦታ",
+      "status": "ሁኔታ",
+      "date": "ቀን"
+    }
+  },
+  "issueDetailPage": {
+    "backToReports": "ወደ የእኔ ሪፖርቶች ይመለሱ",
+    "pageTitle": "የችግር ዝርዝር",
+    "issueId": "የችግር መለያ",
+    "category": "ምድብ",
+    "priority": "ቅድሚያ",
+    "status": "ሁኔታ",
+    "submitted": "የተገለጸ",
+    "description": "መግለጫ",
+    "statusTimeline": "የሁኔታ ታሪክ",
+    "statusTimelineSubtitle": "የሪፖርትዎን እድገት ይከታተሉ",
+    "noTimeline": "የታሪክ መረጃ አልተገኘም።",
+    "issuePhoto": "የችግር ፎቶ",
+    "reopenIssue": "ችግሩን ደግመው ክፈት",
+    "noDescription": "መግለጫ አልተገኘም።",
+    "loading": "የችግር ዝርዝር እየጫነ ይገኛል...",
+    "notFound": "ችግሩ አልተገኘም።"
+  },
+  "dashboardCitizen": {
+    "portalTitle": "የነጋዴ መዳረሻ",
+    "officialAccess": "የአገልግሎት መታወቂያ",
+    "userFallbackName": "የህዝብ ተጠቃሚ",
+    "userFallbackEmail": "user@example.com",
+    "links": {
+      "profile": "መገለጫ",
+      "reports": "የሪፖርቶቼ",
+      "settings": "ቅንብሮች"
+    },
+    "logout": "ውጣ"
   }
 }
