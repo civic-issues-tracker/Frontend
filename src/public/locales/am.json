@@ -60,7 +60,17 @@
     "title": "የቅርብ ጊዜ ሪፖርቶች",
     "subtitle": "ከአዲስ አበባ ጎዳናዎች የተገኙ የቀጥታ መረጃዎች።",
     "viewAll": "ሁሉንም ሪፖርቶች ይመልከቱ",
-    "timeAgo": "ከ2 ሰዓት በፊት",
+    "viewDetailsAria": "ዝርዝሩን ይመልከቱ",
+    "loading": "የቅርብ ጊዜ ሪፖርቶችን እንጫናለን...",
+    "error": "የቅርብ ጊዜ ሪፖርቶችን ማግኘት አልተቻለም።",
+    "noReports": "ሪፖርቶች አልተገኙም።",
+    "dayAgo": "ከ{{count}} ቀን በፊት",
+    "daysAgo": "ከ{{count}} ቀናት በፊት",
+    "hourAgo": "ከ{{count}} ሰዓት በፊት",
+    "hoursAgo": "ከ{{count}} ሰዓታት በፊት",
+    "minuteAgo": "ከ{{count}} ደቂቃ በፊት",
+    "minutesAgo": "ከ{{count}} ደቂቃዎች በፊት",
+    "justNow": "አሁን።",
     "near": "አቅራቢያ",
     "viewDetails": "ዝርዝሩን ይመልከቱ"
   },
@@ -145,10 +155,16 @@
       "fullName": "ሙሉ ስም",
       "email": "የኢሜይል አድራሻ",
       "phone": "የስልክ ቁጥር"
+      ,"currentPassword": "የአሁኑ የይለፍ ቃል"
+      ,"newPassword": "አዲስ የይለፍ ቃል"
+      ,"confirmPassword": "አዲሱን የይለፍ ቃል ያረጋግጡ"
     },
     "placeholders": {
       "fullName": "ሙሉ ስምዎን ያስገቡ",
       "email": "የኢሜይል አድራሻዎን ያስገቡ"
+      ,"currentPassword": "አሁኑን የይለፍ ቃል ያስገቡ"
+      ,"newPassword": "አዲስ የይለፍ ቃል ያስገቡ"
+      ,"confirmPassword": "አዲሱን የይለፍ ቃል ያረጋግጡ"
     },
     "phoneLockTitle": "የስልክ ቁጥር ማቀየር አይቻልም",
     "buttons": {
@@ -159,7 +175,13 @@
     },
     "messages": {
       "updateSuccess": "መገለጫዎ በተሳካ ሁኔታ ተዘምኗል!",
-      "updateError": "መገለጫዎን ማሻሻል አልተቻለም። እባክዎ ደግመው ይሞክሩ."
+      "updateError": "መገለጫዎን ማሻሻል አልተቻለም። እባክዎ ደግመው ይሞክሩ.",
+      "currentPasswordRequired": "የይለፍ ቃሉን ለመቀየር የአሁኑ የይለፍ ቃል ይያዙ።",
+      "passwordMismatch": "አዲሱ የይለፍ ቃል ይዛግሩ አይመሳሰሉም።",
+      "noChanges": "ማንኛውንም መረጃ ማስተካከል አልተፈጠረም። እባክዎ ከዚያ በኋላ ይሙከሩ.",
+      "emailVerifyLinkTitle": "የኢሜይል ማረጋገጫ አገናኝ ተመክሯል:",
+      "emailUpdateNote": "ኢሜይል ለውጥ ወደ አዲሱ አድራሻ የማረጋገጫ አገናኝ ይላካል.",
+      "emailUpdateDisabled": "ኢሜይል ለውጦች አሁን ጊዜ ማድረግ አይቻልም። እባክዎ ከኋላ ደግመው ይሞክሩ."
     },
     "loading": {
       "title": "መገለጫዎን እንሰቅላለን...",
@@ -167,9 +189,11 @@
     }
   },
   "reportsPage": {
-    "pageTitle": "የእኔ ሪፖርቶች",
+    "pageTitle": " ሪፖርቶች",
     "pageSubtitle": "የሪፖርትዎን ሁኔታ እና ታሪክ ይከታተሉ.",
     "searchPlaceholder": "የሪፖርቶችን ይፈልጉ...",
+    "allCategories": "ሁሉንም ምድቦች",
+    "allLocations": "ሁሉንም ቦታዎች",
     "filterButton": "አጣራ",
     "loading": "ሪፖርቶችን እንጫናለን...",
     "noReports": "ሪፖርት አልተገኙም።",
@@ -196,9 +220,11 @@
     "statusTimelineSubtitle": "የሪፖርትዎን እድገት ይከታተሉ",
     "noTimeline": "የታሪክ መረጃ አልተገኘም።",
     "issuePhoto": "የችግር ፎቶ",
+    "issuePhotoAlt": "የችግር ፎቶ",
     "reopenIssue": "ችግሩን ደግመው ክፈት",
     "noDescription": "መግለጫ አልተገኘም።",
     "loading": "የችግር ዝርዝር እየጫነ ይገኛል...",
+    "errorFallback": "የችግር ዝርዝር ማግኘት አልተቻለም። እባክዎን ደግመው ይሞክሩ.",
     "notFound": "ችግሩ አልተገኘም።"
   },
   "dashboardCitizen": {

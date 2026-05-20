@@ -9,14 +9,26 @@ import toast from 'react-hot-toast';
 const ProfilePage = () => {
   const { t } = useTranslation();
   const { user: contextUser, setUser } = useAuth();
+  type FormDataType = {
+    full_name: string;
+    email: string;
+    phone: string;
+    current_password: string;
+    new_password: string;
+    confirm_password: string;
+  };
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
+  const [verifyLink, setVerifyLink] = useState<string | null>(null);
+  const [formData, setFormData] = useState<FormDataType>({
     full_name: '',
     email: '',
-    phone: ''
+    phone: '',
+    current_password: '',
+    new_password: '',
+    confirm_password: ''
   });
 
   useEffect(() => {
@@ -28,6 +40,9 @@ const ProfilePage = () => {
           full_name: data.full_name || '',
           email: data.email || '',
           phone: data.phone || ''
+          , current_password: '',
+          new_password: '',
+          confirm_password: ''
         });
       } catch (err) {
         // handle error
@@ -46,20 +61,53 @@ const ProfilePage = () => {
     setFormData({
       full_name: profile?.full_name || '',
       email: profile?.email || '',
-      phone: profile?.phone || ''
+      phone: profile?.phone || '',
+      current_password: '',
+      new_password: '',
+      confirm_password: ''
     });
+    setVerifyLink(null);
     setIsEditing(false);
   };
 
   const handleUpdate = async () => {
     setSaving(true);
     try {
-      const updateData = {
-        full_name: formData.full_name,
-        email: formData.email
-      };
-      await profileApi.updateProfile(updateData);
+      if ((formData.new_password || formData.confirm_password) && !formData.current_password) {
+        toast.error(t('profilePage.messages.currentPasswordRequired') || 'Current password is required to change password.');
+        setSaving(false);
+        return;
+      }
+
+      if (formData.new_password && formData.new_password !== formData.confirm_password) {
+        toast.error(t('profilePage.messages.passwordMismatch') || 'New passwords do not match.');
+        setSaving(false);
+        return;
+      }
+      const updateData: Partial<FormDataType> = {};
+      if (formData.full_name !== profile?.full_name) {
+        updateData.full_name = formData.full_name;
+      }
+      if (formData.email !== profile?.email) {
+        updateData.email = formData.email;
+      }
+      if (formData.new_password) {
+        updateData.current_password = formData.current_password;
+        updateData.new_password = formData.new_password;
+        updateData.confirm_password = formData.confirm_password;
+      }
+      if (Object.keys(updateData).length === 0) {
+        toast.error(t('profilePage.messages.noChanges') || 'No changes to save.');
+        setSaving(false);
+        return;
+      }
+      const response = await profileApi.updateProfile(updateData as any);
       toast.success(t('profilePage.messages.updateSuccess'));
+      if (response?.updates?.email?.verify_link) {
+        setVerifyLink(response.updates.email.verify_link);
+      } else {
+        setVerifyLink(null);
+      }
       
       // Fetch fresh data from database
       const updatedProfile = await profileApi.getProfile();
@@ -67,7 +115,10 @@ const ProfilePage = () => {
       setFormData({
         full_name: updatedProfile.full_name || '',
         email: updatedProfile.email || '',
-        phone: updatedProfile.phone || ''
+        phone: updatedProfile.phone || '',
+        current_password: '',
+        new_password: '',
+        confirm_password: ''
       });
       
       // Update AuthContext with new user data so it persists across the app
@@ -78,19 +129,28 @@ const ProfilePage = () => {
       }
       
       setIsEditing(false);
-    } catch (err) {
-      console.error('Failed to update profile:', err);
-      toast.error(t('profilePage.messages.updateError'));
+    } catch (error: any) {
+      console.error('Failed to update profile:', error);
+      const data = error?.response?.data;
+      let message = t('profilePage.messages.updateError');
+
+      if (typeof data === 'string') {
+        message = data;
+      } else if (data && typeof data === 'object') {
+        message = data.detail || data.error || data.message || (data.new_password || data.current_password || data.email) || message;
+      } else if (error?.message) {
+        message = error.message;
+      }
+
+      toast.error(message || t('profilePage.messages.updateError'));
     } finally {
       setSaving(false);
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value } as unknown as FormDataType));
   };
 
   return (
@@ -176,8 +236,66 @@ const ProfilePage = () => {
                         : 'border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed'
                       }`}
                   />
+                  {isEditing && (
+                    <p className="mt-2 text-xs text-amber-700">
+                      {t('profilePage.messages.emailUpdateNote')}
+                    </p>
+                  )}
                 </div>
               </div>
+
+              {isEditing && (
+                <div className="space-y-4">
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                    <label className="md:w-48 text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Lock size={16} className="text-gray-400" />
+                      {t('profilePage.labels.currentPassword') || 'Current Password'}
+                    </label>
+                    <div className="flex-1 relative">
+                      <input
+                        type="password"
+                        name="current_password"
+                        value={formData.current_password}
+                        onChange={handleChange}
+                        placeholder={t('profilePage.placeholders.currentPassword') || 'Enter current password'}
+                        className="w-full border rounded-xl px-4 py-2.5 text-sm bg-white text-gray-900 focus:border-[#C6AC8F] focus:ring-4 focus:ring-[#EAE0D5]/40 outline-none shadow-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                    <label className="md:w-48 text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Lock size={16} className="text-gray-400" />
+                      {t('profilePage.labels.newPassword') || 'New Password'}
+                    </label>
+                    <div className="flex-1 relative">
+                      <input
+                        type="password"
+                        name="new_password"
+                        value={formData.new_password}
+                        onChange={handleChange}
+                        placeholder={t('profilePage.placeholders.newPassword') || 'Enter new password'}
+                        className="w-full border rounded-xl px-4 py-2.5 text-sm bg-white text-gray-900 focus:border-[#C6AC8F] focus:ring-4 focus:ring-[#EAE0D5]/40 outline-none shadow-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
+                    <label className="md:w-48 text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Lock size={16} className="text-gray-400" />
+                      {t('profilePage.labels.confirmPassword') || 'Confirm Password'}
+                    </label>
+                    <div className="flex-1 relative">
+                      <input
+                        type="password"
+                        name="confirm_password"
+                        value={formData.confirm_password}
+                        onChange={handleChange}
+                        placeholder={t('profilePage.placeholders.confirmPassword') || 'Confirm new password'}
+                        className="w-full border rounded-xl px-4 py-2.5 text-sm bg-white text-gray-900 focus:border-[#C6AC8F] focus:ring-4 focus:ring-[#EAE0D5]/40 outline-none shadow-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Phone Input Group (Permanently Locked) */}
               <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
@@ -242,6 +360,15 @@ const ProfilePage = () => {
                   </>
                 )}
               </div>
+
+              {verifyLink && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 mt-4">
+                  <p className="font-semibold">{t('profilePage.messages.emailVerifyLinkTitle') || 'Email verification link generated:'}</p>
+                  <a href={verifyLink} className="break-all text-amber-800 underline" target="_blank" rel="noreferrer">
+                    {verifyLink}
+                  </a>
+                </div>
+              )}
 
             </form>
           </div>

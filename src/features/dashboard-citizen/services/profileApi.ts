@@ -5,7 +5,7 @@ export const profileApi = {
     return await authService.getProfile();
   },
 
-  updateProfile: async (data: { full_name?: string; phone?: string; email?: string }) => {
+  updateProfile: async (data: { full_name?: string; phone?: string; email?: string; current_password?: string; new_password?: string; confirm_password?: string }) => {
     console.log("=== FRONTEND UPDATE PROFILE ===");
     console.log("Data being sent:", JSON.stringify(data));
     const response = await authService.updateProfile(data);

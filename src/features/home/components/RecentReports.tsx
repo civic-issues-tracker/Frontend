@@ -21,6 +21,11 @@ const RecentReports = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const viewReportDetail = (reportId: string) => {
+    if (!reportId) return;
+    navigate(`/reports/${reportId}`);
+  };
+
   const timeAgo = (date: string) => {
     const now = new Date();
     const created = new Date(date);
@@ -29,10 +34,22 @@ const RecentReports = () => {
     const diffMin = Math.floor(diffSec / 60);
     const diffHour = Math.floor(diffMin / 60);
     const diffDay = Math.floor(diffHour / 24);
-    if (diffDay > 0) return `${diffDay} day${diffDay > 1 ? 's' : ''} ago`;
-    if (diffHour > 0) return `${diffHour} hour${diffHour > 1 ? 's' : ''} ago`;
-    if (diffMin > 0) return `${diffMin} minute${diffMin > 1 ? 's' : ''} ago`;
-    return 'Just now';
+    if (diffDay > 0) {
+      return diffDay === 1
+        ? t('recentReports.dayAgo', { count: diffDay })
+        : t('recentReports.daysAgo', { count: diffDay });
+    }
+    if (diffHour > 0) {
+      return diffHour === 1
+        ? t('recentReports.hourAgo', { count: diffHour })
+        : t('recentReports.hoursAgo', { count: diffHour });
+    }
+    if (diffMin > 0) {
+      return diffMin === 1
+        ? t('recentReports.minuteAgo', { count: diffMin })
+        : t('recentReports.minutesAgo', { count: diffMin });
+    }
+    return t('recentReports.justNow');
   };
 
   useEffect(() => {
@@ -82,11 +99,11 @@ const RecentReports = () => {
 
         <div className="flex flex-col">
           {loading ? (
-            <div className="px-4 py-6 text-sm text-secondary/60">Loading recent reports...</div>
+            <div className="px-4 py-6 text-sm text-secondary/60">{t('recentReports.loading')}</div>
           ) : error ? (
-            <div className="px-4 py-6 text-sm text-red-500">{error}</div>
+            <div className="px-4 py-6 text-sm text-red-500">{error || t('recentReports.error')}</div>
           ) : latestReports.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-secondary/60">No recent reports available.</div>
+            <div className="px-4 py-6 text-sm text-secondary/60">{t('recentReports.noReports')}</div>
           ) : latestReports.map((report) => (
             <div key={report.id} className="group flex flex-col md:flex-row md:items-center justify-between py-8 border-b border-secondary/5 hover:bg-secondary/2 transition-all px-4 -mx-4 rounded-xl">
               <div className="flex items-center gap-4 mb-4 md:mb-0 md:w-48 shrink-0">
@@ -114,7 +131,9 @@ const RecentReports = () => {
               </div>
               <div className="mt-6 md:mt-0 flex items-center gap-4">
                 <button 
-                  onClick={() => navigate(`/reports/${report.id}`)}
+                  type="button"
+                  onClick={() => viewReportDetail(report.id)}
+                  aria-label={t('recentReports.viewDetailsAria')}
                   className="text-[10px] font-black text-secondary/40 group-hover:text-secondary uppercase tracking-widest transition-all cursor-pointer"
                 >
                   {t('recentReports.viewDetails')}

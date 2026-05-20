@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter } from 'lucide-react';
 import { publicApi } from '../../auth/services/authService';
@@ -23,6 +24,7 @@ const statusColor = (status: string) => {
 };
 
 const AllReportsPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,11 +55,11 @@ const AllReportsPage = () => {
   });
 
   const columns = [
-    { header: 'Issue ID', key: 'issue_number' },
-    { header: 'Category', key: 'category_name' },
-    { header: 'Location', key: 'location_address' },
+    { header: t('reportsPage.tableHeaders.issueId'), key: 'issue_number' },
+    { header: t('reportsPage.tableHeaders.category'), key: 'category_name' },
+    { header: t('reportsPage.tableHeaders.location'), key: 'location_address' },
     {
-      header: 'Status',
+      header: t('reportsPage.tableHeaders.status'),
       key: 'status',
       render: (report: Report) => (
         <span className={`font-medium whitespace-nowrap ${statusColor(report.status)}`}>
@@ -66,7 +68,7 @@ const AllReportsPage = () => {
       )
     },
     {
-      header: 'Date',
+      header: t('reportsPage.tableHeaders.date'),
       key: 'created_at',
       render: (report: Report) => new Date(report.created_at).toLocaleDateString()
     }
@@ -99,6 +101,10 @@ const AllReportsPage = () => {
     fetchReports();
   }, []);
 
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
       <div className="flex flex-col h-full w-full p-3 md:p-12 min-h-screen bg-gray-50/30">
         <div className="max-w-5xl mx-auto w-full">
@@ -108,7 +114,7 @@ const AllReportsPage = () => {
             <div className="flex items-center w-full border border-[#4A3728]/30 rounded-full px-3 py-1 bg-white">
               <input
                 type="text"
-                placeholder="Search reports..."
+                placeholder={t('reportsPage.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="flex-1 bg-transparent outline-none text-xs md:text-sm text-[#4A3728]"
@@ -121,7 +127,7 @@ const AllReportsPage = () => {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="px-3 py-1 border border-[#4A3728]/30 rounded bg-white text-[#4A3728] text-xs md:text-sm"
             >
-              <option value="">All Categories</option>
+              <option value="">{t('reportsPage.allCategories')}</option>
               {categories.map(category => (
                 <option key={category} value={category}>{category}</option>
               ))}
@@ -132,24 +138,24 @@ const AllReportsPage = () => {
               onChange={(e) => setSelectedLocation(e.target.value)}
               className="px-3 py-1 border border-[#4A3728]/30 rounded bg-white text-[#4A3728] text-xs md:text-sm"
             >
-              <option value="">All Locations</option>
+              <option value="">{t('reportsPage.allLocations')}</option>
               {locations.map(location => (
                 <option key={location} value={location}>{location}</option>
               ))}
             </select>
 
             <button className="flex items-center justify-center gap-1 px-3 py-1 border border-[#4A3728]/30 rounded bg-white text-[#4A3728] text-xs w-full md:w-auto">
-              Filter Reports <Filter size={14} />
+              {t('reportsPage.filterButton')} <Filter size={14} />
             </button>
           </div>
 
           {/* HEADER */}
           <div className="mb-4">
             <h2 className="text-base md:text-xl font-semibold text-[#4A3728]">
-              All Reports
+              {t('reportsPage.pageTitle')}
             </h2>
             <p className="text-[#4A3728]/70 text-xs md:text-sm">
-              View all reported issues across the platform
+              {t('reportsPage.pageSubtitle')}
             </p>
           </div>
 
@@ -157,11 +163,11 @@ const AllReportsPage = () => {
           <div className="bg-white border border-[#4A3728]/10 rounded-md overflow-hidden relative">
             <div ref={tableContainerRef} className="overflow-x-auto">
               {loading ? (
-              <div className="p-4 text-sm text-gray-500">Loading reports...</div>
+              <div className="p-4 text-sm text-gray-500">{t('reportsPage.loading')}</div>
             ) : error ? (
-              <div className="p-4 text-sm text-red-500">{error}</div>
+              <div className="p-4 text-sm text-red-500">{error || t('reportsPage.errorFallback')}</div>
             ) : filteredReports.length === 0 ? (
-              <div className="p-4 text-sm text-gray-500">No reports found matching your filters.</div>
+              <div className="p-4 text-sm text-gray-500">{t('reportsPage.noReports')}</div>
             ) : (
               <Table
                 columns={columns}
@@ -175,7 +181,7 @@ const AllReportsPage = () => {
               type="button"
               onClick={scrollTableRight}
               className="md:hidden absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#4A3728]/20 bg-white text-[#4A3728] shadow-sm"
-              aria-label="Scroll table right"
+              aria-label={t('reportsPage.scrollRight')}
             >
               →
             </button>

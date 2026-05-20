@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import CitizenDashboardLayout from '../CitizenDashboardLayout';
 import { Search, Filter } from 'lucide-react';
 import { privateApi } from '../../auth/services/authService';
+import Table from '../../../components/ui/Table';
 
 interface Report {
   id: string;
@@ -26,6 +27,27 @@ const statusColor = (status: string) => {
 const MyReportsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  const columns = [
+    { header: t('reportsPage.tableHeaders.issueId'), key: 'issue_number' },
+    { header: t('reportsPage.tableHeaders.category'), key: 'category_name' },
+    { header: t('reportsPage.tableHeaders.location'), key: 'location_address' },
+    {
+      header: t('reportsPage.tableHeaders.status'),
+      key: 'status',
+      render: (report: Report) => (
+        <span className={`font-medium whitespace-nowrap ${statusColor(report.status)}`}>
+          {report.status_display || report.status}
+        </span>
+      )
+    },
+    {
+      header: t('reportsPage.tableHeaders.date'),
+      key: 'created_at',
+      render: (report: Report) => new Date(report.created_at).toLocaleDateString()
+    }
+  ];
+
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,44 +119,11 @@ const MyReportsPage = () => {
             ) : reports.length === 0 ? (
               <div className="p-4 text-sm text-gray-500">{t('reportsPage.noReports')}</div>
             ) : (
-              <table className="w-full text-left text-[10px] md:text-sm">
-                <thead>
-                  <tr className="text-[#4A3728] font-semibold border-b border-[#4A3728]/20">
-                    <th className="py-2 px-1">{t('reportsPage.tableHeaders.issueId')}</th>
-                    <th className="py-2 px-1">{t('reportsPage.tableHeaders.category')}</th>
-                    <th className="py-2 px-1">{t('reportsPage.tableHeaders.location')}</th>
-                    <th className="py-2 px-1">{t('reportsPage.tableHeaders.status')}</th>
-                    <th className="py-2 px-1">{t('reportsPage.tableHeaders.date')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reports.map((report) => (
-                    <tr
-                      key={report.id}
-                      className="border-b border-[#4A3728]/10 cursor-pointer hover:bg-[#F8F5F2]"
-                      onClick={() => navigate(`/reports/${report.id}`)}
-                      onKeyDown={(e) => e.key === 'Enter' && navigate(`/reports/${report.id}`)}
-                      tabIndex={0}
-                    >
-                      <td className="py-2 px-1 text-[#4A3728] whitespace-nowrap">
-                        {report.issue_number}
-                      </td>
-                      <td className="py-2 px-1 text-[#4A3728] whitespace-nowrap">
-                        {report.category_name}
-                      </td>
-                      <td className="py-2 px-1 text-[#4A3728] whitespace-nowrap">
-                        {report.location_address}
-                      </td>
-                      <td className={`py-2 px-1 font-medium whitespace-nowrap ${statusColor(report.status)}`}>
-                        {report.status_display || report.status}
-                      </td>
-                      <td className="py-2 px-1 text-[#4A3728] whitespace-nowrap">
-                        {new Date(report.created_at).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <Table
+                columns={columns}
+                data={reports}
+                onRowClick={(report) => navigate(`/reports/${report.id}`)}
+              />
             )}
           </div>
 
