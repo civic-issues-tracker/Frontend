@@ -135,6 +135,40 @@
     "language": {
       "title": "Language"
     }
+  },
+  "report": {
+    "subtitle": "Issue Reporting Portal",
+    "loading": "Loading...",
+    "fetchingAddress": "Fetching address...",
+    "mapHint": "Click Map to Pin Location",
+    "labels": {
+      "category": "Category",
+      "subcategory": "Sub Category",
+      "location": "Location",
+      "description": "Detailed Description",
+      "photoProof": "Photo Proof"
+    },
+    "placeholders": {
+      "selectCategory": "Select Category",
+      "selectDetail": "Select Detail",
+      "locating": "Locating...",
+      "locationInput": "Type area or click button to use your current location...",
+      "description": "Tell us what's happening...",
+      "uploadEvidence": "Upload Photo Evidence"
+    },
+    "buttons": {
+      "submit": "Submit Report"
+    },
+    "toasts": {
+      "photoProofRequired": "Please upload at least one photo proof.",
+      "submitSuccess": "Report submitted successfully!",
+      "submitFailed": "Failed to submit report."
+    },
+    "errors": {
+      "descriptionMin": "Description must be at least 10 characters",
+      "locationRequired": "Location is required",
+      "validLocation": "Please select a valid location",
+      "categoryRequired": "Category is required"
+    }
   }
 }
-

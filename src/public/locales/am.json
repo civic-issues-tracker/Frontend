@@ -9,7 +9,7 @@
       "local": "የአካባቢ ሪፖርቶች"
     },
     "profile": {
-      "settings": "የመገለጫ ቅንብሮች",
+      "settings": "المገለጫ ቅንብሮች",
       "logout": "ውጣ",
       "signOut": "ውጣ",
       "signIn": "ግባ"
@@ -134,6 +134,51 @@
     },
     "language": {
       "title": "ቋንቋ"
+    }
+  },
+  "hero_footer_variant": {
+    "title": "የመሠረተ ልማት ችግሮችን ሪፖርት ያድርጉ እና ይጠግኑ",
+    "titleHighlight": "በጋራ",
+    "description": "የተሻለ ሰፈር ለመገንባት የበኩሎን አስተዋጽኦ ያድርጉ。",
+    "buttons": {
+      "report": "ሪፖርት አቅርብ",
+      "locating": "አካባቢ በመፈለግ ላይ...",
+      "useLocation": "ያሉበትን አካባቢ ይጠቀሙ"
+    }
+  },
+  "report": {
+    "subtitle": "የችግሮች ሪፖርት ማቅረቢያ ፖርታል",
+    "loading": "በመጫን ላይ...",
+    "fetchingAddress": "አድራሻ በመፈለግ ላይ...",
+    "mapHint": "አካባቢውን ምልክት ለማድረግ ካርታውን ይጫኑ",
+    "labels": {
+      "category": "ዋና ክፍል (Category)",
+      "subcategory": "ንዑስ ክፍል (Sub Category)",
+      "location": "አካባቢ (Location)",
+      "description": "ዝርዝር መግለጫ",
+      "photoProof": "የፎቶ ማስረጃ"
+    },
+    "placeholders": {
+      "selectCategory": "ዋና ክፍል ይምረጡ",
+      "selectDetail": "ዝርዝር መረጃ ይምረጡ",
+      "locating": "አካባቢ በመፈለግ ላይ...",
+      "locationInput": "የአካባቢ ስም ይጻፉ ወይም ያሉበትን ቦታ ለመጠቀም ምልክቱን ይጫኑ...",
+      "description": "ምን እየተፈጠረ እንዳለ ዝርዝር መረጃ እዚህ ይጻፉ...",
+      "uploadEvidence": "የፎቶ ማስረጃዎችን እዚህ ይጫኑ"
+    },
+    "buttons": {
+      "submit": "ሪፖርቱን ላክ"
+    },
+    "toasts": {
+      "photoProofRequired": "እባክዎ ቢያንስ አንድ የፎቶ ማስረጃ ያያይዙ።",
+      "submitSuccess": "ሪፖርቱ በተሳካ ሁኔታ ተልኳል!",
+      "submitFailed": "ሪፖርቱን መላክ አልተቻለም። እባክዎ እንደገና ይሞክሩ።"
+    },
+    "errors": {
+      "descriptionMin": "መግለጫው ቢያንስ ከ10 ፊደላት በላይ መሆን አለበት",
+      "locationRequired": "የችግሩ አካባቢ መሞላት አለበት",
+      "validLocation": "እባክዎ ትክክለኛ አካባቢ ይምረጡ",
+      "categoryRequired": "ዋና ክፍል መምረጥ ግዴታ ነው"
     }
   }
 }

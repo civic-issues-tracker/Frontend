@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { useTranslation } from 'react-i18next'; // Added
+import { useTranslation } from 'react-i18next'; 
 import 'leaflet/dist/leaflet.css';
 
 const createLocationIcon = (color: string, isUser: boolean = false) => {
@@ -66,7 +66,7 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
     const RecenterMap = ({ lat, lng }: { lat: number, lng: number }) => {
   const map = useMap();
   useEffect(() => {
-    map.setView([lat, lng], 15); // Zooms into the selected area
+    map.setView([lat, lng], 15); 
   }, [lat, lng, map]);
   return null;
 };
@@ -79,7 +79,6 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
         className="h-full w-full z-0"
         scrollWheelZoom={true}
       >
-        {/* Map tiles are configured via VITE_MAP_TILE_URL in .env */}
         <TileLayer
           url={import.meta.env.VITE_MAP_TILE_URL}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
