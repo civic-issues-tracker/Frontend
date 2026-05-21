@@ -26,8 +26,8 @@ const statusColor = (status: string) => {
 };
 
 const MyReportsPage = () => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,6 +86,16 @@ const MyReportsPage = () => {
       render: (report: Report) => report.created_at ? new Date(report.created_at).toLocaleDateString() : ''
     }
   ];
+
+  // const [reports, setReports] = useState<Report[]>([]);
+  // const [loading, setLoading] = useState(true);
+  // const [error, setError] = useState<string | null>(null);
+  // const tableContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // const scrollTableRight = () => {
+  //   if (!tableContainerRef.current) return;
+  //   tableContainerRef.current.scrollBy({ left: 240, behavior: 'smooth' });
+  // };
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -193,7 +203,6 @@ const MyReportsPage = () => {
             →
           </button>
         </div>
-
       </div>
     </CitizenDashboardLayout>
   );

@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents, useMap } from 'react-leaflet';
+import React from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { useTranslation } from 'react-i18next'; 
+// import { useMap } from 'react-leaflet';                
 import 'leaflet/dist/leaflet.css';
 
 const createLocationIcon = (color: string, isUser: boolean = false) => {
@@ -63,13 +64,13 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
     ? [selectedLocation.lat, selectedLocation.lng] 
     : defaultCenter;
 
-    const RecenterMap = ({ lat, lng }: { lat: number, lng: number }) => {
-  const map = useMap();
-  useEffect(() => {
-    map.setView([lat, lng], 15); 
-  }, [lat, lng, map]);
-  return null;
-};
+//   const RecenterMap = ({ lat, lng }: { lat: number, lng: number }) => {
+//   const map = useMap();
+//   useEffect(() => {
+//     map.setView([lat, lng], 15); 
+//   }, [lat, lng, map]);
+//   return null;
+// };
 
   return (
     <div className="h-full w-full rounded-3xl overflow-hidden border border-secondary/10 shadow-lg relative group">
@@ -80,28 +81,25 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
         scrollWheelZoom={true}
       >
         <TileLayer
-          url={import.meta.env.VITE_MAP_TILE_URL}
+          url={import.meta.env.VITE_MAP_TILE_URL || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 
         <MapEvents onLocationSelect={onLocationSelect} />
 
         {selectedLocation && (
-          <>
-            <RecenterMap lat={selectedLocation.lat} lng={selectedLocation.lng} />
-            <Marker 
-              position={[selectedLocation.lat, selectedLocation.lng]} 
-              icon={createLocationIcon('#3b82f6', true)}
-            >
-              <Tooltip direction="top" offset={[0, -30]} opacity={1} permanent>
-                <div className="p-1">
-                  <span className="text-[10px] uppercase font-black text-secondary">
-                    {t('map.selectedLocation')}
-                  </span>
-                </div>
-              </Tooltip>
-            </Marker>
-          </>
+          <Marker 
+            position={[selectedLocation.lat, selectedLocation.lng]} 
+            icon={createLocationIcon('#3b82f6', true)}
+          >
+            <Tooltip direction="top" offset={[0, -30]} opacity={1} permanent>
+              <div className="p-1">
+                <span className="text-[10px] uppercase font-black text-secondary">
+                  {t('map.selectedLocation')}
+                </span>
+              </div>
+            </Tooltip>
+          </Marker>
         )}
 
         {reports
@@ -117,8 +115,9 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
                     {t(report.title)}
                   </h4>
                   <div className="mt-2 flex items-center gap-1.5">
-                    <div
-                      className={`w-2 h-2 rounded-full ${report.status === 'submitted' ? 'bg-[#ef4444]' : report.status === 'under_review' ? 'bg-[#f59e0b]' : report.status === 'in_progress' ? 'bg-[#3b82f6]' : report.status === 'resolved' ? 'bg-[#22c55e]' : 'bg-[#94a3b8]'}`}
+                    <div 
+                      className="w-2 h-2 rounded-full" 
+                      style={{ backgroundColor: STATUS_COLORS[report.status] }}
                     />
                     <span className="text-[10px] uppercase font-black tracking-wider text-secondary/60">
                       {t(`reports.status.${report.status}`)}

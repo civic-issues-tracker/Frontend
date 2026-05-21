@@ -150,8 +150,8 @@ export const authService = {
     return response.data;
   },
 
-  updateProfile: async (data: { full_name?: string; phone?: string; email?: string }) => {
-    const response = await privateApi.patch('/auth/profile/', data);
+  updateProfile: async (data: { full_name?: string; phone?: string; email?: string; current_password?: string; new_password?: string; confirm_password?: string }) => {
+    const response = await privateApi.post('/auth/profile/update/', data);
     return response.data;
   },
 

@@ -60,7 +60,17 @@
     "title": "Recent Reports",
     "subtitle": "Live updates from the streets of Addis.",
     "viewAll": "View All Reports",
-    "timeAgo": "2H AGO",
+    "viewDetailsAria": "View details for this issue",
+    "loading": "Loading recent reports...",
+    "error": "Failed to load recent reports.",
+    "noReports": "No recent reports available.",
+    "dayAgo": "{{count}} day ago",
+    "daysAgo": "{{count}} days ago",
+    "hourAgo": "{{count}} hour ago",
+    "hoursAgo": "{{count}} hours ago",
+    "minuteAgo": "{{count}} minute ago",
+    "minutesAgo": "{{count}} minutes ago",
+    "justNow": "Just now",
     "near": "Near",
     "viewDetails": "View Details"
   },
@@ -170,5 +180,99 @@
       "validLocation": "Please select a valid location",
       "categoryRequired": "Category is required"
     }
+  },
+
+  "profilePage": {
+    "title": "Your Profile",
+    "subtitle": "Update your account details and stay connected.",
+    "sectionTitle": "Profile Details",
+    "sectionDescription": "Manage your contact information for official notifications and report tracking.",
+    "labels": {
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "phone": "Phone Number"
+      ,"currentPassword": "Current Password"
+      ,"newPassword": "New Password"
+      ,"confirmPassword": "Confirm Password"
+    },
+    "placeholders": {
+      "fullName": "Enter your full name",
+      "email": "Enter your email address"
+      ,"currentPassword": "Enter your current password"
+      ,"newPassword": "Enter a new password"
+      ,"confirmPassword": "Confirm the new password"
+    },
+    "phoneLockTitle": "Phone number cannot be changed",
+    "buttons": {
+      "editProfile": "Edit Profile",
+      "cancel": "Cancel",
+      "saveUpdates": "Save Updates",
+      "saving": "Saving..."
+    },
+    "messages": {
+      "updateSuccess": "Profile updated successfully!",
+      "updateError": "Failed to update profile. Please try again.",
+      "currentPasswordRequired": "Current password is required to change your password.",
+      "passwordMismatch": "New passwords do not match.",
+      "noChanges": "No changes detected. Update at least one field before saving.",
+      "emailVerifyLinkTitle": "Email verification link generated:",
+      "emailUpdateNote": "Changing email will send a verification link to the new address.",
+      "emailUpdateDisabled": "Email updates are temporarily unavailable. Please try again later."
+    },
+    "loading": {
+      "title": "Loading your profile...",
+      "subtitle": "Please wait while we fetch your account details."
+    }
+  },
+  "reportsPage": {
+    "pageTitle": " Reports",
+    "pageSubtitle": "Track the status and history of issues you've reported.",
+    "searchPlaceholder": "Search your reports...",
+    "allCategories": "All Categories",
+    "allLocations": "All Locations",
+    "filterButton": "Filter",
+    "loading": "Loading reports...",
+    "noReports": "No reports found.",
+    "errorFallback": "Unable to load your reports. Please try again.",
+    "scrollRight": "Scroll table right",
+    "tableHeaders": {
+      "issueId": "Issue #",
+      "category": "Category",
+      "location": "Location",
+      "status": "Status",
+      "date": "Date"
+    }
+  },
+  "issueDetailPage": {
+    "backToReports": "Back to my reports",
+    "pageTitle": "Issue Detail",
+    "issueId": "Issue ID",
+    "category": "Category",
+    "priority": "Priority",
+    "status": "Status",
+    "submitted": "Submitted",
+    "description": "Description",
+    "statusTimeline": "Status Timeline",
+    "statusTimelineSubtitle": "Track the progress of your report",
+    "noTimeline": "No timeline history available.",
+    "issuePhoto": "Issue Photo",
+    "issuePhotoAlt": "Issue photo",
+    "reopenIssue": "Reopen Issue",
+    "noDescription": "No description available.",
+    "loading": "Loading issue details...",
+    "errorFallback": "Unable to load issue detail. Please try again.",
+    "notFound": "Issue not found."
+  },
+  "dashboardCitizen": {
+    "portalTitle": "Citizen Portal",
+    "officialAccess": "Official Access",
+    "userFallbackName": "Citizen User",
+    "userFallbackEmail": "user@example.com",
+    "links": {
+      "profile": "Profile",
+      "reports": "My Reports",
+      "settings": "Settings"
+    },
+    "logout": "Logout Account"
   }
 }
