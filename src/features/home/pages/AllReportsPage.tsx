@@ -160,7 +160,7 @@ const AllReportsPage = () => {
           </div>
 
           {/* TABLE */}
-          <div className="bg-white border border-[#4A3728]/10 rounded-md overflow-hidden relative">
+          <div className="bg-white border border-[#4A3728]/10 rounded-md overflow-hidden relative overflow-x-auto">
             <div ref={tableContainerRef} className="overflow-x-auto">
               {loading ? (
               <div className="p-4 text-sm text-gray-500">{t('reportsPage.loading')}</div>
