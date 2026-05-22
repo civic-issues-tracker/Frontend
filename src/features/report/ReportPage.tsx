@@ -6,7 +6,6 @@ import { IoLocationSharp, IoCloudUploadOutline, IoCloseCircle } from "react-icon
 import IssueMapPicker from './components/IssueMapPicker';
 import { privateApi } from '../../features/auth/services/authService';
 import { categoryApi } from '../../features/auth/services/CategorySevice';
-import { subcategoryApi } from '../../features/auth/services/subcategoryService';
 import { useAuth } from '../../hooks/useAuth';
 import { useGeoLocation } from '../../hooks/useGeolocation';
 import { useTranslation } from 'react-i18next'; 
@@ -44,7 +43,7 @@ const ReportPage: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [allSubcategories, setAllSubcategories] = useState<any[]>([]);
+  // const [allSubcategories, setAllSubcategories] = useState<any[]>([]);
   const [fetchingCats, setFetchingCats] = useState(true);
   const [previewUrl, setPreviewUrl] = useState<string[]>([]);
   const [selectedMapPos, setSelectedMapPos] = useState<{ lat: number; lng: number } | null>(null);
@@ -76,24 +75,24 @@ const ReportPage: React.FC = () => {
   }, [selectedCategoryId, setValue]);
 
   // Fetch the subcategories list on mount
-  useEffect(() => {
-    const fetchSubData = async () => {
-      try {
-        const data = await subcategoryApi.getAll();
-        const cleanList = data.results || data;
-        setAllSubcategories(cleanList);
-      } catch (error) {
-        console.error("Failed to load subcategories for form:", error);
-      }
-    };
-    fetchSubData();
-  }, []);
+  // useEffect(() => {
+  //   const fetchSubData = async () => {
+  //     try {
+  //       const data = await subcategoryApi.getAll();
+  //       const cleanList = data.results || data;
+  //       setAllSubcategories(cleanList);
+  //     } catch (error) {
+  //       console.error("Failed to load subcategories for form:", error);
+  //     }
+  //   };
+  //   fetchSubData();
+  // }, []);
 
   // Compute filtered subcategories that belong to the active category ID
-  const visibleSubcategories = allSubcategories.filter(sub => {
-    return String(sub.category) === String(selectedCategoryId) || 
-           String(sub.category_id) === String(selectedCategoryId);
-  });
+  // const visibleSubcategories = allSubcategories.filter(sub => {
+  //   return String(sub.category) === String(selectedCategoryId) || 
+  //          String(sub.category_id) === String(selectedCategoryId);
+  // });
 
   // LOCATION SEARCH LOGIC
   useEffect(() => {
@@ -188,10 +187,9 @@ const ReportPage: React.FC = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const [cats, subs] = await Promise.all([categoryApi.getAll(), subcategoryApi.getAll()]);
+        const [cats ] = await Promise.all([categoryApi.getAll()]);
         const mergedData: Category[] = cats.map((cat: any) => ({
-          ...cat,
-          subcategories: subs.filter((sub: SubCategory) => String(sub.category_id) === String(cat.id))
+          ...cat
         }));
         setCategories(mergedData);
       } catch (error) {
@@ -238,7 +236,6 @@ const ReportPage: React.FC = () => {
       formData.append('location_lat', data.location_lat.toString());
       formData.append('location_long', data.location_long.toString());
       formData.append('category', data.category);
-      if (data.subcategory) formData.append('subcategory', data.subcategory);
 
       if (data.images && data.images.length > 0) {
         formData.append('image', data.images[0]);
@@ -268,17 +265,17 @@ const ReportPage: React.FC = () => {
         </header>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="w-full">
             <div className="flex flex-col gap-2">
               <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">{t(`${'report.labels.category'}`)}</label>
-              <select {...register("category")} className="bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 text-sm text-secondary outline-none">
+              <select {...register("category")} className="bg-primary/30 border border-secondary/10  rounded-2xl px-5 py-4 text-sm text-secondary outline-none">
                 <option value="" className="text-secondary ">{fetchingCats ? t(`${'report.loading'}`) : t(`${'report.placeholders.selectCategory'}`)}</option>
                 {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
               </select>
               {errors.category && <span className="text-[10px] text-red-500 ml-2 uppercase font-bold">{t(`${errors.category.message || ''}`)}</span>}
             </div>
 
-            <div className="relative w-full">
+            {/* <div className="relative w-full">
               <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">{t(`${'report.labels.subcategory'}`)}</label>
               <select 
                 {...register("subcategory")} 
@@ -292,7 +289,7 @@ const ReportPage: React.FC = () => {
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
           </div>
 
           <div className="flex flex-col gap-2 relative">
@@ -305,8 +302,13 @@ const ReportPage: React.FC = () => {
                 placeholder={isLocating ? t(`${'report.placeholders.locating'}`) : t(`${'report.placeholders.locationInput'}`)}
                 className="flex-1 bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 text-sm text-secondary outline-none"
               />
-              <button type="button" onClick={handleGpsClick} className="bg-secondary text-primary px-5 rounded-2xl hover:scale-95 transition-transform flex items-center justify-center">
-                <IoLocationSharp size={20} className={isLocating ? "animate-bounce" : ""} />
+              
+            </div>
+            <div className='flex flex-col gap-2 relative'>
+              <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">Current Location</label>
+              <button type="button" onClick={handleGpsClick} className="bg-primary/30 text-secondary/50 tracking-widest font-black border border-secondary/10 text-[13px] px-5 py-3 rounded-2xl hover:scale-95 transition-transform flex justify-start items-center outline-none "> 
+                <IoLocationSharp size={25} className={isLocating ? "animate-bounce" : ""} />
+                 <p className="text-[13px] pl-2">Click to Use Current Location</p>
               </button>
             </div>
             {errors.location_address && <span className="text-[10px] text-red-500 ml-2 uppercase font-bold">{t(`${errors.location_address.message || ''}`)}</span>}
@@ -365,8 +367,8 @@ const ReportPage: React.FC = () => {
         </form>
       </div>
 
-      <div className="w-full lg:w-1/2 flex-1 min-h-100 md:min-h-[500px] lg:min-h-full bg-secondary/5 rounded-[2.5rem] overflow-hidden border border-secondary/5 relative shadow-inner">
-        <div className="absolute top-8 left-8 z-[50] bg-tertiary/80 backdrop-blur-xl px-5 py-3 rounded-full border border-secondary/5">
+      <div className="w-full lg:w-1/2 flex-1 min-h-100 md:min-h-125 lg:min-h-full bg-secondary/5 rounded-[2.5rem] overflow-hidden border border-secondary/5 relative shadow-inner">
+        <div className="absolute top-8 left-8 z-50 bg-tertiary/80 backdrop-blur-xl px-5 py-3 rounded-full border border-secondary/5">
           <div className="flex item-center gap-3">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <p className="font-body text-[9px] uppercase tracking-[0.2em] font-black text-secondary">
