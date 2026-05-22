@@ -15,14 +15,14 @@ interface TableProps<T> {
 
 const Table = <T extends { id?: string | number }>({ columns, data, onRowClick }: TableProps<T>) => {
   return (
-    <div className="w-full overflow-hidden rounded-4xl border border-secondary/5 bg-white shadow-sm">
-      <table className="w-full text-left border-collapse">
+    <div className="w-full rounded-4xl border border-secondary/5 bg-white shadow-sm">
+      <table className="min-w-[700px] text-left border-collapse">
         <thead className="bg-[#E5D3B3]/30">
           <tr>
             {columns.map((col, i) => (
               <th 
                 key={i} 
-                className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-secondary/60"
+                className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-secondary/60 sm:px-6 sm:py-5"
               >
                 {col.header}
               </th>
@@ -37,7 +37,7 @@ const Table = <T extends { id?: string | number }>({ columns, data, onRowClick }
               className="hover:bg-secondary/2 transition-colors cursor-pointer group"
             >
               {columns.map((col, colIndex) => (
-                <td key={colIndex} className="px-6 py-4 text-xs font-bold text-secondary/80">
+                <td key={colIndex} className="px-4 py-4 text-xs font-bold text-secondary/80 break-words sm:px-6">
                   {col.render ? col.render(item) : (item[col.key as keyof T] as React.ReactNode)}
                 </td>
               ))}

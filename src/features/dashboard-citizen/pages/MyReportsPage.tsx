@@ -123,7 +123,8 @@ const MyReportsPage = () => {
 
   return (
     <CitizenDashboardLayout>
-      <div className="flex flex-col h-full w-full p-3 md:p-12">
+      <div className="flex flex-col min-h-screen w-full p-3 md:p-12 bg-gray-50/20">
+        <div className="max-w-5xl mx-auto w-full">
 
         {/* SEARCH & FILTERS CONTROLS */}
         <div className="flex flex-col md:flex-row gap-2 mb-4">
@@ -203,6 +204,7 @@ const MyReportsPage = () => {
             →
           </button>
         </div>
+      </div>
       </div>
     </CitizenDashboardLayout>
   );
