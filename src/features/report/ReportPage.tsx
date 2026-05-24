@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { IoLocationSharp, IoCloudUploadOutline, IoCloseCircle } from "react-icons/io5";
 import IssueMapPicker from './components/IssueMapPicker';
 import { privateApi } from '../../features/auth/services/authService';
+import { subcategoryApi } from '../../features/auth/services/subcategoryService';
 import { categoryApi } from '../../features/auth/services/CategorySevice';
 import { useAuth } from '../../hooks/useAuth';
 import { useGeoLocation } from '../../hooks/useGeolocation';
@@ -43,7 +44,7 @@ const ReportPage: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  // const [allSubcategories, setAllSubcategories] = useState<any[]>([]);
+  const [allSubcategories, setAllSubcategories] = useState<any[]>([]);
   const [fetchingCats, setFetchingCats] = useState(true);
   const [previewUrl, setPreviewUrl] = useState<string[]>([]);
   const [selectedMapPos, setSelectedMapPos] = useState<{ lat: number; lng: number } | null>(null);
@@ -75,24 +76,24 @@ const ReportPage: React.FC = () => {
   }, [selectedCategoryId, setValue]);
 
   // Fetch the subcategories list on mount
-  // useEffect(() => {
-  //   const fetchSubData = async () => {
-  //     try {
-  //       const data = await subcategoryApi.getAll();
-  //       const cleanList = data.results || data;
-  //       setAllSubcategories(cleanList);
-  //     } catch (error) {
-  //       console.error("Failed to load subcategories for form:", error);
-  //     }
-  //   };
-  //   fetchSubData();
-  // }, []);
+  useEffect(() => {
+    const fetchSubData = async () => {
+      try {
+        const data = await subcategoryApi.getAll();
+        const cleanList = data.results || data;
+        setAllSubcategories(cleanList);
+      } catch (error) {
+        console.error("Failed to load subcategories for form:", error);
+      }
+    };
+    fetchSubData();
+  }, []);
 
   // Compute filtered subcategories that belong to the active category ID
-  // const visibleSubcategories = allSubcategories.filter(sub => {
-  //   return String(sub.category) === String(selectedCategoryId) || 
-  //          String(sub.category_id) === String(selectedCategoryId);
-  // });
+  const visibleSubcategories = allSubcategories.filter(sub => {
+    return String(sub.category) === String(selectedCategoryId) || 
+           String(sub.category_id) === String(selectedCategoryId);
+  });
 
   // LOCATION SEARCH LOGIC
   useEffect(() => {
@@ -236,6 +237,7 @@ const ReportPage: React.FC = () => {
       formData.append('location_lat', data.location_lat.toString());
       formData.append('location_long', data.location_long.toString());
       formData.append('category', data.category);
+      formData.append('subcategory', data.subcategory || '');
 
       if (data.images && data.images.length > 0) {
         formData.append('image', data.images[0]);
@@ -265,32 +267,35 @@ const ReportPage: React.FC = () => {
         </header>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="w-full">
-            <div className="flex flex-col gap-2">
-              <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">{t(`${'report.labels.category'}`)}</label>
-              <select {...register("category")} className="bg-primary/30 border border-secondary/10  rounded-2xl px-5 py-4 text-sm text-secondary outline-none">
-                <option value="" className="text-secondary ">{fetchingCats ? t(`${'report.loading'}`) : t(`${'report.placeholders.selectCategory'}`)}</option>
-                {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-              </select>
-              {errors.category && <span className="text-[10px] text-red-500 ml-2 uppercase font-bold">{t(`${errors.category.message || ''}`)}</span>}
-            </div>
+          
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
+              {/* Category Selection Container */}
+              <div className="flex flex-col gap-2 flex-1">
+                <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">{t(`${'report.labels.category'}`)}</label>
+                <select {...register("category")} className="bg-primary/30 border border-secondary/10  rounded-2xl px-5 py-4 text-sm text-secondary outline-none">
+                  <option value="" className="text-secondary ">{fetchingCats ? t(`${'report.loading'}`) : t(`${'report.placeholders.selectCategory'}`)}</option>
+                  {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                </select>
+                {errors.category && <span className="text-[10px] text-red-500 ml-2 uppercase font-bold">{t(`${errors.category.message || ''}`)}</span>}
+              </div>
 
-            {/* <div className="relative w-full">
-              <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">{t(`${'report.labels.subcategory'}`)}</label>
-              <select 
-                {...register("subcategory")} 
-                disabled={!selectedCategoryId} 
-                className="w-full bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 text-sm text-secondary outline-none disabled:opacity-20 cursor-pointer appearance-none transition-all focus:border-secondary/30"
-              >
-                <option value="">{t(`${'report.placeholders.selectDetail'}`)}</option>
-                {visibleSubcategories.map((sub) => (
-                  <option key={sub.id} value={sub.id} className="bg-white text-neutral-800">
-                    {sub.name}
-                  </option>
-                ))}
-              </select>
-            </div> */}
-          </div>
+              {/* Subcategory Selection Container */}
+              <div className="flex flex-col gap-2 flex-1 relative">
+                <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">{t(`${'report.labels.subcategory'}`)}</label>
+                <select 
+                  {...register("subcategory")} 
+                  disabled={!selectedCategoryId} 
+                  className="w-full bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 text-sm text-secondary outline-none disabled:opacity-20 cursor-pointer appearance-none transition-all focus:border-secondary/30"
+                >
+                  <option value="">{t(`${'report.placeholders.selectDetail'}`)}</option>
+                  {visibleSubcategories.map((sub) => (
+                    <option key={sub.id} value={sub.id} className="bg-white text-neutral-800">
+                      {sub.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
           <div className="flex flex-col gap-2 relative">
             <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">{t(`${'report.labels.location'}`)}</label>
