@@ -155,10 +155,11 @@ const ProfilePage = () => {
 
   return (
     <CitizenDashboardLayout>
-      <div className="min-h-screen bg-[#FDFBF9] font-sans flex flex-col pb-12">
+      {/* -mt-X pulls the entire inner page container up to erase the layout's top padding gap */}
+    <div className="min-h-screen bg-[#FDFBF9] font-sans flex flex-col pb-12 -mt-4 md:-mt-8">
 
-        {/* HEADER HERO BANNER (COMPACTED HEIGHT) */}
-        <div className="relative bg-gradient-to-r from-[#EAE0D5] to-[#C6AC8F] h-16 md:h-24 rounded-b-[16px] md:rounded-b-[24px] shadow-sm px-6 md:px-12 flex items-end">
+        {/* HEADER HERO BANNER (NOW PERFECTLY FLUSH TO THE TOP EDGE) */}
+      <div className="relative bg-gradient-to-r from-[#EAE0D5] to-[#C6AC8F] h-12 md:h-16 rounded-b-[16px] md:rounded-b-[24px] shadow-sm px-6 md:px-12 flex items-end">
           
           {/* PROFILE CARD INTEGRATION */}
           <div className="absolute left-6 md:left-12 -bottom-10 flex items-end gap-3 md:gap-4 z-10">
@@ -171,7 +172,7 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            <div className="mb-1">
+            <div className="-mt-2 md:-mt-4 mb-1">
               <h1 className="text-lg md:text-2xl font-bold tracking-tight text-[#26150D]">
                 {t('profilePage.title')}
               </h1>

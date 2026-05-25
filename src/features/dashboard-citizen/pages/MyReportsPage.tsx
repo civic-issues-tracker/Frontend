@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import CitizenDashboardLayout from '../CitizenDashboardLayout';
-import { Search, Filter } from 'lucide-react';
+import { Filter } from 'lucide-react';
+import Search from '../../../components/ui/Search';
 import { privateApi } from '../../auth/services/authService';
 import Table from '../../../components/ui/Table';
 
@@ -39,6 +40,14 @@ const MyReportsPage = () => {
   const [locations, setLocations] = useState<string[]>([]);
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
+  const searchOptions = useMemo(
+    () => [
+      ...categories.map((category) => ({ id: `category-${category}`, label: category, value: category })),
+      ...locations.map((location) => ({ id: `location-${location}`, label: location, value: location })),
+    ],
+    [categories, locations]
+  );
+
   const scrollTableRight = () => {
     if (!tableContainerRef.current) return;
     tableContainerRef.current.scrollBy({ left: 240, behavior: 'smooth' });
@@ -59,19 +68,19 @@ const MyReportsPage = () => {
     });
   }, [reports, searchTerm, selectedCategory, selectedLocation]);
 
-  // Dynamic translated table columns array configuration
+  // Dynamic translated table columns array configuration mapping to reportsPage.tableHeaders
   const columns = [
-    { header: t('table.columns.issueId'), key: 'issue_number' },
-    { header: t('table.columns.category'), key: 'category_name' },
-    { header: t('table.columns.location'), key: 'location_address' },
+    { header: t('reportsPage.tableHeaders.issueId'), key: 'issue_number' },
+    { header: t('reportsPage.tableHeaders.category'), key: 'category_name' },
+    { header: t('reportsPage.tableHeaders.location'), key: 'location_address' },
     {
-      header: t('table.columns.status'),
+      header: t('reportsPage.tableHeaders.status'),
       key: 'status',
       render: (report: Report) => {
         const normalizedStatus = report.status?.toLowerCase() || '';
         
-        // Dynamic map extractor matching standard database status translations safely via i18next schema keys
-        const translatedStatus = t(`statuses.${normalizedStatus}`, { defaultValue: report.status_display || report.status });
+        // Maps securely to the lowercase keys in your "reports.status" JSON block
+        const translatedStatus = t(`reports.status.${normalizedStatus}`, { defaultValue: report.status_display || report.status });
 
         return (
           <span className={`font-medium whitespace-nowrap ${statusColor(report.status)}`}>
@@ -81,21 +90,11 @@ const MyReportsPage = () => {
       }
     },
     {
-      header: t('table.columns.date'),
+      header: t('reportsPage.tableHeaders.date'),
       key: 'created_at',
       render: (report: Report) => report.created_at ? new Date(report.created_at).toLocaleDateString() : ''
     }
   ];
-
-  // const [reports, setReports] = useState<Report[]>([]);
-  // const [loading, setLoading] = useState(true);
-  // const [error, setError] = useState<string | null>(null);
-  // const tableContainerRef = useRef<HTMLDivElement | null>(null);
-
-  // const scrollTableRight = () => {
-  //   if (!tableContainerRef.current) return;
-  //   tableContainerRef.current.scrollBy({ left: 240, behavior: 'smooth' });
-  // };
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -112,7 +111,7 @@ const MyReportsPage = () => {
         setLocations(uniqueLocations);
       } catch (err: any) {
         console.error('Error fetching reports:', err);
-        setError(err?.response?.data?.detail || t('errors.fallback'));
+        setError(err?.response?.data?.detail || t('reportsPage.errorFallback'));
       } finally {
         setLoading(false);
       }
@@ -128,15 +127,16 @@ const MyReportsPage = () => {
 
         {/* SEARCH & FILTERS CONTROLS */}
         <div className="flex flex-col md:flex-row gap-2 mb-4">
-          <div className="flex items-center w-full border border-[#4A3728]/30 rounded-full px-3 py-1 bg-white">
-            <input
-              type="text"
-              placeholder={t('search.placeholder')}
+          <div className="flex-1 min-w-[250px]">
+            <Search
+              label={t('navbar.searchPlaceholder')}
+              placeholder={t('reportsPage.searchPlaceholder')}
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-xs md:text-sm text-[#4A3728]"
+              options={searchOptions}
+              onChange={setSearchTerm}
+              onSelect={(option) => setSearchTerm(option.value)}
+              className="w-full"
             />
-            <Search size={14} className="text-[#4A3728]" />
           </div>
 
           <select
@@ -144,7 +144,7 @@ const MyReportsPage = () => {
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="px-3 py-1 border border-[#4A3728]/30 rounded bg-white text-[#4A3728] text-xs md:text-sm cursor-pointer outline-none"
           >
-            <option value="">{t('filters.allCategories')}</option>
+            <option value="">{t('reportsPage.allCategories')}</option>
             {categories.map(category => (
               <option key={category} value={category}>{category}</option>
             ))}
@@ -155,24 +155,24 @@ const MyReportsPage = () => {
             onChange={(e) => setSelectedLocation(e.target.value)}
             className="px-3 py-1 border border-[#4A3728]/30 rounded bg-white text-[#4A3728] text-xs md:text-sm cursor-pointer outline-none"
           >
-            <option value="">{t('filters.allLocations')}</option>
+            <option value="">{t('reportsPage.allLocations')}</option>
             {locations.map(location => (
               <option key={location} value={location}>{location}</option>
             ))}
           </select>
 
           <button className="flex items-center justify-center gap-1 px-3 py-1 border border-[#4A3728]/30 rounded bg-white text-[#4A3728] text-xs w-full md:w-auto transition-colors hover:bg-neutral-50 active:bg-neutral-100">
-            {t('search.buttonText')} <Filter size={14} />
+            {t('reportsPage.filterButton')} <Filter size={14} />
           </button>
         </div>
 
         {/* PAGE SUB-HEADERS */}
         <div className="mb-4">
           <h2 className="text-base md:text-xl font-semibold text-[#4A3728]">
-            {t('header.title')}
+            {t('reportsPage.pageTitle')}
           </h2>
           <p className="text-[#4A3728]/70 text-xs md:text-sm">
-            {t('header.subtitle')}
+            {t('reportsPage.pageSubtitle')}
           </p>
         </div>
 
@@ -180,11 +180,11 @@ const MyReportsPage = () => {
         <div className="bg-white border border-[#4A3728]/10 rounded-md overflow-hidden relative shadow-xs">
           <div ref={tableContainerRef} className="overflow-x-auto">
             {loading ? (
-              <div className="p-4 text-sm text-gray-500 font-medium">{t('table.states.loading')}</div>
+              <div className="p-4 text-sm text-gray-500 font-medium">{t('reportsPage.loading')}</div>
             ) : error ? (
               <div className="p-4 text-sm text-red-500 font-medium">{error}</div>
             ) : filteredReports.length === 0 ? (
-              <div className="p-4 text-sm text-gray-500 font-medium">{t('table.states.noData')}</div>
+              <div className="p-4 text-sm text-gray-500 font-medium">{t('reportsPage.noReports')}</div>
             ) : (
               <Table
                 columns={columns}
@@ -199,7 +199,7 @@ const MyReportsPage = () => {
             type="button"
             onClick={scrollTableRight}
             className="md:hidden absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#4A3728]/20 bg-white text-[#4A3728] shadow-sm active:scale-95 transition-transform"
-            aria-label="Scroll table right"
+            aria-label={t('reportsPage.scrollRight') || "Scroll table right"}
           >
             →
           </button>

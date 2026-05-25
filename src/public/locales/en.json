@@ -15,6 +15,17 @@
       "signIn": "Sign In"
     }
   },
+  "accessibility": {
+    "toggleMenu": "Toggle menu"
+  },
+  "sidebar": {
+    "guestName": "Citizen User",
+    "guestEmail": "user@example.com",
+    "profile": "Profile",
+    "myReports": "My Reports",
+    "settings": "Settings",
+    "logout": "Logout Account"
+  },
   "hero": {
     "title": "Report & View Local",
     "titleHighlight": "Problems",
