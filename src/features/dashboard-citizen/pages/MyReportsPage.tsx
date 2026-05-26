@@ -11,6 +11,7 @@ interface Report {
   id: string;
   issue_number: string;
   category_name: string;
+  subcategory_name?: string;
   location_address: string;
   status: string;
   status_display: string;
@@ -34,18 +35,19 @@ const MyReportsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [categories, setCategories] = useState<string[]>([]);
+  const [subcategories, setSubcategories] = useState<string[]>([]);
   const [locations, setLocations] = useState<string[]>([]);
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
   const searchOptions = useMemo(
     () => [
       ...categories.map((category) => ({ id: `category-${category}`, label: category, value: category })),
+      ...subcategories.map((subcategory) => ({ id: `subcategory-${subcategory}`, label: subcategory, value: subcategory })),
       ...locations.map((location) => ({ id: `location-${location}`, label: location, value: location })),
     ],
-    [categories, locations]
+    [categories, subcategories, locations]
   );
 
   const scrollTableRight = () => {
@@ -53,20 +55,23 @@ const MyReportsPage = () => {
     tableContainerRef.current.scrollBy({ left: 240, behavior: 'smooth' });
   };
 
-  // Memoized Search & Selection filter grid parameters
+  // Memoized Search & Status filter grid parameters
   const filteredReports = useMemo(() => {
+    const normalizedSearch = searchTerm.toLowerCase();
+
     return reports.filter(report => {
       const matchesSearch = searchTerm === '' ||
-        report.issue_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.category_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.location_address?.toLowerCase().includes(searchTerm.toLowerCase());
+        report.issue_number?.toLowerCase().includes(normalizedSearch) ||
+        report.category_name?.toLowerCase().includes(normalizedSearch) ||
+        report.subcategory_name?.toLowerCase().includes(normalizedSearch) ||
+        report.location_address?.toLowerCase().includes(normalizedSearch) ||
+        report.status.toLowerCase().includes(normalizedSearch);
 
-      const matchesCategory = selectedCategory === '' || report.category_name === selectedCategory;
-      const matchesLocation = selectedLocation === '' || report.location_address === selectedLocation;
+      const matchesStatus = selectedStatus === '' || report.status.toLowerCase() === selectedStatus.toLowerCase();
 
-      return matchesSearch && matchesCategory && matchesLocation;
+      return matchesSearch && matchesStatus;
     });
-  }, [reports, searchTerm, selectedCategory, selectedLocation]);
+  }, [reports, searchTerm, selectedStatus]);
 
   // Dynamic translated table columns array configuration mapping to reportsPage.tableHeaders
   const columns = [
@@ -106,8 +111,10 @@ const MyReportsPage = () => {
         setReports(data);
 
         const uniqueCategories = Array.from(new Set(data.map((report: Report) => report.category_name).filter(Boolean))) as string[];
+        const uniqueSubcategories = Array.from(new Set(data.map((report: Report) => report.subcategory_name).filter(Boolean))) as string[];
         const uniqueLocations = Array.from(new Set(data.map((report: Report) => report.location_address).filter(Boolean))) as string[];
         setCategories(uniqueCategories);
+        setSubcategories(uniqueSubcategories);
         setLocations(uniqueLocations);
       } catch (err: any) {
         console.error('Error fetching reports:', err);
@@ -140,25 +147,14 @@ const MyReportsPage = () => {
           </div>
 
           <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
             className="px-3 py-1 border border-[#4A3728]/30 rounded bg-white text-[#4A3728] text-xs md:text-sm cursor-pointer outline-none"
           >
-            <option value="">{t('reportsPage.allCategories')}</option>
-            {categories.map(category => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
-
-          <select
-            value={selectedLocation}
-            onChange={(e) => setSelectedLocation(e.target.value)}
-            className="px-3 py-1 border border-[#4A3728]/30 rounded bg-white text-[#4A3728] text-xs md:text-sm cursor-pointer outline-none"
-          >
-            <option value="">{t('reportsPage.allLocations')}</option>
-            {locations.map(location => (
-              <option key={location} value={location}>{location}</option>
-            ))}
+            <option value="">{t('reportsPage.allStatuses', 'All Statuses')}</option>
+            <option value="submitted">{t('reports.status.submitted', 'Submitted')}</option>
+            <option value="in progress">{t('reports.status.in_progress', 'In Progress')}</option>
+            <option value="resolved">{t('reports.status.resolved', 'Resolved')}</option>
           </select>
 
           <button className="flex items-center justify-center gap-1 px-3 py-1 border border-[#4A3728]/30 rounded bg-white text-[#4A3728] text-xs w-full md:w-auto transition-colors hover:bg-neutral-50 active:bg-neutral-100">
