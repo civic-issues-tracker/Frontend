@@ -2,6 +2,7 @@ import { useLayoutEffect, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { privateApi } from '../auth/services/authService';
 
 interface StatusHistoryItem {
@@ -79,26 +80,45 @@ const IssueDetailPage = () => {
     const [issue, setIssue] = useState<IssueDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [reopenLoading, setReopenLoading] = useState(false);
+
+    const fetchIssue = async () => {
+        if (!id) return;
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await privateApi.get(`/issues/${id}/`);
+            setIssue(response.data);
+        } catch (err: any) {
+            console.error('Error loading issue detail:', err);
+            setError(err?.response?.data?.detail || t('issueDetailPage.errorFallback'));
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchIssue = async () => {
-            if (!id) return;
-            setLoading(true);
-            setError(null);
-
-            try {
-                const response = await privateApi.get(`/issues/${id}/`);
-                setIssue(response.data);
-            } catch (err: any) {
-                console.error('Error loading issue detail:', err);
-                setError(err?.response?.data?.detail || t('issueDetailPage.errorFallback'));
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchIssue();
     }, [id]);
+
+    const handleReopen = async () => {
+        if (!id || reopenLoading) return;
+
+        setReopenLoading(true);
+
+        try {
+            await privateApi.post(`/issues/${id}/reopen/`, {});
+            toast.success(t('issueDetailPage.reopenSuccess', 'Issue reopened successfully.'));
+            await fetchIssue();
+        } catch (err: any) {
+            console.error('Error reopening issue:', err);
+            const message = err?.response?.data?.detail || t('issueDetailPage.reopenError', 'Unable to reopen issue.');
+            toast.error(message);
+        } finally {
+            setReopenLoading(false);
+        }
+    };
 
     useLayoutEffect(() => {
         window.scrollTo(0, 0);
@@ -313,8 +333,18 @@ const IssueDetailPage = () => {
                                 </div>
 
                                 {/* Reopen button */}
-                                <button className="w-full rounded-full bg-[#4A3728] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#3b2d26]">
-                                    {t('issueDetailPage.reopenIssue')}
+                                <button
+                                    onClick={handleReopen}
+                                    disabled={reopenLoading || issue.status.toLowerCase() !== 'resolved'}
+                                    className={`w-full rounded-full px-4 py-2.5 text-xs font-semibold text-white transition ${
+                                        reopenLoading || issue.status.toLowerCase() !== 'resolved'
+                                            ? 'bg-[#A8A296] cursor-not-allowed'
+                                            : 'bg-[#4A3728] hover:bg-[#3b2d26]'
+                                    }`}
+                                >
+                                    {reopenLoading
+                                        ? t('issueDetailPage.reopening', 'Reopening...')
+                                        : t('issueDetailPage.reopenIssue')}
                                 </button>
                             </div>
                         </div>
