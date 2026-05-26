@@ -193,7 +193,7 @@ const LoginForm: React.FC = () => {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-50 group border flex items-center justify-center py-4  border-secondary rounded-full shadow-2xl hover:border-secondary transition-all disabled:opacity-50 mt-4"
+            className="w-full group border flex items-center justify-center py-4 border-secondary rounded-full shadow-2xl hover:border-secondary transition-all disabled:opacity-50 mt-4"
           >
             <span className="text-[10px] font-black uppercase tracking-[0.5em] text-secondary">
               {loading ? "Authenticating..." : "Access Account"}
