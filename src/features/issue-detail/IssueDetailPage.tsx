@@ -105,15 +105,33 @@ const IssueDetailPage = () => {
     const handleReopen = async () => {
         if (!id || reopenLoading) return;
 
+        // Provide a minimal reason if user doesn't want to enter one
+        const reasonInput = window.prompt(
+            t('issueDetailPage.reopenReasonPrompt', 'Please provide a reason for reopening this issue.'),
+            'Reopened by user'
+        );
+
+        if (reasonInput === null) return; // user cancelled
+        const reason = reasonInput.trim() || 'Reopened by user';
+
         setReopenLoading(true);
 
         try {
-            await privateApi.post(`/issues/${id}/reopen/`, {});
+            const payload = new FormData();
+            payload.append('reason', reason);
+
+            await privateApi.post(`/issues/${id}/reopen/`, payload, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
             toast.success(t('issueDetailPage.reopenSuccess', 'Issue reopened successfully.'));
             await fetchIssue();
         } catch (err: any) {
             console.error('Error reopening issue:', err);
-            const message = err?.response?.data?.detail || t('issueDetailPage.reopenError', 'Unable to reopen issue.');
+            const message =
+                err?.response?.data?.detail ||
+                (err?.response?.data?.reason ? err.response.data.reason : null) ||
+                t('issueDetailPage.reopenError', 'Unable to reopen issue.');
             toast.error(message);
         } finally {
             setReopenLoading(false);
