@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Filter } from 'lucide-react';
-import Search from './Search';
+
 import Table from './Table';
 
 export interface Report {
@@ -19,11 +18,11 @@ interface ReportListProps {
   reports: Report[];
   loading: boolean;
   error: string | null;
-  searchTerm: string;
-  selectedStatus: string;
-  searchOptions: Array<{ id: string; label: string; value: string }>;
-  onSearchTermChange: (value: string) => void;
-  onStatusChange: (value: string) => void;
+  searchTerm?: string;
+  selectedStatus?: string;
+  searchOptions?: Array<{ id: string; label: string; value: string }>;
+  onSearchTermChange?: (value: string) => void;
+  onStatusChange?: (value: string) => void;
   onRowClick: (report: Report) => void;
 }
 
@@ -42,11 +41,6 @@ const ReportList = ({
   reports,
   loading,
   error,
-  searchTerm,
-  selectedStatus,
-  searchOptions,
-  onSearchTermChange,
-  onStatusChange,
   onRowClick,
 }: ReportListProps) => {
   const { t } = useTranslation();
@@ -87,37 +81,6 @@ const ReportList = ({
 
   return (
     <div className="bg-white border border-[#4A3728]/10 rounded-md overflow-hidden relative shadow-xs">
-      <div className="flex flex-col md:flex-row gap-2 p-4">
-        <div className="flex-1 min-w-[250px]">
-          <Search
-            label={t('navbar.searchPlaceholder')}
-            placeholder={t('reportsPage.searchPlaceholder')}
-            value={searchTerm}
-            options={searchOptions}
-            onChange={onSearchTermChange}
-            onSelect={(option) => onSearchTermChange(option.value)}
-            className="w-full"
-          />
-        </div>
-
-        <select
-          value={selectedStatus}
-          onChange={(e) => onStatusChange(e.target.value)}
-          className="px-3 py-1 border border-[#4A3728]/30 rounded bg-white text-[#4A3728] text-xs md:text-sm cursor-pointer outline-none"
-        >
-          <option value="">{t('reportsPage.allStatuses', 'All Statuses')}</option>
-          <option value="submitted">{t('reports.status.submitted', 'Submitted')}</option>
-          <option value="in_progress">{t('reports.status.in_progress', 'In Progress')}</option>
-          <option value="resolved">{t('reports.status.resolved', 'Resolved')}</option>
-          <option value="rejected">{t('reports.status.rejected', 'Rejected')}</option>
-          <option value="pending_admin">{t('reports.status.pending_admin', 'Pending Admin')}</option>
-          <option value="escalated">{t('reports.status.escalated', 'Escalated')}</option>
-        </select>
-
-        <button className="flex items-center justify-center gap-1 px-3 py-1 border border-[#4A3728]/30 rounded bg-white text-[#4A3728] text-xs w-full md:w-auto transition-colors hover:bg-neutral-50 active:bg-neutral-100">
-          {t('reportsPage.filterButton')} <Filter size={14} />
-        </button>
-      </div>
 
       <div ref={tableContainerRef} className="overflow-x-auto">
         {loading ? (

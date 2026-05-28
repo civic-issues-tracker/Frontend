@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import CitizenDashboardLayout from '../CitizenDashboardLayout';
 import { privateApi } from '../../auth/services/authService';
 import ReportList from '../../../components/ui/ReportList';
+import Search from '../../../components/ui/Search';
 import type { Report } from '../../../components/ui/ReportList';
 
 const MyReportsPage = () => {
@@ -33,7 +34,16 @@ const MyReportsPage = () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await privateApi.get('/issues/?mine=true');
+
+        const params: Record<string, string> = {
+          mine: 'true',
+          ordering: '-created_at',
+        };
+
+        if (searchTerm.trim()) params.search = searchTerm.trim();
+        if (selectedStatus) params.status = selectedStatus;
+
+        const res = await privateApi.get('/issues/', { params });
         const data = Array.isArray(res.data) ? res.data : (res.data.results ?? []);
         setReports(data);
 
@@ -52,7 +62,7 @@ const MyReportsPage = () => {
     };
 
     fetchReports();
-  }, [t]);
+  }, [searchTerm, selectedStatus, t]);
 
   return (
     <CitizenDashboardLayout>
@@ -69,15 +79,33 @@ const MyReportsPage = () => {
           </p>
         </div>
 
+        <div className="mb-4">
+          <Search
+            label={t('navbar.searchPlaceholder')}
+            placeholder={t('reportsPage.searchPlaceholder')}
+            value={searchTerm}
+            options={searchOptions}
+            onChange={setSearchTerm}
+            onSelect={(option) => setSearchTerm(option.value)}
+            onSubmit={() => undefined}
+            className="w-full"
+            statusValue={selectedStatus}
+            statusOptions={[
+              { label: t('reports.status.submitted', 'Submitted'), value: 'submitted' },
+              { label: t('reports.status.in_progress', 'In Progress'), value: 'in_progress' },
+              { label: t('reports.status.resolved', 'Resolved'), value: 'resolved' },
+              { label: t('reports.status.rejected', 'Rejected'), value: 'rejected' },
+              { label: t('reports.status.pending_admin', 'Pending Admin'), value: 'pending_admin' },
+              { label: t('reports.status.escalated', 'Escalated'), value: 'escalated' },
+            ]}
+            onStatusChange={setSelectedStatus}
+          />
+        </div>
+
         <ReportList
           reports={reports}
           loading={loading}
           error={error}
-          searchTerm={searchTerm}
-          selectedStatus={selectedStatus}
-          searchOptions={searchOptions}
-          onSearchTermChange={setSearchTerm}
-          onStatusChange={setSelectedStatus}
           onRowClick={(report) => navigate(`/reports/${report.id}`)}
         />
       </div>

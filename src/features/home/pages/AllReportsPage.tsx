@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { publicApi } from '../../auth/services/authService';
 import ReportList from '../../../components/ui/ReportList';
+import Search from '../../../components/ui/Search';
 import type { Report } from '../../../components/ui/ReportList';
 
 const AllReportsPage = () => {
@@ -41,9 +42,11 @@ const AllReportsPage = () => {
 
         const res = await publicApi.get('/issues/', { params });
         const rawData = Array.isArray(res.data) ? res.data : (res.data.results ?? []);
-        setReports(rawData);
+        const visibleData = rawData.filter((report: Report) => report.status?.toLowerCase() !== 'rejected');
 
-        const uniqueCategories = Array.from(new Set(rawData.map((report: Report) => report.category_name).filter(Boolean))) as string[];
+        setReports(visibleData);
+
+        const uniqueCategories = Array.from(new Set(visibleData.map((report: Report) => report.category_name).filter(Boolean))) as string[];
         const uniqueSubcategories = Array.from(new Set(rawData.map((report: Report) => report.subcategory_name).filter(Boolean))) as string[];
         const uniqueLocations = Array.from(new Set(rawData.map((report: Report) => report.location_address).filter(Boolean))) as string[];
         setCategories(uniqueCategories);
@@ -77,15 +80,32 @@ const AllReportsPage = () => {
             </p>
           </div>
 
+          <div className="mb-4">
+            <Search
+              label={t('navbar.searchPlaceholder')}
+              placeholder={t('reportsPage.searchPlaceholder')}
+              value={searchTerm}
+              options={searchOptions}
+              onChange={setSearchTerm}
+              onSelect={(option) => setSearchTerm(option.value)}
+              onSubmit={() => undefined}
+              className="w-full"
+              statusValue={selectedStatus}
+              statusOptions={[
+                { label: t('reports.status.submitted', 'Submitted'), value: 'submitted' },
+                { label: t('reports.status.in_progress', 'In Progress'), value: 'in_progress' },
+                { label: t('reports.status.resolved', 'Resolved'), value: 'resolved' },
+                { label: t('reports.status.pending_admin', 'Pending Admin'), value: 'pending_admin' },
+                { label: t('reports.status.escalated', 'Escalated'), value: 'escalated' },
+              ]}
+              onStatusChange={setSelectedStatus}
+            />
+          </div>
+
           <ReportList
             reports={reports}
             loading={loading}
             error={error}
-            searchTerm={searchTerm}
-            selectedStatus={selectedStatus}
-            searchOptions={searchOptions}
-            onSearchTermChange={setSearchTerm}
-            onStatusChange={setSelectedStatus}
             onRowClick={(report) => navigate(`/reports/${report.id}`)}
           />
 
