@@ -387,7 +387,7 @@ const ReportPage: React.FC = () => {
               )}
               {previewUrl.length < 3 && (
                 <label className="w-full border-2 border-dashed border-secondary/10 rounded-2xl py-8 flex flex-col items-center justify-center gap-3 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-all">
-                  <input type="file" className="hidden" accept="image/*" required multiple onChange={(e) => {
+                  <input type="file" className="hidden required" accept="image/*" required multiple onChange={(e) => {
                     const combined = [...Array.from(watch("images") || []), ...Array.from(e.target.files || [])].slice(0, 3);
                     setValue("images", combined);
                   }} />
