@@ -6,9 +6,9 @@ import toast from 'react-hot-toast';
 import { privateApi } from '../auth/services/authService';
 
 interface StatusHistoryItem {
-    old: string;
-    new: string;
-    date: string;
+    old_status: string;
+    new_status: string;
+    changed_at: string;
     note: string | null;
 }
 
@@ -35,16 +35,21 @@ const priorityStyles = (priority: string) => {
     return 'bg-[#4A3728] text-white';
 };
 
+// Fixed: Case-insensitive status color matcher
 const statusColor = (status: string) => {
-    if (status === 'In Progress') return 'text-yellow-600';
-    if (status === 'Resolved') return 'text-green-700';
-    if (status === 'Submitted') return 'text-[#4A3728]';
-    if (status === 'Rejected') return 'text-red-600';
+    const normalized = status?.toLowerCase();
+    if (normalized === 'in progress' || normalized === 'in_progress') return 'text-yellow-600';
+    if (normalized === 'resolved') return 'text-green-700';
+    if (normalized === 'submitted') return 'text-[#4A3728]';
+    if (normalized === 'rejected') return 'text-red-600';
+    if (normalized === 'pending_admin' || normalized === 'pending admin') return 'text-violet-700';
+    if (normalized === 'escalated') return 'text-sky-700';
     return 'text-[#4A3728]';
 };
 
 const formatDate = (value: string, locale = 'en-US') => {
     try {
+        if (!value) return '';
         return new Date(value).toLocaleDateString(locale, {
             month: 'short',
             day: '2-digit',
@@ -59,15 +64,24 @@ const IssueDetailPage = () => {
     const { t, i18n } = useTranslation();
     const locale = i18n.language === 'am' ? 'am-ET' : 'en-US';
 
+    // Fixed: Made key mapping robust against variations in backend casing
     const normalizeStatusKey = (status: string) => {
+        if (!status) return 'submitted';
+        const normalized = status.toLowerCase().trim();
+        
         const map: Record<string, string> = {
-            Submitted: 'submitted',
-            'In Progress': 'in_progress',
-            Resolved: 'resolved',
-            Rejected: 'rejected',
-            'Under Review': 'under_review',
+            'submitted': 'submitted',
+            'in progress': 'in_progress',
+            'in_progress': 'in_progress',
+            'resolved': 'resolved',
+            'rejected': 'rejected',
+            'pending admin': 'pending_admin',
+            'pending_admin': 'pending_admin',
+            'escalated': 'escalated',
+            'under review': 'under_review',
+            'under_review': 'under_review',
         };
-        return map[status] || status.toLowerCase().replace(/\s+/g, '_');
+        return map[normalized] || normalized.replace(/\s+/g, '_');
     };
 
     const translateStatus = (status: string) => {
@@ -82,10 +96,12 @@ const IssueDetailPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [reopenLoading, setReopenLoading] = useState(false);
 
-    const fetchIssue = async () => {
+    const fetchIssue = async (showLoading = true) => {
         if (!id) return;
-        setLoading(true);
-        setError(null);
+        if (showLoading) {
+            setLoading(true);
+            setError(null);
+        }
 
         try {
             const response = await privateApi.get(`/issues/${id}/`);
@@ -94,7 +110,9 @@ const IssueDetailPage = () => {
             console.error('Error loading issue detail:', err);
             setError(err?.response?.data?.detail || t('issueDetailPage.errorFallback'));
         } finally {
-            setLoading(false);
+            if (showLoading) {
+                setLoading(false);
+            }
         }
     };
 
@@ -102,16 +120,25 @@ const IssueDetailPage = () => {
         fetchIssue();
     }, [id]);
 
+    useEffect(() => {
+        if (!id) return;
+
+        const intervalId = window.setInterval(() => {
+            fetchIssue(false);
+        }, 15000);
+
+        return () => window.clearInterval(intervalId);
+    }, [id]);
+
     const handleReopen = async () => {
         if (!id || reopenLoading) return;
 
-        // Provide a minimal reason if user doesn't want to enter one
         const reasonInput = window.prompt(
             t('issueDetailPage.reopenReasonPrompt', 'Please provide a reason for reopening this issue.'),
             'Reopened by user'
         );
 
-        if (reasonInput === null) return; // user cancelled
+        if (reasonInput === null) return; 
         const reason = reasonInput.trim() || 'Reopened by user';
 
         setReopenLoading(true);
@@ -149,22 +176,23 @@ const IssueDetailPage = () => {
                 date: formatDate(issue.created_at, locale),
                 note: '',
             },
-            ...(issue.status_history ?? []).map((entry) => ({
-                label: translateStatus(entry.new),
-                date: formatDate(entry.date, locale),
-                note: entry.note ?? '',
-            })),
+            ...(issue.status_history ?? [])
+                .slice()
+                .sort((a, b) => new Date(a.changed_at).getTime() - new Date(b.changed_at).getTime())
+                .map((entry) => ({
+                    label: translateStatus(entry.new_status),
+                    date: formatDate(entry.changed_at, locale),
+                    note: entry.note ?? '',
+                })),
         ]
         : [];
 
+    const isResolved = issue?.status?.toLowerCase() === 'resolved';
+
     return (
-        /* Added vertical spacing (pt-10 / md:pt-16) to ensure the container card sits cleanly below your navbar without overlapping */
         <div className="flex flex-col w-full px-4 pt-10 pb-6 md:px-8 md:pt-8 md:pb-8">
-            
-            {/* Main Container */}
             <div className="mx-auto w-full max-w-4xl rounded-2xl border border-[#4A3728]/20 bg-white p-4 shadow-sm md:p-6 relative">
                 
-                {/* Back Button integrated inside the white box */}
                 <div className="absolute top-4 left-4 md:top-6 md:left-6 z-10">
                     <Link
                         to="/reports"
@@ -185,7 +213,6 @@ const IssueDetailPage = () => {
                     </div>
                 ) : issue ? (
                     <>
-                        {/* Header Title Block */}
                         <div className="text-center mb-6 pt-4 md:pt-2">
                             <p className="text-[10px] uppercase tracking-[0.3em] text-[#4A3728]/60">
                                 {t('issueDetailPage.pageTitle')}
@@ -195,37 +222,34 @@ const IssueDetailPage = () => {
                             </h1>
                         </div>
 
-                        {/* Top info cards */}
                         <div className="grid gap-3 md:grid-cols-2 mb-3">
-                            {/* ID + Category */}
                             <div className="rounded-2xl border border-[#4A3728]/10 bg-[#FBF7F4] p-4">
-                                <div className="flex items-center justify-between gap-2 mb-2">
-                                    <span className="text-[10px] uppercase tracking-[0.2em] text-[#4A3728]/60">
-                                        {t('issueDetailPage.issueId')}
-                                    </span>
-                                    <span className="text-[10px] text-[#4A3728]/60">
-                                        {t('issueDetailPage.category')}
-                                    </span>
-                                </div>
-                                <div className="flex flex-col gap-1.5 text-xs text-[#4A3728]">
-                                    <div className="font-medium">{issue.issue_number}</div>
-                                    <div>
-                                        {issue.category_name}
-                                        {issue.subcategory_name ? ` • ${issue.subcategory_name}` : ''}
+                                <div className="grid gap-3 grid-cols-2 text-xs text-[#4A3728]">
+                                    <div className="space-y-2">
+                                        <div className="text-[10px] uppercase tracking-[0.2em] text-[#4A3728]/60">
+                                            {t('issueDetailPage.issueId')}
+                                        </div>
+                                        <div className="font-medium">{issue.issue_number}</div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="text-[10px] uppercase tracking-[0.2em] text-[#4A3728]/60">
+                                            {t('issueDetailPage.category')}
+                                        </div>
+                                        <div className="font-medium">
+                                            {issue.category_name}
+                                            {issue.subcategory_name ? ` • ${issue.subcategory_name}` : ''}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Priority + Status */}
                             <div className="rounded-2xl border border-[#4A3728]/10 bg-[#FBF7F4] p-4">
                                 <div className="grid gap-3 grid-cols-2">
                                     <div>
                                         <div className="text-[10px] uppercase tracking-[0.2em] text-[#4A3728]/60 mb-1.5">
                                             {t('issueDetailPage.priority')}
                                         </div>
-                                        <span
-                                            className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${priorityStyles(issue.priority)}`}
-                                        >
+                                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${priorityStyles(issue.priority)}`}>
                                             {issue.priority}
                                         </span>
                                     </div>
@@ -235,10 +259,7 @@ const IssueDetailPage = () => {
                                         </div>
                                         <span className={`font-medium text-xs ${statusColor(issue.status)}`}>
                                             {issue.status_display
-                                                ? t(
-                                                    `reports.status.${normalizeStatusKey(issue.status)}`,
-                                                    issue.status_display
-                                                )
+                                                ? t(`reports.status.${normalizeStatusKey(issue.status)}`, issue.status_display)
                                                 : translateStatus(issue.status)}
                                         </span>
                                     </div>
@@ -246,7 +267,6 @@ const IssueDetailPage = () => {
                             </div>
                         </div>
 
-                        {/* Submitted date + Location */}
                         <div className="rounded-2xl border border-[#4A3728]/10 bg-[#FBF7F4] p-4 mb-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -268,11 +288,8 @@ const IssueDetailPage = () => {
                             </div>
                         </div>
 
-                        {/* Main grid split */}
                         <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-                            {/* Left column */}
                             <div className="space-y-4">
-                                {/* Description */}
                                 <div className="rounded-2xl border border-[#4A3728]/10 bg-[#FBF7F4] p-4">
                                     <div className="text-xs font-semibold text-[#4A3728] mb-2">
                                         {t('issueDetailPage.description')}
@@ -282,7 +299,6 @@ const IssueDetailPage = () => {
                                     </p>
                                 </div>
 
-                                {/* Status Timeline */}
                                 <div className="rounded-2xl border border-[#4A3728]/10 bg-[#FBF7F4] p-4">
                                     <div className="mb-3 flex items-center justify-between">
                                         <div>
@@ -333,9 +349,7 @@ const IssueDetailPage = () => {
                                 </div>
                             </div>
 
-                            {/* Right column */}
                             <div className="space-y-4">
-                                {/* Issue Photo */}
                                 <div className="overflow-hidden rounded-2xl border border-[#4A3728]/10 bg-[#FBF7F4] p-4">
                                     <div className="mb-3 text-xs font-semibold text-[#4A3728]">
                                         {t('issueDetailPage.issuePhoto')}
@@ -350,12 +364,12 @@ const IssueDetailPage = () => {
                                     />
                                 </div>
 
-                                {/* Reopen button */}
+                                {/* Fixed Button Conditional Classes and Disabled State Flags */}
                                 <button
                                     onClick={handleReopen}
-                                    disabled={reopenLoading || issue.status.toLowerCase() !== 'resolved'}
+                                    disabled={reopenLoading || !isResolved}
                                     className={`w-full rounded-full px-4 py-2.5 text-xs font-semibold text-white transition ${
-                                        reopenLoading || issue.status.toLowerCase() !== 'resolved'
+                                        reopenLoading || !isResolved
                                             ? 'bg-[#A8A296] cursor-not-allowed'
                                             : 'bg-[#4A3728] hover:bg-[#3b2d26]'
                                     }`}

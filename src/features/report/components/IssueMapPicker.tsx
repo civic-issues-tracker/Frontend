@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import { useTranslation } from 'react-i18next'; 
-// import { useMap } from 'react-leaflet';                
+import { useTranslation } from 'react-i18next';
 import 'leaflet/dist/leaflet.css';
+import { publicApi } from '../../auth/services/authService';
 
 const createLocationIcon = (color: string, isUser: boolean = false) => {
   return L.divIcon({
@@ -17,7 +17,7 @@ const createLocationIcon = (color: string, isUser: boolean = false) => {
       </div>`,
     className: 'custom-location-icon',
     iconSize: [30, 30],
-    iconAnchor: [15, 30], 
+    iconAnchor: [15, 30],
     popupAnchor: [0, -30]
   });
 };
@@ -40,12 +40,16 @@ export interface Report {
 }
 
 interface MapProps {
-  reports: Report[];
+  reports?: Report[];
   onLocationSelect?: (lat: number, lng: number) => void;
   selectedLocation?: { lat: number; lng: number } | null;
 }
 
-const MapEvents = ({ onLocationSelect }: { onLocationSelect?: (lat: number, lng: number) => void }) => {
+const MapEvents = ({
+  onLocationSelect
+}: {
+  onLocationSelect?: (lat: number, lng: number) => void;
+}) => {
   useMapEvents({
     click(e) {
       if (onLocationSelect) {
@@ -53,46 +57,142 @@ const MapEvents = ({ onLocationSelect }: { onLocationSelect?: (lat: number, lng:
       }
     },
   });
+
   return null;
 };
 
-const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selectedLocation }) => {
-  const { t } = useTranslation(); 
-  const defaultCenter: [number, number] = [9.0192, 38.7525];
-  
-  const mapCenter: [number, number] = selectedLocation 
-    ? [selectedLocation.lat, selectedLocation.lng] 
-    : defaultCenter;
+const IssueMapPicker: React.FC<MapProps> = ({
+  reports = [],
+  onLocationSelect,
+  selectedLocation
+}) => {
+  const { t } = useTranslation();
+  const [backendReports, setBackendReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(false);
 
-//   const RecenterMap = ({ lat, lng }: { lat: number, lng: number }) => {
-//   const map = useMap();
-//   useEffect(() => {
-//     map.setView([lat, lng], 15); 
-//   }, [lat, lng, map]);
-//   return null;
-// };
+  const defaultCenter: [number, number] = [9.0192, 38.7525];
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const hasProvidedReports =
+      Array.isArray(reports) && reports.length > 0;
+
+    if (hasProvidedReports) {
+      setBackendReports(reports);
+
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const fetchReports = async () => {
+      try {
+        setLoading(true);
+
+        const response = await publicApi.get('/issues/');
+
+        const rawReports = Array.isArray(response.data)
+          ? response.data
+          : response.data?.results ?? [];
+
+        if (!isMounted) return;
+
+        const normalizedReports = rawReports
+          .filter(
+            (item: any) =>
+              Number.isFinite(Number(item?.location_lat)) &&
+              Number.isFinite(Number(item?.location_long))
+          )
+          .map((item: any) => ({
+            ...item,
+            location_lat: Number(item.location_lat),
+            location_long: Number(item.location_long),
+          })) as Report[];
+
+        setBackendReports(normalizedReports);
+      } catch (error) {
+        console.error(
+          'Failed to load issue reports for map:',
+          error
+        );
+
+        if (isMounted) {
+          setBackendReports([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchReports();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [reports]);
+
+  const mapReports = useMemo(() => {
+    if (Array.isArray(reports) && reports.length > 0) {
+      return reports;
+    }
+
+    return backendReports;
+  }, [backendReports, reports]);
+
+  const fallbackCenter = useMemo(() => {
+    const firstReport = mapReports.find(
+      (report) =>
+        Number.isFinite(report.location_lat) &&
+        Number.isFinite(report.location_long)
+    );
+
+    return firstReport
+      ? ([firstReport.location_lat, firstReport.location_long] as [
+          number,
+          number
+        ])
+      : defaultCenter;
+  }, [defaultCenter, mapReports]);
+
+  const mapCenter: [number, number] = selectedLocation
+    ? [selectedLocation.lat, selectedLocation.lng]
+    : fallbackCenter;
 
   return (
     <div className="h-full w-full rounded-3xl overflow-hidden border border-secondary/10 shadow-lg relative group">
-      <MapContainer 
-        center={mapCenter} 
-        zoom={selectedLocation ? 15 : 13} 
+      <MapContainer
+        center={mapCenter}
+        zoom={selectedLocation ? 15 : 13}
         className="h-full w-full z-0"
         scrollWheelZoom={true}
       >
         <TileLayer
-          url={import.meta.env.VITE_MAP_TILE_URL || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
+          url={
+            import.meta.env.VITE_MAP_TILE_URL ||
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          }
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
 
         <MapEvents onLocationSelect={onLocationSelect} />
 
         {selectedLocation && (
-          <Marker 
-            position={[selectedLocation.lat, selectedLocation.lng]} 
+          <Marker
+            position={[
+              selectedLocation.lat,
+              selectedLocation.lng
+            ]}
             icon={createLocationIcon('#3b82f6', true)}
           >
-            <Tooltip direction="top" offset={[0, -30]} opacity={1} permanent>
+            <Tooltip
+              direction="top"
+              offset={[0, -30]}
+              opacity={1}
+              permanent
+            >
               <div className="p-1">
                 <span className="text-[10px] uppercase font-black text-secondary">
                   {t('map.selectedLocation')}
@@ -102,32 +202,55 @@ const IssueMapPicker: React.FC<MapProps> = ({ reports, onLocationSelect, selecte
           </Marker>
         )}
 
-        {reports
-          .map((report) => (
-            <Marker 
+        {mapReports.map((report) => {
+          const normalizedStatus = report.status
+            ?.toLowerCase()
+            .replace(/\s+/g, '_');
+
+          return (
+            <Marker
               key={report.id}
-              position={[report.location_lat, report.location_long]} 
-              icon={createLocationIcon(STATUS_COLORS[report.status] || '#000')}
+              position={[
+                report.location_lat,
+                report.location_long
+              ]}
+              icon={createLocationIcon(
+                STATUS_COLORS[normalizedStatus] || '#000'
+              )}
             >
               <Popup>
                 <div className="p-1 min-w-30">
                   <h4 className="font-header font-bold text-secondary text-sm leading-tight">
-                    {t(report.title)}
+                    {report.title}
                   </h4>
+
                   <div className="mt-2 flex items-center gap-1.5">
-                    <div 
-                      className="w-2 h-2 rounded-full" 
-                      style={{ backgroundColor: STATUS_COLORS[report.status] }}
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{
+                        backgroundColor:
+                          STATUS_COLORS[normalizedStatus]
+                      }}
                     />
+
                     <span className="text-[10px] uppercase font-black tracking-wider text-secondary/60">
-                      {t(`reports.status.${report.status}`)}
+                      {t(
+                        `reports.status.${normalizedStatus}`
+                      )}
                     </span>
                   </div>
                 </div>
               </Popup>
             </Marker>
-          ))}
+          );
+        })}
       </MapContainer>
+
+      {loading && (
+        <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl border border-secondary/10 text-[10px] font-black text-secondary uppercase tracking-widest shadow-xl">
+          Loading issues…
+        </div>
+      )}
 
       <div className="absolute bottom-4 left-4 z-10 bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl border border-secondary/10 text-[10px] font-black text-secondary uppercase tracking-widest shadow-xl">
         <div className="flex items-center gap-2">

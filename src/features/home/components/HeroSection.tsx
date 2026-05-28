@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { Button } from '../../../components/ui/Button'
 import { IoLocationSharp } from "react-icons/io5";
 import IssueMapPicker from '../../report/components/IssueMapPicker';
-import { mockReports } from '../../../mock/mockReports';
 import { useGeoLocation } from '../../../hooks/useGeolocation'; 
 import { useTranslation } from 'react-i18next';
 
@@ -42,10 +41,9 @@ const HeroSection: React.FC = () => {
 
         {/* Right Side: Map Component */}
         <div className='w-full lg:w-full min-h-100 h-125 lg:h-137.5 bg-slate-100 rounded-3xl overflow-hidden relative border-2 border-primary/20'>
-            <IssueMapPicker 
-              reports={mockReports} 
-              selectedLocation={location ? { lat: location.lat, lng: location.lng } : null} 
-            />        
+            <IssueMapPicker
+              selectedLocation={location ? { lat: location.lat, lng: location.lng } : null}
+            />
         </div>
         
       </div>
