@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 
 // ZOD SCHEMA - Passing key names directly to be processed dynamically by t() below
 const reportSchema = z.object({
+  title: z.string().min(3, "report.errors.titleMin || 'Title must be at least 3 characters'"),
   description: z.string().min(10, "report.errors.descriptionMin"),
   location_address: z.string().min(1, "report.errors.locationRequired"),
   location_lat: z.number().refine(val => val !== 0, "report.errors.validLocation"),
@@ -61,6 +62,7 @@ const ReportPage: React.FC = () => {
   } = useForm<ReportFormData>({
     resolver: zodResolver(reportSchema),
     defaultValues: {
+      title: "",
       location_lat: 0,
       location_long: 0
     }
@@ -232,6 +234,7 @@ const ReportPage: React.FC = () => {
     setLoading(true);
     try {
       const formData = new FormData();
+      formData.append('title', data.title);
       formData.append('description', data.description);
       formData.append('location_address', data.location_address);
       formData.append('location_lat', data.location_lat.toString());
@@ -240,9 +243,24 @@ const ReportPage: React.FC = () => {
       formData.append('subcategory', data.subcategory || '');
 
       if (data.images && data.images.length > 0) {
-        formData.append('image', data.images[0]);
-        Array.from(data.images as File[]).slice(1).forEach(file => formData.append('extra_images', file));
-      }
+      const mainFile = data.images[0];
+      const mainExt = mainFile.name.split('.').pop() || 'jpg';
+      const cleanMainFile = mainFile.name.length > 50 
+        ? new File([mainFile], `upload_${Date.now()}_0.${mainExt}`, { type: mainFile.type })
+        : mainFile;
+      
+      formData.append('image', cleanMainFile);
+
+      // Clean up extra images
+      Array.from(data.images as File[]).slice(1).forEach((file, index) => {
+        const ext = file.name.split('.').pop() || 'jpg';
+        const cleanFile = file.name.length > 50
+          ? new File([file], `upload_${Date.now()}_${index + 1}.${ext}`, { type: file.type })
+          : file;
+        
+        formData.append('extra_images', cleanFile);
+      });
+    }
 
       await privateApi.post('/issues/submit/', formData, {
         headers: {
@@ -267,17 +285,29 @@ const ReportPage: React.FC = () => {
         </header>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          
+            {/* Issue Title Input Container */}
+              <div className="flex flex-col gap-2">
+                <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">Issue Title</label>
+                <input 
+                  type="text" 
+                  {...register("title")} 
+                  placeholder="Provide a brief summary title for the incident..." 
+                  className="w-full bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 text-sm text-secondary outline-none" 
+                />
+                {errors.title && <span className="text-[10px] text-red-500 ml-2 uppercase font-bold">{t(`${errors.title.message || ''}`)}</span>}
+              </div>
             <div className="flex flex-col sm:flex-row gap-4 w-full">
+              
               {/* Category Selection Container */}
               <div className="flex flex-col gap-2 flex-1">
                 <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">{t(`${'report.labels.category'}`)}</label>
-                <select {...register("category")} className="bg-primary/30 border border-secondary/10  rounded-2xl px-5 py-4 text-sm text-secondary outline-none">
+                <select {...register("category")} className="bg-primary/30 border border-secondary/10   rounded-2xl px-5 py-4 text-sm text-secondary outline-none">
                   <option value="" className="text-secondary ">{fetchingCats ? t(`${'report.loading'}`) : t(`${'report.placeholders.selectCategory'}`)}</option>
                   {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
                 </select>
                 {errors.category && <span className="text-[10px] text-red-500 ml-2 uppercase font-bold">{t(`${errors.category.message || ''}`)}</span>}
               </div>
+
 
               {/* Subcategory Selection Container */}
               <div className="flex flex-col gap-2 flex-1 relative">
@@ -331,6 +361,8 @@ const ReportPage: React.FC = () => {
               </ul>
             )}
           </div>
+
+          
 
           <div className="flex flex-col gap-2">
             <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/40 ml-2">{t(`${'report.labels.description'}`)}</label>
