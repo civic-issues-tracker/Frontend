@@ -9,11 +9,22 @@
       "local": "የአካባቢ ሪፖርቶች"
     },
     "profile": {
-      "settings": "المገለጫ ቅንብሮች",
+      "settings": "الመገለጫ ቅንብሮች",
       "logout": "ውጣ",
       "signOut": "ውጣ",
       "signIn": "ግባ"
     }
+  },
+  "accessibility": {
+    "toggleMenu": "ማውጫውን ይቀይሩ"
+  },
+  "sidebar": {
+    "guestName": "የዜግነት ተጠቃሚ",
+    "guestEmail": "user@example.com",
+    "profile": "መገለጫ",
+    "myReports": "የእኔ ሪፖርቶች",
+    "settings": "ቅንብሮች",
+    "logout": "ውጣ"
   },
   "hero": {
     "title": "የአካባቢዎን ችግሮች",
@@ -189,7 +200,8 @@
       "locationRequired": "የችግሩ አካባቢ መሞላት አለበት",
       "validLocation": "እባክዎ ትክክለኛ አካባቢ ይምረጡ",
       "categoryRequired": "ዋና ክፍል መምረጥ ግዴታ ነው"
-    },
+    }
+  },
   "profilePage": {
     "title": "መገለጫዎ",
     "subtitle": "የመገለጫ መረጃዎን ያዘምኑ እና ይገናኙ.",
@@ -198,22 +210,22 @@
     "labels": {
       "fullName": "ሙሉ ስም",
       "email": "የኢሜይል አድራሻ",
-      "phone": "የስልክ ቁጥር"
-      ,"currentPassword": "የአሁኑ የይለፍ ቃል"
-      ,"newPassword": "አዲስ የይለፍ ቃል"
-      ,"confirmPassword": "አዲሱን የይለፍ ቃል ያረጋግጡ"
+      "phone": "የስልክ ቁጥር",
+      "currentPassword": "የአሁኑ የይለፍ ቃል",
+      "newPassword": "አዲስ የይለፍ ቃል",
+      "confirmPassword": "አዲሱን የይለፍ ቃል ያረጋግጡ"
     },
     "placeholders": {
       "fullName": "ሙሉ ስምዎን ያስገቡ",
-      "email": "የኢሜይል አድራሻዎን ያስገቡ"
-      ,"currentPassword": "አሁኑን የይለፍ ቃል ያስገቡ"
-      ,"newPassword": "አዲስ የይለፍ ቃል ያስገቡ"
-      ,"confirmPassword": "አዲሱን የይለፍ ቃል ያረጋግጡ"
+      "email": "የኢሜይል አድራሻዎን ያስገቡ",
+      "currentPassword": "አሁኑን የይለፍ ቃል ያስገቡ",
+      "newPassword": "አዲስ የይለፍ ቃል ያስገቡ",
+      "confirmPassword": "አዲሱን የይለፍ ቃል ያረጋግጡ"
     },
     "phoneLockTitle": "የስልክ ቁጥር ማቀየር አይቻልም",
     "buttons": {
       "editProfile": "መገለጫ አርትዕ",
-      "cancel": "ሰንሰለት",
+      "cancel": "ሰርዝ", 
       "saveUpdates": "ማሻሻያዎችን አስቀምጥ",
       "saving": "በማስቀመጥ..."
     },
@@ -284,4 +296,4 @@
     "logout": "ውጣ"
   }
 }
-}
+
