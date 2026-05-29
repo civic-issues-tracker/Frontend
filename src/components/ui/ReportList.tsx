@@ -48,7 +48,6 @@ const ReportList = ({
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
   const columns = [
-    { header: t('reportsPage.tableHeaders.issueId'), key: 'issue_number' },
     { header: t('reportsPage.tableHeaders.category'), key: 'category_name' },
     { header: t('reportsPage.tableHeaders.location'), key: 'location_address' },
     {
@@ -67,7 +66,7 @@ const ReportList = ({
       },
     },
     {
-      header: t('reportsPage.tableHeaders.date'),
+      header: 'Issue Created Day',
       key: 'created_at',
       render: (report: Report) =>
         report.created_at ? new Date(report.created_at).toLocaleDateString() : '',
