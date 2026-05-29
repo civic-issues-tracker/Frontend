@@ -1,7 +1,9 @@
 import { MapPin, BellRing, Camera, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import {useState} from "react"
 
 const HowToReport = () => {
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
   const { t } = useTranslation();
   const steps = [
     {
@@ -85,20 +87,37 @@ const HowToReport = () => {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-center">
-            <p className="text-primary/40 text-[10px] uppercase font-black tracking-widest mb-3">
-              {t('howTo.telegram.prompt')}
-            </p>
-            <a href="https://t.me/YegnaFixBot" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-3 p-3 pr-6 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all shadow-lg">
-              <div className="w-8 h-8 rounded-lg bg-[#229ED9] flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform">
-                <Send className="w-4 h-4 -rotate-12 fill-current translate-x-[-0.5px] translate-y-[0.5px]" />
-              </div>
-              <div className="flex flex-col">
-                <p className="text-primary text-[9px] font-medium opacity-70 leading-none mb-1">{t('howTo.telegram.cta')}</p>
-                <p className="text-primary text-xs font-black tracking-tight">@YegnaFixBot</p>
-              </div>
-            </a>
+        {isPopupOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={() => setIsPopupOpen(false)}>
+            <div className="p-6 bg-secondary border border-primary/20 rounded-2xl text-center max-w-sm shadow-2xl animate-in fade-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-primary font-bold text-lg mb-2">New Features Coming Soon! 🚀</h3>
+              <p className="text-primary/60 text-sm">
+                We are currently developing advanced reporting process via telegram. Stay tuned for the next version!
+              </p>
+              <button 
+                className="mt-6 px-4 py-2 bg-primary text-secondary rounded-lg font-bold text-xs uppercase"
+                onClick={() => setIsPopupOpen(false)}
+              >
+                Close
+              </button>
+            </div>
           </div>
+        )}
+
+        <div className="flex justify-center w-full">
+          <button 
+            className="group flex items-center gap-3 p-3 pr-6 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all shadow-lg" 
+            onClick={() => setIsPopupOpen(true)}
+          >
+            <div className="w-8 h-8 rounded-lg bg-[#229ED9] flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform">
+              <Send className="w-4 h-4 -rotate-12 fill-current translate-x-[-0.5px] translate-y-[0.5px]" />
+            </div>
+            <div className="flex flex-col text-left">
+              <p className="text-primary text-[9px] font-medium opacity-70 leading-none mb-1">{t('howTo.telegram.cta')}</p>
+              <p className="text-primary text-xs font-black tracking-tight">@YegnaFixBot</p>
+            </div>
+          </button>
+        </div>
       </div>
     </section>
   );

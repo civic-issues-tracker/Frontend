@@ -1,28 +1,63 @@
 import { BarChart3, CheckCircle2, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useState, useEffect } from 'react';
+import { privateApi } from '../../auth/services/authService'; 
 
 const QuickStats = () => {
   const { t } = useTranslation();
+  const [data, setData] = useState({
+    total: "0",
+    fixed: "0",
+    weekly: "0"
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await privateApi.get('/issues/'); 
+        const issues = response.data.results || response.data;
+        
+        // Logic to calculate stats based on your data structure
+        const total = issues.length;
+        const fixed = issues.filter((i: any) => i.status === 'resolved' || i.status === 'fixed').length;
+        const weekly = issues.filter((i: any) => {
+            const date = new Date(i.created_at);
+            const now = new Date();
+            return (now.getTime() - date.getTime()) < (7 * 24 * 60 * 60 * 1000);
+        }).length;
+
+        setData({
+          total: total.toString(),
+          fixed: fixed.toString(),
+          weekly: weekly.toString()
+        });
+      } catch (error) {
+        console.error("Failed to fetch landing stats:", error);
+      }
+    };
+    fetchStats();
+  }, []);
+
   const stats = [
     {
       label: t('stats.total.label'),
-      value: "312",
+      value: data.total,
       icon: <Zap className="w-4 h-4 opacity-30" />,
       trend: t('stats.total.trend'),
       className: "md:col-start-2 md:row-start-1 md:mt-12" 
     },
     {
       label: t('stats.fixed.label'),
-      value: "89",
+      value: data.fixed,
       icon: <CheckCircle2 className="w-4 h-4 opacity-30" />,
-      trend: "94%",
+      trend: "94%", 
       className: "md:col-start-3 md:row-start-1" 
     },
     {
       label: t('stats.weekly.label'),
-      value: "124",
+      value: data.weekly,
       icon: <BarChart3 className="w-4 h-4 opacity-30" />,
-      trend: "+12%",
+      trend: "+12%", 
       className: "md:col-start-3 md:row-start-2 md:-mt-5 lg:-mt-3"
     },
   ];
