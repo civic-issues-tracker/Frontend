@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { privateApi } from '../auth/services/authService';
+import ThemeLoader from '../../components/ui/ThemeLoader';
 
 interface StatusHistoryItem {
     old_status: string;
@@ -204,8 +205,8 @@ const IssueDetailPage = () => {
                 </div>
 
                 {loading ? (
-                    <div className="py-20 text-center text-xs text-[#4A3728]/80">
-                        {t('issueDetailPage.loading')}
+                    <div className="flex min-h-[280px] items-center justify-center py-10">
+                        <ThemeLoader size="md" />
                     </div>
                 ) : error ? (
                     <div className="mt-8 rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-700">

@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast'; 
 import LogoIcon from '../../../src/assets/icons/logoIcon';
 import { hasAllowedRole } from '../../lib/roleUtils';
+import ThemeLoader from '../../components/ui/ThemeLoader';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -25,9 +26,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-primary">
-        <div className="animate-pulse font-body text-[10px] uppercase tracking-[0.5em] text-secondary/40">
-          Authenticating...
-        </div>
+        <ThemeLoader size="md" />
       </div>
     );
   }

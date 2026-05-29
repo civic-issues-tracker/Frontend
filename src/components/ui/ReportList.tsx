@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Table from './Table';
+import ThemeLoader from './ThemeLoader';
 
 export interface Report {
   id: string;
@@ -84,7 +85,9 @@ const ReportList = ({
 
       <div ref={tableContainerRef} className="overflow-x-auto">
         {loading ? (
-          <div className="p-4 text-sm text-gray-500 font-medium">{t('reportsPage.loading')}</div>
+          <div className="flex min-h-[220px] items-center justify-center p-4">
+            <ThemeLoader size="md" />
+          </div>
         ) : error ? (
           <div className="p-4 text-sm text-red-500 font-medium">{error}</div>
         ) : reports.length === 0 ? (

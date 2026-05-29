@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { publicApi } from '../../auth/services/authService';
 import { ArrowRight, Clock, MapPin, ChevronRight } from 'lucide-react';
+import ThemeLoader from '../../../components/ui/ThemeLoader';
 
 interface Report {
   id: string;
@@ -99,7 +100,9 @@ const RecentReports = () => {
 
         <div className="flex flex-col">
           {loading ? (
-            <div className="px-4 py-6 text-sm text-secondary/60">{t('recentReports.loading')}</div>
+            <div className="flex items-center justify-center py-10">
+              <ThemeLoader size="md" />
+            </div>
           ) : error ? (
             <div className="px-4 py-6 text-sm text-red-500">{error || t('recentReports.error')}</div>
           ) : latestReports.length === 0 ? (
