@@ -1,22 +1,44 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom'; 
 import { useTranslation } from 'react-i18next';
-import { FileText, Settings, LogOut, CircleUser, Menu, X } from 'lucide-react';
+import { Bell, FileText, Settings, LogOut, CircleUser, Menu, X } from 'lucide-react';
 import LogoIcon from '../../assets/icons/logoIcon';
 import { useAuth } from '../../hooks/useAuth';
+import { privateApi } from '../auth/services/authService';
 
 const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation(); 
   const navigate = useNavigate(); 
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
   const closeSidebar = () => setIsSidebarOpen(false);
   const isActive = (path: string) => location.pathname === path;
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await privateApi.get('/notifications/unread/count/');
+        setUnreadCount(Number(res?.data?.unread_count || 0));
+      } catch (err) {
+        console.error('Failed to fetch unread notifications:', err);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = window.setInterval(fetchUnreadCount, 10000);
+    window.addEventListener('focus', fetchUnreadCount);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', fetchUnreadCount);
+    };
+  }, []);
 
   return (
     <div className="flex h-screen bg-[#FCFBF9] text-gray-800 overflow-hidden antialiased">
@@ -110,6 +132,23 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
           >
             <FileText size={16} className={`transition-colors ${isActive('/reports') ? 'text-[#4A3728]' : 'text-[#4A3728]/70'}`} />
             <span>{t('sidebar.myReports')}</span>
+          </Link>
+
+          {/* NOTIFICATIONS LINK */}
+          <Link
+            to="/notifications"
+            onClick={closeSidebar}
+            className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 text-xs font-semibold uppercase tracking-wider text-[#4A3728]/80 hover:text-[#2A1E17] hover:bg-white/15"
+          >
+            <span className="relative flex items-center justify-center">
+              <Bell size={16} className="text-[#4A3728]/70" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-500 border border-white px-1 text-[10px] font-bold text-white flex items-center justify-center leading-none">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </span>
+            <span>{t('sidebar.notifications', 'Notifications')}</span>
           </Link>
 
           {/* SETTINGS LINK */}

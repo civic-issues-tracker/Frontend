@@ -23,6 +23,7 @@
     "guestEmail": "user@example.com",
     "profile": "Profile",
     "myReports": "My Reports",
+    "notifications": "Notifications",
     "settings": "Settings",
     "logout": "Logout Account"
   },

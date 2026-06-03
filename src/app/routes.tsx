@@ -6,6 +6,7 @@ import ReportFormPage from '../features/report/ReportPage'
 import LocalReports from '../features/report/components/LocalReports'
 import ProfilePage from '../features/dashboard-citizen/pages/ProfilePage'
 import MyReportsPage from '../features/dashboard-citizen/pages/MyReportsPage'
+import NotificationPage from '../features/dashboard-citizen/pages/Notification'
 import IssueDetailPage from '../features/issue-detail/IssueDetailPage'
 import AllReportsPage from '../features/home/pages/AllReportsPage'
 import PublicLayout from './PublicLayout'
@@ -91,6 +92,14 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <MyReportsPage />
+      </ProtectedRoute>
+    )
+  },
+  {
+    path: '/notifications',
+    element: (
+      <ProtectedRoute>
+        <NotificationPage />
       </ProtectedRoute>
     )
   },
