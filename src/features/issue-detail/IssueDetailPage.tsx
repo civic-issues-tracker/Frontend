@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { privateApi } from '../auth/services/authService';
 import ThemeLoader from '../../components/ui/ThemeLoader';
+import Modal from '../../components/ui/Modal';
 
 interface StatusHistoryItem {
     old_status: string;
@@ -96,6 +97,10 @@ const IssueDetailPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [reopenLoading, setReopenLoading] = useState(false);
+    
+    // Modal state
+    const [isReopenModalOpen, setIsReopenModalOpen] = useState(false);
+    const [reopenReason, setReopenReason] = useState('');
 
     const fetchIssue = async (showLoading = true) => {
         if (!id) return;
@@ -131,16 +136,16 @@ const IssueDetailPage = () => {
         return () => window.clearInterval(intervalId);
     }, [id]);
 
-    const handleReopen = async () => {
+    const handleReopenClick = () => {
+        if (!id || reopenLoading || !isResolved) return;
+        setReopenReason('');
+        setIsReopenModalOpen(true);
+    };
+
+    const submitReopen = async () => {
         if (!id || reopenLoading) return;
 
-        const reasonInput = window.prompt(
-            t('issueDetailPage.reopenReasonPrompt', 'Please provide a reason for reopening this issue.'),
-            'Reopened by user'
-        );
-
-        if (reasonInput === null) return; 
-        const reason = reasonInput.trim() || 'Reopened by user';
+        const reason = reopenReason.trim() || 'Reopened by user';
 
         setReopenLoading(true);
 
@@ -153,6 +158,7 @@ const IssueDetailPage = () => {
             });
 
             toast.success(t('issueDetailPage.reopenSuccess', 'Issue reopened successfully.'));
+            setIsReopenModalOpen(false);
             await fetchIssue();
         } catch (err: any) {
             console.error('Error reopening issue:', err);
@@ -367,7 +373,7 @@ const IssueDetailPage = () => {
 
                                 {/* Fixed Button Conditional Classes and Disabled State Flags */}
                                 <button
-                                    onClick={handleReopen}
+                                    onClick={handleReopenClick}
                                     disabled={reopenLoading || !isResolved}
                                     className={`w-full rounded-full px-4 py-2.5 text-xs font-semibold text-white transition ${
                                         reopenLoading || !isResolved
@@ -388,6 +394,45 @@ const IssueDetailPage = () => {
                     </div>
                 )}
             </div>
+
+            {/* Reopen Modal */}
+            <Modal
+                isOpen={isReopenModalOpen}
+                onClose={() => !reopenLoading && setIsReopenModalOpen(false)}
+                title={t('issueDetailPage.reopenModalTitle', 'Reopen Issue')}
+            >
+                <div className="space-y-4">
+                    <p className="text-sm text-secondary/70">
+                        {t('issueDetailPage.reopenReasonPrompt', 'Please provide a reason for reopening this issue.')}
+                    </p>
+                    <textarea
+                        value={reopenReason}
+                        onChange={(e) => setReopenReason(e.target.value)}
+                        placeholder={t('issueDetailPage.reopenReasonPlaceholder', 'E.g., The issue is still not fixed...')}
+                        className="w-full rounded-xl border border-secondary/20 bg-primary p-3 text-sm text-secondary outline-hidden focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors"
+                        rows={4}
+                        disabled={reopenLoading}
+                    />
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button
+                            onClick={() => setIsReopenModalOpen(false)}
+                            disabled={reopenLoading}
+                            className="px-4 py-2 text-sm font-medium text-secondary hover:text-secondary/70 transition-colors disabled:opacity-50"
+                        >
+                            {t('issueDetailPage.cancel', 'Cancel')}
+                        </button>
+                        <button
+                            onClick={submitReopen}
+                            disabled={reopenLoading || !reopenReason.trim()}
+                            className="rounded-full bg-[#4A3728] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#3b2d26] disabled:opacity-50"
+                        >
+                            {reopenLoading 
+                                ? t('issueDetailPage.reopening', 'Reopening...') 
+                                : t('issueDetailPage.submit', 'Submit')}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };
