@@ -155,6 +155,11 @@ export const authService = {
     return response.data;
   },
 
+  verifyEmailChange: async (token: string) => {
+    const response = await publicApi.get(`/auth/verify-email-change/?token=${token}`);
+    return response.data;
+  },
+
   // Admin Management
   registerSystemAdmin: async (data: SystemAdminRegister) => {
     const response = await publicApi.post('/auth/register/system-admin/', data);

@@ -12,6 +12,7 @@ import PublicLayout from './PublicLayout'
 
 import ProtectedRoute from '../features/auth/ProtectedAuth'     
 import ResetPasswordPage from '../features/auth/pages/ResetPasswordPage'
+import VerifyEmailChangePage from '../features/dashboard-citizen/pages/VerifyEmailChangePage'
 
 const RouteErrorPage = () => {
   const error = useRouteError();
@@ -52,6 +53,7 @@ const router = createBrowserRouter([
       { path: 'login', element: <LoginPage /> },   
       { path: 'signup', element: <SignupPage /> }, 
       { path: 'reset-password', element: <ResetPasswordPage /> },
+      { path: 'verify-email-change', element: <VerifyEmailChangePage /> },
       
       { 
         path: 'report', 
