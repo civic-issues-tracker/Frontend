@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bell, CircleAlert, FileText, Loader2 } from 'lucide-react';
+import { Bell, CircleAlert, FileText } from 'lucide-react';
 import CitizenDashboardLayout from '../CitizenDashboardLayout';
 import { privateApi } from '../../auth/services/authService';
+import ThemeLoader from '../../../components/ui/ThemeLoader';
 
 interface NotificationItem {
   id: string;
@@ -132,12 +133,8 @@ const NotificationPage = () => {
 
           {/* Loading */}
           {loading ? (
-            <div className="flex items-center justify-center rounded-[28px] border border-gray-100 bg-white py-8 shadow-sm">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin text-blue-500" />
-
-              <span className="text-sm text-gray-600">
-                Loading notifications...
-              </span>
+            <div className="rounded-[28px] border border-gray-100 bg-white py-8 shadow-sm">
+              <ThemeLoader size="md" />
             </div>
           ) : error ? (
             <div className="rounded-[28px] border border-red-100 bg-red-50 p-4 text-sm text-red-700 shadow-sm">
