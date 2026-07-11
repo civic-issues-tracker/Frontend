@@ -173,6 +173,7 @@
     "fetchingAddress": "አድራሻ በመፈለግ ላይ...",
     "mapHint": "አካባቢውን ምልክት ለማድረግ ካርታውን ይጫኑ",
     "labels": {
+      "title": "የችግሩ ርዕስ (Issue Title)",
       "category": "ዋና ክፍል (Category)",
       "subcategory": "ንዑስ ክፍል (Sub Category)",
       "location": "አካባቢ (Location)",

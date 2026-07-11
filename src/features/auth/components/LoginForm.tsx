@@ -9,8 +9,8 @@ import axios from 'axios';
 import Input from '../../../../src/components/ui/Input';
 import { useAuth } from '../../../hooks/useAuth'; 
 import { authService } from '../../../features/auth/services/authService';
-import Toast, {  type ToastType } from '../../../components/ui/Toast';
 import { isOrganizationAdminRole } from '../../../lib/roleUtils';
+import { useGoogleLogin } from '@react-oauth/google';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Phone or Email is required"),
@@ -26,19 +26,10 @@ const LoginForm: React.FC = () => {
   const [forgotIdentifier, setForgotIdentifier] = useState(""); 
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false); 
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
-  const [toast, setToast] = useState<{ show: boolean; msg: string; type: ToastType }>({
-      show: false,
-      msg: '',
-      type: 'info'
-    });
 
-  const { login } = useAuth();
-
-  const showToast = (msg: string, type: ToastType) => {
-    setToast({ show: true, msg, type });
-    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 5000);
-  };
+  const { login, showToast } = useAuth();
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -96,14 +87,10 @@ const LoginForm: React.FC = () => {
     try {
       const result = await authService.login(payload);
 
-      if (result.access && result.user) {
+      if (result.user) {
         const role = result.user.role_name;
 
-        login({
-          access: result.access,
-          refresh: result.refresh,
-          user: result.user
-        });
+        login(result.user);
 
         showToast("Login successful!", "success");
 
@@ -138,6 +125,24 @@ const LoginForm: React.FC = () => {
     }
   };
 
+  const handleGoogleLogin = useGoogleLogin({
+  flow: 'auth-code',
+  onSuccess: async (codeResponse) => {
+    setIsGoogleLoading(true);
+    try {
+      const response = await authService.loginWithGoogle(codeResponse.code);
+      console.log("Logged in successfully:", response);
+    } catch (error) {
+      showToast("Error logging in with Google", "error");
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  }, // TypeScript infers codeResponse automatically now!
+  onError: (error) => {
+    console.error("Google Auth Failed:", error);
+  }
+});
+
   return (
     <>
     <AnimatePresence mode="wait">
@@ -156,6 +161,7 @@ const LoginForm: React.FC = () => {
               placeholder="Enter phone or email"
               {...register("identifier")} 
               error={errors.identifier?.message} 
+              autoComplete='current-username'
             />
             <div className="space-y-2 relative">
               <Input 
@@ -164,11 +170,12 @@ const LoginForm: React.FC = () => {
                 placeholder="••••••••"
                 {...register("password")} 
                 error={errors.password?.message} 
+                autoComplete='current-password'
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-10 text-secondary/30 hover:text-secondary transition-colors"
+                className="absolute right-4 top-10 text-secondary/90 hover:text-secondary transition-colors"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -176,7 +183,7 @@ const LoginForm: React.FC = () => {
               <button 
                 type="button"
                 onClick={() => setIsForgotMode(true)}
-                className="text-[9px] font-black uppercase tracking-widest text-secondary/40 hover:text-red-500 transition-colors float-right"
+                className="text-[9px] font-black uppercase tracking-widest text-secondary hover:text-red-500 transition-colors float-right"
               >
                 Forgot Password?
               </button>
@@ -196,15 +203,25 @@ const LoginForm: React.FC = () => {
             className="w-full group bg-secondary text-primary flex items-center justify-center gap-2 py-4 rounded-full shadow-2xl hover:bg-secondary/90 transition-all disabled:opacity-50 mt-4"
           >
             <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">
-              {loading ? "Authenticating..." : "Login"}
+              {loading ? "Signing in..." : "Login"}
             </span>
             {loading ? <Loader2 className="animate-spin w-4 h-4 text-primary" /> : <LogIn size={16} className="group-hover:translate-x-1 transition-transform" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleGoogleLogin()}
+            disabled={isGoogleLoading}
+            className="w-full group bg-white/10 text-secondary flex items-center justify-center gap-2 py-3 rounded-full shadow-2xl hover:bg-white/20 transition-all disabled:opacity-50"  
+          >
+            {isGoogleLoading ? "Signing in with Google..." : "Login with Google"}
+
           </button>
 
           <button 
             type="button"
             onClick={() => navigate('/signup')}
-            className="text-[9px] font-black uppercase tracking-[0.3em] text-secondary/40 hover:text-secondary transition-colors text-left"
+            className="text-[9px] font-black uppercase tracking-[0.3em] text-secondary hover:text-secondary transition-colors text-left"
           >
             New here? <span className="text-secondary border-b border-secondary/20 ml-1">Create Account</span>
           </button>
@@ -221,7 +238,7 @@ const LoginForm: React.FC = () => {
           <button 
             type="button"
             onClick={() => setIsForgotMode(false)}
-            className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-secondary/40 hover:text-secondary mb-4"
+            className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-secondary hover:text-secondary mb-4"
           >
             <ArrowLeft size={12} /> Back to Login
           </button>
@@ -270,13 +287,6 @@ const LoginForm: React.FC = () => {
         </motion.form>
       )}
     </AnimatePresence>
-
-    <Toast 
-      isVisible={toast.show} 
-      message={toast.msg} 
-      type={toast.type} 
-      onClose={() => setToast(p => ({...p, show: false}))} 
-    />
     </>
   );
 };

@@ -130,7 +130,7 @@
     "stats": {
       "resolution": "Resolution Rate",
       "live": "Live Reports",
-      "fixed": "Fixed Month"
+      "fixed": "Fixed This Month"
     }
   },
   "footer": {
@@ -163,6 +163,7 @@
     "fetchingAddress": "Fetching address...",
     "mapHint": "Click Map to Pin Location",
     "labels": {
+      "title": "Issue Title",
       "category": "Category",
       "subcategory": "Sub Category",
       "location": "Location",

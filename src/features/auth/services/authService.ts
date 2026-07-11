@@ -1,4 +1,5 @@
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 export const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
@@ -16,36 +17,56 @@ export const privateApi = axios.create({
   withCredentials: true,
 });
 
-privateApi.interceptors.request.use(
-  (config) => {
-    const accessToken =
-      sessionStorage.getItem('accessToken') ||
-      localStorage.getItem('accessToken') ||
-      sessionStorage.getItem('token') ||
-      localStorage.getItem('token');
+// Variables to handle simultaneous 401 requests elegantly
+let isRefreshing = false;
+let failedQueue: any[] = [];
 
-    if (accessToken) {
-	  config.headers.Authorization = `Bearer ${accessToken}`;
+const processQueue = (error: any) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve();
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+  });
+  failedQueue = [];
+};
 
-//  Response Interceptor: Catches 401 errors globally
 privateApi.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      console.warn("Session expired or unauthorized. Logging out...");
-      sessionStorage.removeItem('accessToken');
-      localStorage.removeItem('accessToken');
-      sessionStorage.removeItem('token');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user'); 
-      window.location.href = '/login'; 
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      // If a refresh is already happening, queue this request up and wait
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => privateApi(originalRequest))
+          .catch((err) => Promise.reject(err));
+      }
+
+      isRefreshing = true;
+
+      try {
+        await privateApi.post('/auth/refresh-token/'); 
+        
+        // Resolve all requests in the queue
+        processQueue(null);
+        isRefreshing = false;
+
+        return privateApi(originalRequest); 
+      } catch (err) {
+        processQueue(err);
+        isRefreshing = false;
+        
+        sessionStorage.removeItem('user');
+        window.location.href = '/login';
+        return Promise.reject(err);
+      }
     }
     return Promise.reject(error);
   }
@@ -75,25 +96,25 @@ interface ResendOTPPayload {
   temp_id: string;
 }
 
-interface SystemAdminRegister {
-  full_name: string;
-  email: string;
-  phone: string;
-  password: string;
-}
+// interface SystemAdminRegister {
+//   full_name: string;
+//   email: string;
+//   phone: string;
+//   password: string;
+// }
 
-interface CreateOrgAdminPayload {
-  email: string;
-  full_name: string;
-  phone: string;
-  organization_name: string;
-}
+// interface CreateOrgAdminPayload {
+//   email: string;
+//   full_name: string;
+//   phone: string;
+//   organization_name: string;
+// }
 
-interface CompleteOrgAdminPayload {
-  token: string; // OTP sent via email link
-  password: string;
-  confirm_password: string;
-}
+// interface CompleteOrgAdminPayload {
+//   token: string; // OTP sent via email link
+//   password: string;
+//   confirm_password: string;
+// }
 
 
 export const authService = {
@@ -118,9 +139,26 @@ export const authService = {
     return response.data;
   },
 
-  logout: async () => {
-    await privateApi.post('/auth/logout/');
+  loginWithGoogle: async (googleCode: string) => {
+  try{
+    await privateApi.post('/auth/google-login/', { code: googleCode });
+  }
+  catch (error) {
+    toast.error('Error logging in with Google');
+  }
+  finally {
+    window.location.href = '/';
+  }
   },
+
+  logout: async () => {
+  try {
+    await privateApi.post('/auth/logout/');
+  } finally {
+    window.location.href = '/'; 
+  }
+},
+
   // Forgot Password
   forgotPassword: async (data: { email?: string; phone?: string }) => {
     const response = await publicApi.post('/auth/forgot-password/', data);
@@ -140,7 +178,10 @@ export const authService = {
   },
 
   refreshToken: async () => {
-    const response = await publicApi.post('/auth/token/refresh/');
+    const response = await publicApi.post('/auth/token/refresh-token/',
+      {},
+    { withCredentials: true }
+    );
     return response.data;
   },
 
@@ -155,19 +196,20 @@ export const authService = {
     return response.data;
   },
 
+
   // Admin Management
-  registerSystemAdmin: async (data: SystemAdminRegister) => {
-    const response = await publicApi.post('/auth/register/system-admin/', data);
-    return response.data;
-  },
+  // registerSystemAdmin: async (data: SystemAdminRegister) => {
+  //   const response = await publicApi.post('/auth/register/system-admin/', data);
+  //   return response.data;
+  // },
 
-  createOrgAdmin: async (data: CreateOrgAdminPayload) => {
-    const response = await privateApi.post('/auth/admin/create-org-admin/', data);
-    return response.data;
-  },
+  // createOrgAdmin: async (data: CreateOrgAdminPayload) => {
+  //   const response = await privateApi.post('/auth/admin/create-org-admin/', data);
+  //   return response.data;
+  // },
 
-  completeOrgRegistration: async (data: CompleteOrgAdminPayload) => {
-    const response = await publicApi.post('/auth/complete-registration/', data);
-    return response.data;
-  }
+  // completeOrgRegistration: async (data: CompleteOrgAdminPayload) => {
+  //   const response = await publicApi.post('/auth/complete-registration/', data);
+  //   return response.data;
+  // }
 };

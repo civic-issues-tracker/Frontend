@@ -1,6 +1,7 @@
-import React, { createContext, useState, useCallback, useLayoutEffect, useRef } from 'react';
-import { privateApi } from '../features/auth/services/authService';
+import React, { createContext, useState, useCallback, useRef, useEffect } from 'react';
+import { authService } from '../features/auth/services/authService';
 import Toast, { type ToastType } from '../components/ui/Toast'; 
+import { User } from 'lucide-react';
 
 interface User {
   id: string;
@@ -17,12 +18,10 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (data: { access: string; refresh?: string; user: User }) => void;
+  login: (user: User) => void;
   logout: () => Promise<void>;
-  updateToken: (newToken: string) => void;
   setUser: (user: User | null) => void;
   showToast: (msg: string, type: ToastType) => void;
 }
@@ -30,14 +29,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
+  const [user, setUserState] = useState<User | null>(() => {
     const savedUser = sessionStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  const [accessToken, setAccessToken] = useState<string | null>(() => {
-    return sessionStorage.getItem('accessToken');
-  });
 
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, msg: '', type: 'info' as ToastType });
@@ -50,98 +46,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 5000);
   }, []);
 
-  const login = useCallback((data: { access: string; refresh?: string; user: User }) => {
-    setAccessToken(data.access);
-    setUser(data.user);
-    
-    sessionStorage.setItem('accessToken', data.access);
-    sessionStorage.setItem('user', JSON.stringify(data.user));
-    if (data.refresh) {
-      sessionStorage.setItem('refreshToken', data.refresh);
-    } else {
-      sessionStorage.removeItem('refreshToken');
-    }
-    
-    setIsLoading(false);
-  }, []);
 
-  const updateToken = useCallback((newToken: string) => {
-    setAccessToken(newToken);
-    sessionStorage.setItem('accessToken', newToken);
-  }, []);
+  const setUser = useCallback((newUser: User | null) => {
+    setUserState(newUser);
+    if (newUser) {
+      sessionStorage.setItem('user', JSON.stringify(newUser));
+    } else {
+      sessionStorage.removeItem('user');
+    }
+  }, [])
+
+  // Simplified: Login now just saves the User object. Cookies are set implicitly by the browser.
+  const login = useCallback(( user: User ) => {
+    setUser(user);
+    setIsLoading(false);
+  }, [setUser]);
 
   const logout = useCallback(async () => {
-  if (isLoggingOut.current) return;
-  isLoggingOut.current = true;
+    if (isLoggingOut.current) return;
+    isLoggingOut.current = true;
 
-  try {
-    const refreshToken = sessionStorage.getItem('refreshToken') || localStorage.getItem('refreshToken');
-
-    if (refreshToken) {
-      await privateApi.post('/auth/logout/', { refresh: refreshToken });
-    } else {
-      await privateApi.post('/auth/logout/');
-    }
-  } catch  {
-    // This catches the 400 error so the app doesn't crash
-    console.warn("Server logout request failed (expected if token expired)");
-  } finally {
-    setAccessToken(null);
     setUser(null);
-    
-    sessionStorage.removeItem('accessToken');
-    sessionStorage.removeItem('refreshToken');
-    sessionStorage.removeItem('user');
-    localStorage.removeItem('refreshToken'); 
-    
-    isLoggingOut.current = false;
-  }
-}, [showToast]);
+    window.location.href = '/';
 
-  // Interceptors for API logic
-  useLayoutEffect(() => {
-    const requestIntercept = privateApi.interceptors.request.use(
-      (config) => {
-        if (!config.headers['Authorization'] && accessToken) {
-          config.headers['Authorization'] = `Bearer ${accessToken}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
+    try {
+      await authService.logout();
+    } catch {
+      console.warn("Server logout cleanly bypassed or token already purged.");
+    } finally {
+      isLoggingOut.current = false;
+    }
+  }, [setUser]); 
 
-    const responseIntercept = privateApi.interceptors.response.use(
-      (response) => response,
-      async (error) => {
-        if (error.response?.status === 429) {
-          showToast("Security: Too many requests. Please slow down.", "error");
-        }
+  useEffect(() => {
+  if (!user) return;
 
-        // If we get a 401 and we're NOT already logging out, trigger logout
-        if (error.response?.status === 401 && !isLoggingOut.current) {
-          logout();
-        }
-        
-        return Promise.reject(error);
-      }
-    );
+  const REFRESH_INTERVAL_MS = 25 * 60 * 1000; // 25 Minutes
 
-    return () => {
-      privateApi.interceptors.request.eject(requestIntercept);
-      privateApi.interceptors.response.eject(responseIntercept);
-    };
-  }, [accessToken, logout, showToast]); 
+  const triggerSilentRefresh = async () => {
+    try {
+      await authService.refreshToken();
+    } catch (error) {
+      console.error("Background session refresh failed:", error);
+      logout();
+    }
+  };
+
+  //the heartbeat loop execution
+  const intervalId = setInterval(triggerSilentRefresh, REFRESH_INTERVAL_MS);
+
+  // cleanup function to destroy the heartbeat loop on logout or unmount
+  return () => clearInterval(intervalId);
+}, [user, logout]);
+
 
   return (
     <AuthContext.Provider value={{ 
       user, 
-      accessToken, 
-      isAuthenticated: !!accessToken, 
+      isAuthenticated: !!user, 
       isLoading, 
       login, 
       logout,
-      updateToken,
-      setUser,
+      setUser: setUserState,
       showToast
     }}>
       {children}

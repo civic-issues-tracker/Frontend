@@ -6,8 +6,8 @@ import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { KeyRound, Loader2, CheckCircle2, Smartphone, Mail, ArrowLeftRight } from 'lucide-react';
 import { authService } from '../../../features/auth/services/authService';
+import { useAuth } from '../../../hooks/useAuth';
 import Input from '../../../components/ui/Input';
-import Toast, { type ToastType } from '../../../components/ui/Toast';
 
 const resetSchema = z.object({
   otp_code: z.string().optional(),
@@ -34,17 +34,11 @@ const ResetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [toast, setToast] = useState<{ show: boolean; msg: string; type: ToastType }>({
-    show: false, msg: '', type: 'info'
-  });
 
   // Flow State: Default to SMS if no token is present
   const [flow, setFlow] = useState<'email' | 'sms'>(activeToken ? 'email' : 'sms');
 
-  const showToast = (msg: string, type: ToastType) => {
-    setToast({ show: true, msg, type });
-    setTimeout(() => setToast(p => ({ ...p, show: false })), 4000);
-  };
+  const { showToast } = useAuth();
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<ResetData>({
     resolver: zodResolver(resetSchema),
@@ -198,13 +192,6 @@ const ResetPasswordPage: React.FC = () => {
           </form>
         )}
       </motion.div>
-
-      <Toast 
-        isVisible={toast.show} 
-        message={toast.msg} 
-        type={toast.type} 
-        onClose={() => setToast(p => ({...p, show: false}))} 
-      />
     </div>
   );
 };
