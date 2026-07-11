@@ -9,6 +9,7 @@ interface User {
   email?: string;
   phone?: string;
   full_name: string;
+  organization_name?: string;
   role_name: 'resident' | 'system_admin' | 'organization' | 'organization_admin';
   email_verified?: boolean;
   sms_verified?: boolean;

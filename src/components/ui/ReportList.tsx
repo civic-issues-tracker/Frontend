@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Table from './Table';
+import ThemeLoader from './ThemeLoader';
 
 export interface Report {
   id: string;
@@ -47,7 +48,6 @@ const ReportList = ({
   const tableContainerRef = useRef<HTMLDivElement | null>(null);
 
   const columns = [
-    { header: t('reportsPage.tableHeaders.issueId'), key: 'issue_number' },
     { header: t('reportsPage.tableHeaders.category'), key: 'category_name' },
     { header: t('reportsPage.tableHeaders.location'), key: 'location_address' },
     {
@@ -66,7 +66,7 @@ const ReportList = ({
       },
     },
     {
-      header: t('reportsPage.tableHeaders.date'),
+      header: 'Issue Created Day',
       key: 'created_at',
       render: (report: Report) =>
         report.created_at ? new Date(report.created_at).toLocaleDateString() : '',
@@ -84,7 +84,9 @@ const ReportList = ({
 
       <div ref={tableContainerRef} className="overflow-x-auto">
         {loading ? (
-          <div className="p-4 text-sm text-gray-500 font-medium">{t('reportsPage.loading')}</div>
+          <div className="flex min-h-[220px] items-center justify-center p-4">
+            <ThemeLoader size="md" />
+          </div>
         ) : error ? (
           <div className="p-4 text-sm text-red-500 font-medium">{error}</div>
         ) : reports.length === 0 ? (
