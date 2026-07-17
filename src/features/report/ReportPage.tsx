@@ -20,8 +20,8 @@ const reportSchema = z.object({
   location_lat: z.number().refine(val => val !== 0, "report.errors.validLocation"),
   location_long: z.number().refine(val => val !== 0, "report.errors.validLocation"),
   category: z.string().min(1, "report.errors.categoryRequired"),
-  subcategory: z.string().optional(),
-  images: z.any().optional(),
+  subcategory: z.string().min(1, "report.errors.subcategoryRequired"),
+  images: z.array(z.any()).min(1, "report.toasts.photoProofRequired"),
 });
 
 type ReportFormData = z.infer<typeof reportSchema>;
@@ -51,6 +51,7 @@ const ReportPage: React.FC = () => {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isLocationSelected, setIsLocationSelected] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isTriggeredByClick, setIsTriggeredByClick] = useState(false);
 
   // 1. Fetching Categories via TanStack Query
   const { data: categories = [], isLoading: fetchingCats } = useQuery<Category[]>({
@@ -62,7 +63,6 @@ const ReportPage: React.FC = () => {
     staleTime: 1000 * 60 * 5, // Cache categories for 5 minutes
   });
 
-  // 2. Fetching Subcategories via TanStack Query
   const { data: allSubcategories = [], isLoading: fetchingSubs } = useQuery<SubCategory[]>({
     queryKey: ['subcategories'],
     queryFn: async () => {
@@ -83,7 +83,10 @@ const ReportPage: React.FC = () => {
     defaultValues: {
       title: "",
       location_lat: 0,
-      location_long: 0
+      location_long: 0,
+      category: "",
+      subcategory: "",
+      images: []
     }
   });
 
@@ -93,7 +96,7 @@ const ReportPage: React.FC = () => {
 
   // Clear subcategory when the main category updates
   useEffect(() => {
-    setValue("subcategory", "");
+    setValue("subcategory", "", { shouldValidate: true });
   }, [selectedCategoryId, setValue]);
 
   // Derived state selector: dynamic subcategory arrays filtered down on demand
@@ -193,8 +196,8 @@ const ReportPage: React.FC = () => {
 
     setIsLocationSelected(true);   
     setValue("location_address", address, { shouldValidate: true, shouldDirty: true });
-    setValue("location_lat", lat);
-    setValue("location_long", lon);
+    setValue("location_lat", lat, { shouldValidate: true });
+    setValue("location_long", lon, { shouldValidate: true });
     setSelectedMapPos({ lat, lng: lon });
     setShowDropdown(false);
     setSuggestions([]);
@@ -229,17 +232,27 @@ const ReportPage: React.FC = () => {
   };
 
   const handleGpsClick = async () => {
-    await requestLocation(); 
-    if (globalLocation?.lat && globalLocation?.lng) {
-      updateLocationData(globalLocation.lat, globalLocation.lng, globalLocation.address);
-      setIsLocationSelected(true);
-    }
-  };
+  setIsTriggeredByClick(true); 
+  await requestLocation(); 
+};
 
+  useEffect(() => {
+  if (isTriggeredByClick && globalLocation?.lat && globalLocation?.lng) {
+    updateLocationData(
+      globalLocation.lat, 
+      globalLocation.lng, 
+      globalLocation.address
+    );
+    setIsLocationSelected(true);
+    
+    setIsTriggeredByClick(false); 
+  }
+}, [globalLocation, isTriggeredByClick]);
+ 
   const removeImage = (indexToRemove: number) => {
     const currentFiles = Array.from(watch("images") || []);
     const newFiles = currentFiles.filter((_, index) => index !== indexToRemove);
-    setValue("images", newFiles);
+    setValue("images", newFiles, { shouldValidate: true });
   };
 
   const handleMapClick = (lat: number, lng: number) => {
@@ -247,11 +260,12 @@ const ReportPage: React.FC = () => {
   };
 
   const onSubmit = (data: ReportFormData) => {
-    if (!data.images || data.images.length === 0) {
-      showToast(t('report.toasts.photoProofRequired'), "error");
-      return;
-    }
     submitReport(data);
+  };
+
+  const onInvalidSubmit = (validationErrors: any) => {
+    console.warn("⚠️ Validation blockers detected on submission:", validationErrors);
+    showToast(t('report.errors.pleaseCorrectErrors'), "error");
   };
 
   return (
@@ -262,7 +276,7 @@ const ReportPage: React.FC = () => {
           <p className="font-body text-[10px] text-secondary/80 uppercase tracking-[0.4em] mt-2 font-bold">{t('report.subtitle')}</p>
         </header>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-6">
           {/* Issue Title Input Container */}
           <div className="flex flex-col gap-2">
             <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary ml-2">{t('report.labels.title')}</label>
@@ -280,7 +294,7 @@ const ReportPage: React.FC = () => {
             <div className="flex flex-col gap-2 flex-1">
               <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary ml-2">{t('report.labels.category')}</label>
               {fetchingCats ? (
-                <div className="w-full bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 h-13.5 animate-pulse" />
+                <div className="w-full bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 h-13.5 animate-pulse text-secondary/70 font-body text-[14px]" >loading categories... </div>
               ) : (
                 <select {...register("category")} className="bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 text-sm text-secondary outline-none w-full">
                   <option value="" className="text-secondary">{t('report.placeholders.selectCategory')}</option>
@@ -294,7 +308,7 @@ const ReportPage: React.FC = () => {
             <div className="flex flex-col gap-2 flex-1 relative">
               <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary ml-2">{t('report.labels.subcategory')}</label>
               {fetchingSubs ? (
-                <div className="w-full bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 h-13.5 animate-pulse" />
+                <div className="w-full bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 h-13.5 animate-pulse text-secondary/70 font-body text-[14px]" >loading subcategories... </div>
               ) : (
                 <select 
                   {...register("subcategory")} 
@@ -309,6 +323,7 @@ const ReportPage: React.FC = () => {
                   ))}
                 </select>
               )}
+              {errors.subcategory && <span className="text-[10px] text-red-500 ml-2 uppercase font-bold">{t(errors.subcategory.message || '')}</span>}
             </div>
           </div>
 
@@ -332,6 +347,9 @@ const ReportPage: React.FC = () => {
               </button>
             </div>
             {errors.location_address && <span className="text-[10px] text-red-500 ml-2 uppercase font-bold">{t(errors.location_address.message || '')}</span>}
+            {(errors.location_lat || errors.location_long) && (
+              <span className="text-[10px] text-red-500 ml-2 uppercase font-bold">{t('report.errors.validLocation')}</span>
+            )}
 
             {showDropdown && suggestions.length > 0 && (
               <ul className="absolute top-full left-0 w-full bg-tertiary border border-secondary/10 rounded-2xl mt-2 overflow-hidden z-999 shadow-2xl">
@@ -370,18 +388,19 @@ const ReportPage: React.FC = () => {
               )}
               {previewUrl.length < 3 && (
                 <label className="w-full border-2 border-dashed border-secondary/10 rounded-2xl py-8 flex flex-col items-center justify-center gap-3 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-all">
-                  <input type="file" className="hidden required" accept="image/*" required multiple onChange={(e) => {
+                  <input type="file" className="hidden" accept="image/*" multiple onChange={(e) => {
                     const combined = [...Array.from(watch("images") || []), ...Array.from(e.target.files || [])].slice(0, 3);
-                    setValue("images", combined);
+                    setValue("images", combined, { shouldValidate: true });
                   }} />
                   <IoCloudUploadOutline size={28} className="text-secondary/20" />
                   <span className="font-body text-[9px] uppercase tracking-[0.3em] font-black text-secondary/90">{t('report.placeholders.uploadEvidence')}</span>
                 </label>
               )}
+              {errors.images && <span className="text-[10px] text-red-500 ml-2 uppercase font-bold block">{t(errors.images.message || '')}</span>}
             </div>
           </div>
 
-          <button type="submit" disabled={loading} className="w-full py-5 rounded-2xl text-[9px] uppercase tracking-[0.5em] font-black shadow-2xl bg-secondary text-primary hover:scale-[0.99] transition-transform disabled:opacity-50">
+          <button type="submit" disabled={loading} className="w-full py-5 rounded-2xl text-[9px] uppercase tracking-[0.5em] font-black shadow-2xl bg-secondary cursor-pointer text-primary hover:scale-[0.99] transition-transform disabled:opacity-50">
             {loading ? t('report.loading') : t('report.buttons.submit')}
           </button>
         </form>

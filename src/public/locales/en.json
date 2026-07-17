@@ -188,10 +188,13 @@
       "submitFailed": "Failed to submit report."
     },
     "errors": {
-      "descriptionMin": "Description must be at least 10 characters",
+      "titleMin": "Title is required and must be at least 5 characters",
+      "descriptionMin": "Description is required and must be at least 10 characters",
       "locationRequired": "Location is required",
       "validLocation": "Please select a valid location",
-      "categoryRequired": "Category is required"
+      "categoryRequired": "Category is required",
+      "subcategoryRequired": "Subcategory is required",
+      "pleaseCorrectErrors": "Please correct the errors before submitting."
     }
   },
 

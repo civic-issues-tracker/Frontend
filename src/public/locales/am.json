@@ -198,10 +198,13 @@
       "submitFailed": "ሪፖርቱን መላክ አልተቻለም። እባክዎ እንደገና ይሞክሩ።"
     },
     "errors": {
-      "descriptionMin": "መግለጫው ቢያንስ ከ10 ፊደላት በላይ መሆን አለበት",
+      "titleMin": "ርዕስ መምረጥ ግዴታ ነው እና ቢያንስ ከ5 ፊደላት በላይ መሆን አለበት",
+      "descriptionMin": "መግለጫ መምረጥ ግዴታ ነው እና ቢያንስ ከ10 ፊደላት በላይ መሆን አለበት",
       "locationRequired": "የችግሩ አካባቢ መሞላት አለበት",
       "validLocation": "እባክዎ ትክክለኛ አካባቢ ይምረጡ",
-      "categoryRequired": "ዋና ክፍል መምረጥ ግዴታ ነው"
+      "categoryRequired": "ዋና ክፍል መምረጥ ግዴታ ነው",
+      "subcategoryRequired": "ንዑስ ክፍል መምረጥ ግዴታ ነው",
+      "pleaseCorrectErrors": "እባክዎ ቅጹን ከማስገባትዎ በፊት ስህተቶቹን ያስተካክሉ"
     }
   },
   "profilePage": {

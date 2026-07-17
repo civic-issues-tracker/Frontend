@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom'; 
 import { useTranslation } from 'react-i18next';
-import { Bell, FileText, Settings, LogOut, CircleUser, Menu, X } from 'lucide-react';
+import { Bell, FileText, LogOut, CircleUser, Menu, X } from 'lucide-react';
 import LogoIcon from '../../assets/icons/logoIcon';
 import { useAuth } from '../../hooks/useAuth';
 import { privateApi } from '../auth/services/authService';
@@ -49,7 +49,7 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4A3728] to-[#2A1E17] flex items-center justify-center shadow-md shadow-amber-950/10">
             <CircleUser size={18} className="text-white" />
           </div>
-          <span className="font-bold text-sm tracking-tight text-[#2A1E17]">{t('navbar.brandName')}</span>
+          <span className="font-bold text-sm tracking-tight text-primary">{t('navbar.brandName')}</span>
         </div>
         
         <button 
@@ -63,7 +63,7 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
 
       {/* --- SIDEBAR OVERLAY (Mobile) --- */}
       <div 
-        className={`fixed inset-0 bg-black/40 backdrop-blur-xs z-[60] lg:hidden transition-opacity duration-300 ease-in-out ${
+        className={`fixed inset-0 bg-black/40 backdrop-blur-xs z-60 lg:hidden transition-opacity duration-300 ease-in-out ${
           isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={toggleSidebar}
@@ -71,7 +71,7 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
 
       {/* --- SIDEBAR CONTAINER --- */}
       <aside className={`
-        fixed inset-y-0 left-0 z-[70] w-64 bg-[#DCCAB7] border-r border-[#CBB7A3]/50 px-5 py-8 flex flex-col transition-transform duration-300 ease-out
+        fixed inset-y-0 left-0 z-70 w-64 bg-secondary border-r border-[#CBB7A3]/50 px-5 py-8 flex flex-col transition-transform duration-300 ease-out
         lg:relative lg:translate-x-0 lg:z-auto
         ${isSidebarOpen ? 'translate-x-0 shadow-2xl shadow-black/20' : '-translate-x-full'}
       `}>
@@ -79,10 +79,10 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
         {/* Brand/Identity Header for Large Screens */}
         <Link
           to="/"
-          className="hidden lg:flex items-center gap-2.5 px-3 mb-8 rounded-xl hover:bg-white/10 active:scale-[0.99] transition-all duration-200 py-2.5 group"
+          className="hidden lg:flex text-primary  items-center gap-2.5 px-3 mb-8 rounded-xl hover:bg-white/10 active:scale-[0.99] transition-all duration-200 py-2.5 group"
         >
-          <LogoIcon size={26} color="#4A3728" />
-          <span className="font-black text-base tracking-tight uppercase text-[#2A1E17]">
+          <LogoIcon size={34} color="var(--primary)" />
+          <span className="font-black  text-3xl tracking-tight uppercase text-primary group-hover:text-[#2A1E17] transition-colors duration-200">
             {t('navbar.brandName')}<span className="font-light opacity-80"> Fix</span>
           </span>
         </Link>
@@ -113,10 +113,10 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 text-xs font-semibold uppercase tracking-wider ${
               isActive('/profile') 
                 ? 'bg-white text-[#2A1E17] shadow-xs translate-x-1' 
-                : 'text-[#4A3728]/80 hover:text-[#2A1E17] hover:bg-white/15'
+                : 'text-primary hover:text-[#2A1E17] hover:bg-white/15'
             }`}
           >
-            <CircleUser size={16} className={`transition-colors ${isActive('/profile') ? 'text-[#4A3728]' : 'text-[#4A3728]/70'}`} />
+            <CircleUser size={16} className={`transition-colors ${isActive('/profile') ? 'text-[#4A3728]' : 'text-primary'}`} />
             <span>{t('sidebar.profile')}</span>
           </Link>
 
@@ -127,10 +127,10 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 text-xs font-semibold uppercase tracking-wider ${
               isActive('/reports') 
                 ? 'bg-white text-[#2A1E17] shadow-xs translate-x-1' 
-                : 'text-[#4A3728]/80 hover:text-[#2A1E17] hover:bg-white/15'
+                : 'text-primary hover:text-[#2A1E17] hover:bg-white/15'
             }`}
           >
-            <FileText size={16} className={`transition-colors ${isActive('/reports') ? 'text-[#4A3728]' : 'text-[#4A3728]/70'}`} />
+            <FileText size={16} className={`transition-colors ${isActive('/reports') ? 'text-[#4A3728]' : 'text-primary'}`} />
             <span>{t('sidebar.myReports')}</span>
           </Link>
 
@@ -138,10 +138,10 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
           <Link
             to="/notifications"
             onClick={closeSidebar}
-            className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 text-xs font-semibold uppercase tracking-wider text-[#4A3728]/80 hover:text-[#2A1E17] hover:bg-white/15"
+            className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 text-xs font-semibold uppercase tracking-wider text-primary hover:text-[#2A1E17] hover:bg-white/15"
           >
             <span className="relative flex items-center justify-center">
-              <Bell size={16} className="text-[#4A3728]/70" />
+              <Bell size={16} className="text-primary" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-500 border border-white px-1 text-[10px] font-bold text-white flex items-center justify-center leading-none">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -152,18 +152,18 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
           </Link>
 
           {/* SETTINGS LINK */}
-          <Link 
+          {/* <Link 
             to="/settings" 
             onClick={closeSidebar}
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-200 text-xs font-semibold uppercase tracking-wider ${
               isActive('/settings') 
                 ? 'bg-white text-[#2A1E17] shadow-xs translate-x-1' 
-                : 'text-[#4A3728]/80 hover:text-[#2A1E17] hover:bg-white/15'
+                : 'text-primary hover:text-[#2A1E17] hover:bg-white/15'
             }`}
           >
-            <Settings size={16} className={`transition-colors ${isActive('/settings') ? 'text-[#4A3728]' : 'text-[#4A3728]/70'}`} />
+            <Settings size={16} className={`transition-colors ${isActive('/settings') ? 'text-[#4A3728]' : 'text-primary'}`} />
             <span>{t('sidebar.settings')}</span>
-          </Link>
+          </Link> */}
         </nav>
 
         {/* Secure Logout Footer Interaction */}
@@ -174,9 +174,9 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
               localStorage.removeItem('refresh');
               navigate('/login');
             }}
-            className="flex items-center gap-3 px-3.5 py-2.5 text-[#4A3728]/80 font-semibold text-xs uppercase tracking-wider rounded-xl hover:text-red-700 hover:bg-red-500/10 active:scale-[0.98] transition-all duration-200 w-full text-left group"
+            className="flex items-center gap-3 px-3.5 py-2.5 text-primary font-semibold text-xs uppercase tracking-wider rounded-xl hover:text-red-700 hover:bg-red-500/10 active:scale-[0.98] transition-all duration-200 w-full text-left group"
           >
-            <LogOut size={16} className="text-[#4A3728]/70 group-hover:text-red-600 transition-colors duration-200" />
+            <LogOut size={16} className="text-primary group-hover:text-red-600 transition-colors duration-200" />
             <span>{t('sidebar.logout')}</span>
           </button>
         </div>
@@ -185,7 +185,7 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
       {/* --- SYSTEM VIEWPORT CONTENT --- */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#FAF9F6]">
         {/* Mobile Spacer (Compensates for fixed position header layout) */}
-        <div className="h-16 lg:hidden flex-shrink-0" />
+        <div className="h-16 lg:hidden shrink-0" />
         
         {/* Scrollable Dynamic Body */}
         <section className="flex-1 overflow-y-auto p-5 md:p-8 lg:p-10">

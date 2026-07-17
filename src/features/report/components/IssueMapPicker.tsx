@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { useTranslation } from 'react-i18next';
 import 'leaflet/dist/leaflet.css';
 import { publicApi } from '../../auth/services/authService';
+import { useQuery } from '@tanstack/react-query';
 
 const createLocationIcon = (color: string, isUser: boolean = false) => {
   return L.divIcon({
@@ -67,42 +68,22 @@ const IssueMapPicker: React.FC<MapProps> = ({
   selectedLocation
 }) => {
   const { t } = useTranslation();
-  const [backendReports, setBackendReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(false);
-
   const defaultCenter: [number, number] = [9.0192, 38.7525];
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const hasProvidedReports =
-      Array.isArray(reports) && reports.length > 0;
-
-    if (hasProvidedReports) {
-      setBackendReports(reports);
-
-      return () => {
-        isMounted = false;
-      };
-    }
-
-    const fetchReports = async () => {
+  // TanStack Query with LocalStorage fallback to survive browser refresh
+  const { data: backendReports = [], isLoading: loading } = useQuery<Report[]>({
+    queryKey: ['mapReportsTimeline'],
+    queryFn: async () => {
       try {
-        setLoading(true);
-
         const response = await publicApi.get('/issues/');
-
         const rawReports = Array.isArray(response.data)
           ? response.data
           : response.data?.results ?? [];
 
-        if (!isMounted) return;
-
-        const normalizedReports = rawReports
-          .filter(
-            (item: any) =>
-              Number.isFinite(Number(item?.location_lat)) &&
-              Number.isFinite(Number(item?.location_long))
+        const normalized = rawReports
+          .filter((item: any) =>
+            Number.isFinite(Number(item?.location_lat)) &&
+            Number.isFinite(Number(item?.location_long))
           )
           .map((item: any) => ({
             ...item,
@@ -110,35 +91,31 @@ const IssueMapPicker: React.FC<MapProps> = ({
             location_long: Number(item.location_long),
           })) as Report[];
 
-        setBackendReports(normalizedReports);
+        // Sync local cache storage
+        localStorage.setItem('cached_map_reports', JSON.stringify(normalized));
+        return normalized;
       } catch (error) {
-        console.error(
-          'Failed to load issue reports for map:',
-          error
-        );
-
-        if (isMounted) {
-          setBackendReports([]);
+        console.error('Failed to load issue reports for map network fetch:', error);
+        const diskCache = localStorage.getItem('cached_map_reports');
+        if (diskCache) {
+          return JSON.parse(diskCache);
         }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        throw error;
       }
-    };
-
-    fetchReports();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [reports]);
+    },
+    // Populate cache on load directly from disk if available
+    initialData: () => {
+      const saved = localStorage.getItem('cached_map_reports');
+      return saved ? JSON.parse(saved) : undefined;
+    },
+    staleTime: 1000 * 60 * 10, // Consider fresh for 10 minutes
+    gcTime: 1000 * 60 * 30,    // Retain cache in memory for 30 minutes
+  });
 
   const mapReports = useMemo(() => {
     if (Array.isArray(reports) && reports.length > 0) {
       return reports;
     }
-
     return backendReports;
   }, [backendReports, reports]);
 
@@ -150,10 +127,7 @@ const IssueMapPicker: React.FC<MapProps> = ({
     );
 
     return firstReport
-      ? ([firstReport.location_lat, firstReport.location_long] as [
-          number,
-          number
-        ])
+      ? ([firstReport.location_lat, firstReport.location_long] as [number, number])
       : defaultCenter;
   }, [defaultCenter, mapReports]);
 
@@ -181,10 +155,7 @@ const IssueMapPicker: React.FC<MapProps> = ({
 
         {selectedLocation && (
           <Marker
-            position={[
-              selectedLocation.lat,
-              selectedLocation.lng
-            ]}
+            position={[selectedLocation.lat, selectedLocation.lng]}
             icon={createLocationIcon('#3b82f6', true)}
           >
             <Tooltip
@@ -210,10 +181,7 @@ const IssueMapPicker: React.FC<MapProps> = ({
           return (
             <Marker
               key={report.id}
-              position={[
-                report.location_lat,
-                report.location_long
-              ]}
+              position={[report.location_lat, report.location_long]}
               icon={createLocationIcon(
                 STATUS_COLORS[normalizedStatus] || '#000'
               )}
@@ -228,15 +196,12 @@ const IssueMapPicker: React.FC<MapProps> = ({
                     <div
                       className="w-2 h-2 rounded-full"
                       style={{
-                        backgroundColor:
-                          STATUS_COLORS[normalizedStatus]
+                        backgroundColor: STATUS_COLORS[normalizedStatus]
                       }}
                     />
 
                     <span className="text-[10px] uppercase font-black tracking-wider text-secondary/60">
-                      {t(
-                        `reports.status.${normalizedStatus}`
-                      )}
+                      {t(`reports.status.${normalizedStatus}`)}
                     </span>
                   </div>
                 </div>

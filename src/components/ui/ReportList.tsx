@@ -84,7 +84,7 @@ const ReportList = ({
 
       <div ref={tableContainerRef} className="overflow-x-auto">
         {loading ? (
-          <div className="flex min-h-[220px] items-center justify-center p-4">
+          <div className="flex min-h-55 items-center justify-center p-4">
             <ThemeLoader size="md" />
           </div>
         ) : error ? (
@@ -99,7 +99,7 @@ const ReportList = ({
       <button
         type="button"
         onClick={() => handleTableScroll('right')}
-        className="md:hidden absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#4A3728]/20 bg-white text-[#4A3728] shadow-sm active:scale-95 transition-transform"
+        className="md:hidden absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#4A3728]/20 bg-white text-black shadow-sm active:scale-95 transition-transform"
         aria-label={t('reportsPage.scrollRight') || 'Scroll table right'}
       >
         →

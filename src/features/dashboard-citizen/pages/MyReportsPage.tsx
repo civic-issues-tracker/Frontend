@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import CitizenDashboardLayout from '../CitizenDashboardLayout';
 import { privateApi } from '../../auth/services/authService';
 import ReportList from '../../../components/ui/ReportList';
@@ -11,14 +12,45 @@ const MyReportsPage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   
-  const [reports, setReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
-  const [categories, setCategories] = useState<string[]>([]);
-  const [subcategories, setSubcategories] = useState<string[]>([]);
-  const [locations, setLocations] = useState<string[]>([]);
+
+  // Use TanStack Query to load and cache the reports list smoothly
+  const { data, error, isPending, isFetching } = useQuery({
+    queryKey: ['myReports', searchTerm, selectedStatus],
+    queryFn: async () => {
+      const params: Record<string, string> = {
+        mine: 'true',
+        ordering: '-created_at',
+      };
+
+      if (searchTerm.trim()) params.search = searchTerm.trim();
+      if (selectedStatus) params.status = selectedStatus;
+
+      const res = await privateApi.get('/issues/', { params });
+      const rawReports = Array.isArray(res.data) ? res.data : (res.data.results ?? []);
+      
+      // Calculate search filter options inside the queryFn to keep it structured and run once per load
+      const uniqueCategories = Array.from(new Set(rawReports.map((report: Report) => report.category_name).filter(Boolean))) as string[];
+      const uniqueSubcategories = Array.from(new Set(rawReports.map((report: Report) => report.subcategory_name).filter(Boolean))) as string[];
+      const uniqueLocations = Array.from(new Set(rawReports.map((report: Report) => report.location_address).filter(Boolean))) as string[];
+
+      return {
+        reports: rawReports as Report[],
+        categories: uniqueCategories,
+        subcategories: uniqueSubcategories,
+        locations: uniqueLocations,
+      };
+    },
+    staleTime: 1000 * 60 * 5, 
+    gcTime: 1000 * 60 * 10,  
+  });
+
+  // Extract reports and filters safely with default structures
+  const reports = data?.reports ?? [];
+  const categories = data?.categories ?? [];
+  const subcategories = data?.subcategories ?? [];
+  const locations = data?.locations ?? [];
 
   const searchOptions = useMemo(
     () => [
@@ -29,52 +61,20 @@ const MyReportsPage = () => {
     [categories, subcategories, locations]
   );
 
-  useEffect(() => {
-    const fetchReports = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const params: Record<string, string> = {
-          mine: 'true',
-          ordering: '-created_at',
-        };
-
-        if (searchTerm.trim()) params.search = searchTerm.trim();
-        if (selectedStatus) params.status = selectedStatus;
-
-        const res = await privateApi.get('/issues/', { params });
-        const data = Array.isArray(res.data) ? res.data : (res.data.results ?? []);
-        setReports(data);
-
-        const uniqueCategories = Array.from(new Set(data.map((report: Report) => report.category_name).filter(Boolean))) as string[];
-        const uniqueSubcategories = Array.from(new Set(data.map((report: Report) => report.subcategory_name).filter(Boolean))) as string[];
-        const uniqueLocations = Array.from(new Set(data.map((report: Report) => report.location_address).filter(Boolean))) as string[];
-        setCategories(uniqueCategories);
-        setSubcategories(uniqueSubcategories);
-        setLocations(uniqueLocations);
-      } catch (err: any) {
-        console.error('Error fetching reports:', err);
-        setError(err?.response?.data?.detail || t('reportsPage.errorFallback'));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReports();
-  }, [searchTerm, selectedStatus, t]);
+  // Safely capture and format errors from the hook
+  const queryError = error ? ((error as any)?.response?.data?.detail || t('reportsPage.errorFallback')) : null;
 
   return (
     <CitizenDashboardLayout>
-      <div className="flex flex-col min-h-screen w-full p-3 md:p-12 bg-gray-50/20">
+      <div className="flex flex-col min-h-screen w-full p-3 md:p-12 bg-primary">
         <div className="max-w-5xl mx-auto w-full">
 
         {/* PAGE SUB-HEADERS */}
         <div className="mb-4">
-          <h2 className="text-base md:text-xl font-semibold text-[#4A3728]">
+          <h2 className="text-base md:text-xl font-semibold text-secondary tracking-tight">
             {t('reportsPage.pageTitle')}
           </h2>
-          <p className="text-[#4A3728]/70 text-xs md:text-sm">
+          <p className="text-secondary/90 text-xs md:text-sm">
             {t('reportsPage.pageSubtitle')}
           </p>
         </div>
@@ -104,8 +104,8 @@ const MyReportsPage = () => {
 
         <ReportList
           reports={reports}
-          loading={loading}
-          error={error}
+          loading={isPending}
+          error={queryError}
           onRowClick={(report) => navigate(`/reports/${report.id}`)}
         />
       </div>

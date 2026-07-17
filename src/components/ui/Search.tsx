@@ -126,7 +126,7 @@ const Search = ({
             type="button"
             onClick={onSubmit}
             disabled={isLoading}
-            className="rounded-lg bg-slate-900 px-4 h-full text-xs font-medium text-white transition-all duration-200 hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300 flex items-center justify-center"
+            className="rounded-lg bg-secondary px-4 h-full text-xs font-medium text-white transition-all duration-200 hover:bg-slate-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300 flex items-center justify-center"
           >
             {isLoading ? 'Searching...' : 'Search'}
           </button>

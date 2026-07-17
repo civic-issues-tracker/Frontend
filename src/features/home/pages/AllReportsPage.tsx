@@ -68,11 +68,11 @@ const AllReportsPage = () => {
   }, []);
 
   return (
-      <div className="flex flex-col h-full w-full p-3 md:p-12 min-h-screen bg-gray-50/30">
+      <div className="flex flex-col h-full w-full p-3 md:p-12 min-h-screen bg-primary">
         <div className="max-w-5xl mx-auto w-full">
 
           <div className="mb-4">
-            <h2 className="text-base md:text-xl font-semibold text-[#4A3728]">
+            <h2 className="text-base md:text-xl font-semibold text-secondary">
               {t('reportsPage.pageTitle')}
             </h2>
             <p className="text-[#4A3728]/70 text-xs md:text-sm">

@@ -23,7 +23,7 @@ const Table = <T extends { id?: string | number }>({ columns, data, onRowClick }
             {columns.map((col, i) => (
               <th 
                 key={i} 
-                className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest text-secondary/60 sm:px-6 sm:py-5 whitespace-nowrap ${col.className || ''}`}
+                className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest text-secondary sm:px-6 sm:py-5 whitespace-nowrap ${col.className || ''}`}
               >
                 {col.header}
               </th>
@@ -35,12 +35,12 @@ const Table = <T extends { id?: string | number }>({ columns, data, onRowClick }
             <tr 
               key={item.id || rowIndex} 
               onClick={() => onRowClick?.(item)}
-              className="hover:bg-secondary/2 transition-colors cursor-pointer group"
+              className="hover:bg-secondary/2 text-black transition-colors cursor-pointer group"
             >
               {columns.map((col, colIndex) => (
                 <td 
                   key={colIndex} 
-                  className={`px-4 py-4 text-xs font-bold text-secondary/80 sm:px-6 whitespace-nowrap ${col.className || ''}`}
+                  className={`px-4 py-4 text-xs font-bold text-black sm:px-6 whitespace-nowrap ${col.className || ''}`}
                 >
                   {col.render ? col.render(item) : (item[col.key as keyof T] as React.ReactNode)}
                 </td>

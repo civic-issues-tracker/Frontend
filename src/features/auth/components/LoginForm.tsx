@@ -10,7 +10,7 @@ import Input from '../../../../src/components/ui/Input';
 import { useAuth } from '../../../hooks/useAuth'; 
 import { authService } from '../../../features/auth/services/authService';
 import { isOrganizationAdminRole } from '../../../lib/roleUtils';
-import { useGoogleLogin } from '@react-oauth/google';
+// import { useGoogleLogin } from '@react-oauth/google';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Phone or Email is required"),
@@ -26,7 +26,7 @@ const LoginForm: React.FC = () => {
   const [forgotIdentifier, setForgotIdentifier] = useState(""); 
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false); 
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  // const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
 
   const { login, showToast } = useAuth();
@@ -125,23 +125,25 @@ const LoginForm: React.FC = () => {
     }
   };
 
-  const handleGoogleLogin = useGoogleLogin({
-  flow: 'auth-code',
-  onSuccess: async (codeResponse) => {
-    setIsGoogleLoading(true);
-    try {
-      const response = await authService.loginWithGoogle(codeResponse.code);
-      console.log("Logged in successfully:", response);
-    } catch (error) {
-      showToast("Error logging in with Google", "error");
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  }, // TypeScript infers codeResponse automatically now!
-  onError: (error) => {
-    console.error("Google Auth Failed:", error);
-  }
-});
+
+
+//   const handleGoogleLogin = useGoogleLogin({
+//   flow: 'auth-code',
+//   onSuccess: async (codeResponse) => {
+//     setIsGoogleLoading(true);
+//     try {
+//       const response = await authService.loginWithGoogle(codeResponse.code);
+//       console.log("Logged in successfully:", response);
+//     } catch (error) {
+//       showToast("Error logging in with Google", "error");
+//     } finally {
+//       setIsGoogleLoading(false);
+//     }
+//   }, // TypeScript infers codeResponse automatically now!
+//   onError: (error) => {
+//     console.error("Google Auth Failed:", error);
+//   }
+// });
 
   return (
     <>
@@ -159,7 +161,7 @@ const LoginForm: React.FC = () => {
             <Input 
               label="Phone or Email" 
               placeholder="Enter phone or email"
-              {...register("identifier")} 
+              {...register("identifier")}
               error={errors.identifier?.message} 
               autoComplete='current-username'
             />
@@ -208,7 +210,7 @@ const LoginForm: React.FC = () => {
             {loading ? <Loader2 className="animate-spin w-4 h-4 text-primary" /> : <LogIn size={16} className="group-hover:translate-x-1 transition-transform" />}
           </button>
 
-          <button
+          {/* <button
             type="button"
             onClick={() => handleGoogleLogin()}
             disabled={isGoogleLoading}
@@ -216,7 +218,7 @@ const LoginForm: React.FC = () => {
           >
             {isGoogleLoading ? "Signing in with Google..." : "Login with Google"}
 
-          </button>
+          </button> */}
 
           <button 
             type="button"
