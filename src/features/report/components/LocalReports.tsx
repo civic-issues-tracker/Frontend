@@ -6,6 +6,28 @@ import { publicApi } from '../../auth/services/authService';
 import ReportList, { type Report } from '../../../components/ui/ReportList';
 import { MapPin, Eye } from 'lucide-react';
 
+/**
+ * Calculates straight-line distance between two geo-points in Kilometers using Haversine formula
+ */
+const calculateHaversineDistance = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number => {
+  const R = 6371; // Earth radius in kilometers
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in kilometers
+};
+
 const LocalReports: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -37,7 +59,7 @@ const LocalReports: React.FC = () => {
     retry: false,
   });
 
-  // 2. Query local issues using the exact filtering logic from your recent reports component
+  // 2. Query local issues using Haversine radius filtering
   const { data: localReports = [], isLoading: isReportsLoading, error: fetchError } = useQuery<Report[], Error, Report[]>({
     queryKey: ['local-reports', coords?.latitude, coords?.longitude],
     queryFn: async () => {
@@ -54,18 +76,32 @@ const LocalReports: React.FC = () => {
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      // Apply the exact proximity targeting step from your snippet
+      // Apply Haversine proximity targeting (default radius set to 25 km)
       if (coords?.latitude && coords?.longitude) {
+        const MAX_RADIUS_KM = 25; // Change this radius up/down as needed for testing
+
         return globallySorted.filter((report) => {
-          // Report type may not have latitude/longitude typed; use a safe any-cast
-          const rptLat = (report as any).latitude;
-          const rptLon = (report as any).longitude;
-          if (rptLat == null || rptLon == null) return false;
-          const distance = Math.sqrt(
-            Math.pow(rptLat - coords.latitude, 2) +
-            Math.pow(rptLon - coords.longitude, 2)
+          const rptAny = report as any;
+          
+          // Fallback checks for different API payload key variants
+          const rawLat = rptAny.latitude ?? rptAny.lat ?? rptAny.location?.latitude;
+          const rawLon = rptAny.longitude ?? rptAny.lng ?? rptAny.lon ?? rptAny.location?.longitude;
+
+          if (rawLat == null || rawLon == null) return false;
+
+          const rptLat = parseFloat(rawLat);
+          const rptLon = parseFloat(rawLon);
+
+          if (isNaN(rptLat) || isNaN(rptLon)) return false;
+
+          const distanceInKm = calculateHaversineDistance(
+            coords.latitude,
+            coords.longitude,
+            rptLat,
+            rptLon
           );
-          return distance < 0.1; 
+
+          return distanceInKm <= MAX_RADIUS_KM;
         });
       }
 

@@ -20,7 +20,7 @@ const reportSchema = z.object({
   location_lat: z.number().refine(val => val !== 0, "report.errors.validLocation"),
   location_long: z.number().refine(val => val !== 0, "report.errors.validLocation"),
   category: z.string().min(1, "report.errors.categoryRequired"),
-  subcategory: z.string().min(1, "report.errors.subcategoryRequired"),
+  subcategory: z.string().optional(),
   images: z.array(z.any()).min(1, "report.toasts.photoProofRequired"),
 });
 
@@ -140,8 +140,10 @@ const ReportPage: React.FC = () => {
       formData.append('location_address', data.location_address);
       formData.append('location_lat', data.location_lat.toString());
       formData.append('location_long', data.location_long.toString());
-      formData.append('category', data.category);
-      formData.append('subcategory', data.subcategory || '');
+      formData.append('category_id', data.category);
+      if (data.subcategory) {
+        formData.append('subcategory_id', data.subcategory);
+      }
 
       if (data.images && data.images.length > 0) {
         const mainFile = data.images[0];
@@ -232,22 +234,22 @@ const ReportPage: React.FC = () => {
   };
 
   const handleGpsClick = async () => {
-  setIsTriggeredByClick(true); 
-  await requestLocation(); 
-};
+    setIsTriggeredByClick(true); 
+    await requestLocation(); 
+  };
 
   useEffect(() => {
-  if (isTriggeredByClick && globalLocation?.lat && globalLocation?.lng) {
-    updateLocationData(
-      globalLocation.lat, 
-      globalLocation.lng, 
-      globalLocation.address
-    );
-    setIsLocationSelected(true);
-    
-    setIsTriggeredByClick(false); 
-  }
-}, [globalLocation, isTriggeredByClick]);
+    if (isTriggeredByClick && globalLocation?.lat && globalLocation?.lng) {
+      updateLocationData(
+        globalLocation.lat, 
+        globalLocation.lng, 
+        globalLocation.address
+      );
+      setIsLocationSelected(true);
+      
+      setIsTriggeredByClick(false); 
+    }
+  }, [globalLocation, isTriggeredByClick]);
  
   const removeImage = (indexToRemove: number) => {
     const currentFiles = Array.from(watch("images") || []);

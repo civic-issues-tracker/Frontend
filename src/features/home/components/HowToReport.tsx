@@ -104,7 +104,7 @@ const HowToReport = () => {
           </div>
         )}
 
-        <div className="flex justify-center w-full">
+        {/* <div className="flex justify-center w-full">
           <button 
             className="group flex items-center gap-3 p-3 pr-6 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all shadow-lg" 
             onClick={() => setIsPopupOpen(true)}
@@ -117,7 +117,7 @@ const HowToReport = () => {
               <p className="text-primary text-xs font-black tracking-tight">@YegnaFixBot</p>
             </div>
           </button>
-        </div>
+        </div> */}
       </div>
     </section>
   );
