@@ -1,9 +1,8 @@
 import React, { createContext, useState, useCallback, useRef, useEffect } from 'react';
 import { authService } from '../features/auth/services/authService';
 import Toast, { type ToastType } from '../components/ui/Toast'; 
-import { User } from 'lucide-react';
 
-interface User {
+export interface User {
   id: string;
   user_number?: string;
   email?: string;
@@ -31,15 +30,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUserState] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    try {
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    } catch {
+      return null;
+    }
   });
 
-
+  // Keep isLoading false by default so mobile pages load immediately without infinite spinners
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, msg: '', type: 'info' as ToastType });
 
-  // Use a Ref to track if we are already in the middle of a logout
   const isLoggingOut = useRef(false);
 
   const showToast = useCallback((msg: string, type: ToastType) => {
@@ -47,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 5000);
   }, []);
 
-
+  // Correct wrapped setUser to keep localStorage and React state in sync
   const setUser = useCallback((newUser: User | null) => {
     setUserState(newUser);
     if (newUser) {
@@ -55,11 +57,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       localStorage.removeItem('user');
     }
-  }, [])
+  }, []);
 
-  // Simplified: Login now just saves the User object. Cookies are set implicitly by the browser.
-  const login = useCallback(( user: User ) => {
-    setUser(user);
+  const login = useCallback((userData: User) => {
+    setUser(userData);
     setIsLoading(false);
   }, [setUser]);
 
@@ -68,38 +69,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoggingOut.current = true;
 
     setUser(null);
-    window.location.href = '/';
-
     try {
       await authService.logout();
     } catch {
-      console.warn("Server logout cleanly bypassed or token already purged.");
+      console.warn("Server logout bypassed or session already cleared.");
     } finally {
       isLoggingOut.current = false;
+      window.location.href = '/';
     }
-  }, [setUser]); 
+  }, [setUser]);
 
+  // Handle visibility changes on mobile (e.g. user unlocks phone or returns to app tab)
   useEffect(() => {
-  if (!user) return;
+    if (!user) return;
 
-  const REFRESH_INTERVAL_MS = 25 * 60 * 1000; // 25 Minutes
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        try {
+          await authService.refreshToken();
+        } catch (error) {
+          console.warn("Mobile wake refresh failed:", error);
+          // Don't auto-logout here; let the actual API request retry or interceptor manage 401s
+        }
+      }
+    };
 
-  const triggerSilentRefresh = async () => {
-    try {
-      await authService.refreshToken();
-    } catch (error) {
-      console.error("Background session refresh failed:", error);
-      logout();
-    }
-  };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [user]);
 
-  //the heartbeat loop execution
-  const intervalId = setInterval(triggerSilentRefresh, REFRESH_INTERVAL_MS);
+  // Periodic silent refresh heartbeat
+  useEffect(() => {
+    if (!user) return;
 
-  // cleanup function to destroy the heartbeat loop on logout or unmount
-  return () => clearInterval(intervalId);
-}, [user, logout]);
+    const REFRESH_INTERVAL_MS = 25 * 60 * 1000; // 25 minutes
 
+    const intervalId = setInterval(async () => {
+      try {
+        await authService.refreshToken();
+      } catch (error) {
+        console.error("Background refresh failed:", error);
+      }
+    }, REFRESH_INTERVAL_MS);
+
+    return () => clearInterval(intervalId);
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ 
@@ -108,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoading, 
       login, 
       logout,
-      setUser: setUserState,
+      setUser, // Passed wrapped method instead of raw setUserState
       showToast
     }}>
       {children}
@@ -116,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isVisible={toast.show} 
         message={toast.msg} 
         type={toast.type} 
-        onClose={() => setToast(p => ({...p, show: false}))} 
+        onClose={() => setToast(p => ({ ...p, show: false }))} 
       />
     </AuthContext.Provider>
   );

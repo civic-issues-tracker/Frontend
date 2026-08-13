@@ -12,7 +12,6 @@ import { useGeoLocation } from '../../hooks/useGeolocation';
 import { useTranslation } from 'react-i18next'; 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-// ZOD SCHEMA
 const reportSchema = z.object({
   title: z.string().min(3, "report.errors.titleMin"),
   description: z.string().min(10, "report.errors.descriptionMin"),
@@ -41,11 +40,10 @@ interface Category {
 
 const ReportPage: React.FC = () => {
   const { t } = useTranslation(); 
-  const { showToast } = useAuth();
+  const { user, showToast } = useAuth();
   const queryClient = useQueryClient();
   const { location: globalLocation, requestLocation, isLoading: isLocating, searchLocations } = useGeoLocation();
 
-  // Clean, specialized UI interaction states
   const [previewUrl, setPreviewUrl] = useState<string[]>([]);
   const [selectedMapPos, setSelectedMapPos] = useState<{ lat: number; lng: number } | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -53,14 +51,15 @@ const ReportPage: React.FC = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [isTriggeredByClick, setIsTriggeredByClick] = useState(false);
 
-  // 1. Fetching Categories via TanStack Query
+  // Enabled flag prevents firing queries when user session is not ready
   const { data: categories = [], isLoading: fetchingCats } = useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: async () => {
       const data = await categoryApi.getAll();
       return data.map((cat: any) => ({ ...cat }));
     },
-    staleTime: 1000 * 60 * 5, // Cache categories for 5 minutes
+    enabled: !!user,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { data: allSubcategories = [], isLoading: fetchingSubs } = useQuery<SubCategory[]>({
@@ -69,6 +68,7 @@ const ReportPage: React.FC = () => {
       const data = await subcategoryApi.getAll();
       return data.results || data;
     },
+    enabled: !!user,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -82,6 +82,7 @@ const ReportPage: React.FC = () => {
     resolver: zodResolver(reportSchema),
     defaultValues: {
       title: "",
+      location_address: "",
       location_lat: 0,
       location_long: 0,
       category: "",
@@ -94,18 +95,15 @@ const ReportPage: React.FC = () => {
   const selectedCategoryId = watch("category");
   const photoFile = watch("images");
 
-  // Clear subcategory when the main category updates
   useEffect(() => {
     setValue("subcategory", "", { shouldValidate: true });
   }, [selectedCategoryId, setValue]);
 
-  // Derived state selector: dynamic subcategory arrays filtered down on demand
   const visibleSubcategories = allSubcategories.filter(sub => {
     return String(sub.category) === String(selectedCategoryId) || 
            String(sub.category_id) === String(selectedCategoryId);
   });
 
-  // Location suggestions debounce effect
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (locationInput && locationInput.length > 2 && !isLocationSelected) {
@@ -120,18 +118,19 @@ const ReportPage: React.FC = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [locationInput, isLocationSelected, searchLocations]);
 
-  // Image processing preview effect hooks
+  // Clean memory management for Blob URLs
   useEffect(() => {
     if (photoFile && photoFile.length > 0) {
       const urls = Array.from(photoFile as File[]).map(file => URL.createObjectURL(file));
       setPreviewUrl(urls);
-      return () => urls.forEach(url => URL.revokeObjectURL(url));
+      return () => {
+        urls.forEach(url => URL.revokeObjectURL(url));
+      };
     } else {
       setPreviewUrl([]);
     }
-  }, [photoFile]);
+  }, [photoFile?.length]);
 
-  // Form submission mutation orchestration layer
   const { mutate: submitReport, isPending: loading } = useMutation({
     mutationFn: async (data: ReportFormData) => {
       const formData = new FormData();
@@ -171,7 +170,6 @@ const ReportPage: React.FC = () => {
     },
     onSuccess: () => {
       showToast(t('report.toasts.submitSuccess'), "success");
-      // Target invalidation to flush out out-of-date caches instantly on the landing page
       queryClient.invalidateQueries({ queryKey: ['recentReports'] });
     },
     onError: () => {
@@ -188,7 +186,7 @@ const ReportPage: React.FC = () => {
         setSuggestions([]);
         setShowDropdown(false);
       }
-    }, 500);
+    }, 300);
   };
 
   const handleSelectSuggestion = (item: any) => {
@@ -213,7 +211,7 @@ const ReportPage: React.FC = () => {
       );
       const data = await response.json();
       return data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-    } catch (error) {
+    } catch {
       return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
     }
   };
@@ -246,19 +244,14 @@ const ReportPage: React.FC = () => {
         globalLocation.address
       );
       setIsLocationSelected(true);
-      
       setIsTriggeredByClick(false); 
     }
   }, [globalLocation, isTriggeredByClick]);
- 
+
   const removeImage = (indexToRemove: number) => {
     const currentFiles = Array.from(watch("images") || []);
     const newFiles = currentFiles.filter((_, index) => index !== indexToRemove);
     setValue("images", newFiles, { shouldValidate: true });
-  };
-
-  const handleMapClick = (lat: number, lng: number) => {
-    updateLocationData(lat, lng);
   };
 
   const onSubmit = (data: ReportFormData) => {
@@ -270,6 +263,9 @@ const ReportPage: React.FC = () => {
     showToast(t('report.errors.pleaseCorrectErrors'), "error");
   };
 
+  // Clean register handler for location input
+  const locationRegister = register("location_address");
+
   return (
     <div className="flex flex-col lg:flex-row gap-8 min-h-[85vh] px-6 lg:px-20 my-8 md:my-14 animate-in fade-in duration-500">
       <div className="w-full lg:w-1/2 bg-tertiary p-6 md:p-10 rounded-[2.5rem] border border-secondary/5 shadow-2xl shadow-secondary/5">
@@ -279,7 +275,6 @@ const ReportPage: React.FC = () => {
         </header>
 
         <form onSubmit={handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-6">
-          {/* Issue Title Input Container */}
           <div className="flex flex-col gap-2">
             <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary ml-2">{t('report.labels.title')}</label>
             <input 
@@ -292,11 +287,10 @@ const ReportPage: React.FC = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 w-full">
-            {/* Category Selection Container */}
             <div className="flex flex-col gap-2 flex-1">
               <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary ml-2">{t('report.labels.category')}</label>
               {fetchingCats ? (
-                <div className="w-full bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 h-13.5 animate-pulse text-secondary/70 font-body text-[14px]" >loading categories... </div>
+                <div className="w-full bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 h-13.5 animate-pulse text-secondary/70 font-body text-[14px]">loading categories... </div>
               ) : (
                 <select {...register("category")} className="bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 text-sm text-secondary outline-none w-full">
                   <option value="" className="text-secondary">{t('report.placeholders.selectCategory')}</option>
@@ -306,11 +300,10 @@ const ReportPage: React.FC = () => {
               {errors.category && <span className="text-[10px] text-red-500 ml-2 uppercase font-bold">{t(errors.category.message || '')}</span>}
             </div>
 
-            {/* Subcategory Selection Container */}
             <div className="flex flex-col gap-2 flex-1 relative">
               <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary ml-2">{t('report.labels.subcategory')}</label>
               {fetchingSubs ? (
-                <div className="w-full bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 h-13.5 animate-pulse text-secondary/70 font-body text-[14px]" >loading subcategories... </div>
+                <div className="w-full bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 h-13.5 animate-pulse text-secondary/70 font-body text-[14px]">loading subcategories... </div>
               ) : (
                 <select 
                   {...register("subcategory")} 
@@ -333,9 +326,16 @@ const ReportPage: React.FC = () => {
             <label className="font-body text-[10px] uppercase tracking-widest font-black text-secondary/90 ml-2">{t('report.labels.location')}</label>
             <div className="flex gap-2">
               <input
-                {...register("location_address")}
-                onChange={(e) => { setIsLocationSelected(false); register("location_address").onChange(e); }}
-                onBlur={handleInputBlur}
+                ref={locationRegister.ref}
+                name={locationRegister.name}
+                onBlur={(e) => {
+                  locationRegister.onBlur(e);
+                  handleInputBlur();
+                }}
+                onChange={(e) => {
+                  setIsLocationSelected(false);
+                  locationRegister.onChange(e);
+                }}
                 placeholder={isLocating ? t('report.placeholders.locating') : t('report.placeholders.locationInput')}
                 className="flex-1 bg-primary/30 border border-secondary/10 rounded-2xl px-5 py-4 text-sm text-secondary outline-none"
               />
@@ -354,9 +354,9 @@ const ReportPage: React.FC = () => {
             )}
 
             {showDropdown && suggestions.length > 0 && (
-              <ul className="absolute top-full left-0 w-full bg-tertiary border border-secondary/10 rounded-2xl mt-2 overflow-hidden z-999 shadow-2xl">
+              <ul className="absolute top-full left-0 w-full bg-tertiary border border-secondary/10 rounded-2xl mt-2 overflow-hidden z-[999] shadow-2xl">
                 {suggestions.map((item) => (
-                  <li key={item.place_id} onMouseDown={(e)=> {
+                  <li key={item.place_id} onMouseDown={(e) => {
                     e.preventDefault();
                     handleSelectSuggestion(item);
                   }} className="px-5 py-3 text-xs text-secondary hover:bg-primary cursor-pointer border-b border-secondary/5 last:border-none">
@@ -408,9 +408,9 @@ const ReportPage: React.FC = () => {
         </form>
       </div>
 
-      <div className="w-full lg:w-1/2 flex-1 min-h-100 md:min-h-125 lg:min-h-full bg-secondary/5 rounded-[2.5rem] overflow-hidden border border-secondary/5 relative shadow-inner">
+      <div className="w-full lg:w-1/2 flex-1 min-h-[400px] md:min-h-[500px] lg:min-h-full bg-secondary/5 rounded-[2.5rem] overflow-hidden border border-secondary/5 relative shadow-inner">
         <div className="absolute top-8 left-8 z-50 bg-tertiary/80 backdrop-blur-xl px-5 py-3 rounded-full border border-secondary/5">
-          <div className="flex item-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <p className="font-body text-[9px] uppercase tracking-[0.2em] font-black text-secondary">
               {t('report.mapHint')}
@@ -420,7 +420,7 @@ const ReportPage: React.FC = () => {
 
         <div className="absolute inset-0 w-full h-full">
           <IssueMapPicker 
-            onLocationSelect={handleMapClick} 
+            onLocationSelect={updateLocationData} 
             selectedLocation={selectedMapPos} 
             reports={[]} 
           /> 
