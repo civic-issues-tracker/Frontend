@@ -67,7 +67,7 @@ privateApi.interceptors.response.use(
       
       // If the request that failed is the actual refresh request, DO NOT loop. Log out.
       if (originalRequest.url?.includes('/auth/refresh-token/')) {
-        sessionStorage.removeItem('user');
+        localStorage.removeItem('user');
         setAuthHeader(null);
         window.location.href = '/login';
         return Promise.reject(error);
@@ -110,7 +110,7 @@ privateApi.interceptors.response.use(
         isRefreshing = false;
         
         // Only kick them out if we are absolutely sure the refresh token is dead/expired
-        sessionStorage.removeItem('user');
+        localStorage.removeItem('user');
         setAuthHeader(null);
         window.location.href = '/login';
         return Promise.reject(err);
@@ -230,7 +230,7 @@ export const authService = {
   },
 
   refreshToken: async () => {
-    const response = await publicApi.post('/auth/token/refresh-token/',
+    const response = await publicApi.post('/auth/refresh-token/',
       {},
     { withCredentials: true }
     );
