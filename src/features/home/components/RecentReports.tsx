@@ -28,46 +28,51 @@ const RecentReports = () => {
   
   const { location, isLoading: isLocationLoading } = useGeoLocation();
 
-  // Query configuration with structural selection adjustment
-  const { data, isLoading: isQueryLoading, error } = useQuery<Report[], Error, RecentReportsQueryResult>({
+  const { data, isLoading: isQueryLoading, error } = useQuery<RecentReportsQueryResult, Error>({
     queryKey: ['recentReports', location?.lat, location?.lng],
     queryFn: async () => {
-      const res = await publicApi.get('/issues/');
-      return Array.isArray(res.data) ? res.data : res.data.results ?? [];
-    },
-    enabled: !isLocationLoading && !!location?.lat && !!location?.lng,
-    staleTime: 1000 * 60 * 5, 
-    gcTime: 1000 * 60 * 10,
-    select: (data: Report[]) => {
-      const globallySorted = [...data].sort(
+      // 1. Try fetching nearby issues if geolocation coordinates are available
+      if (location?.lat && location?.lng) {
+        try {
+          const nearbyRes = await publicApi.get('/issues/nearby/', {
+            params: {
+              lat: location.lat,
+              lng: location.lng,
+            },
+          });
+          const nearbyData = Array.isArray(nearbyRes.data)
+            ? nearbyRes.data
+            : nearbyRes.data.results ?? [];
+
+          if (nearbyData.length > 0) {
+            return {
+              reports: nearbyData.slice(0, 3),
+              isFallback: false,
+            };
+          }
+        } catch {
+          
+        }
+      }
+
+      // 2. Fallback: Fetch general recent issues if nearby returns empty, fails, or location is absent
+      const globalRes = await publicApi.get('/issues/');
+      const globalData = Array.isArray(globalRes.data)
+        ? globalRes.data
+        : globalRes.data.results ?? [];
+
+      const sortedGlobal = [...globalData].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
-      // Attempt proximity target filtering step
-      let localFiltered = globallySorted;
-      if (location?.lat && location?.lng) {
-        localFiltered = globallySorted.filter((report) => {
-          if (!report.latitude || !report.longitude) return false;
-          const distance = Math.sqrt(
-            Math.pow(report.latitude - location.lat, 2) + 
-            Math.pow(report.longitude - location.lng, 2)
-          );
-          return distance < 0.1; 
-        });
-      }
-
-      if (localFiltered.length === 0) {
-        return {
-          reports: globallySorted.slice(0, 3), 
-          isFallback: true,                    
-        };
-      }
-
       return {
-        reports: localFiltered.slice(0, 3),
-        isFallback: false,
+        reports: sortedGlobal.slice(0, 3),
+        isFallback: true,
       };
     },
+    enabled: !isLocationLoading,
+    staleTime: 1000 * 60 * 5, 
+    gcTime: 1000 * 60 * 10,
   });
 
   const viewReportDetail = (reportId: string) => {

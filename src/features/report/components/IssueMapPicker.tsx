@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents } from 'react-leaflet';
+import React, { useMemo, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { useTranslation } from 'react-i18next';
 import 'leaflet/dist/leaflet.css';
 import { publicApi } from '../../auth/services/authService';
 import { useQuery } from '@tanstack/react-query';
+import type { Nullable } from 'vitest';
 
 const createLocationIcon = (color: string, isUser: boolean = false) => {
   return L.divIcon({
@@ -58,6 +59,22 @@ const MapEvents = ({
       }
     },
   });
+
+  return null;
+};
+
+// Smoothly re-centers map view whenever selectedLocation changes
+const MapRecenter = ({ location }: { location?: { lat: number; lng: number } | null }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (location) {
+      map.flyTo([location.lat, location.lng], 15, {
+        animate: true,
+        duration: 1.2,
+      });
+    }
+  }, [location, map]);
 
   return null;
 };
@@ -152,6 +169,7 @@ const IssueMapPicker: React.FC<MapProps> = ({
         />
 
         <MapEvents onLocationSelect={onLocationSelect} />
+        <MapRecenter location={selectedLocation ?? null} />
 
         {selectedLocation && (
           <Marker

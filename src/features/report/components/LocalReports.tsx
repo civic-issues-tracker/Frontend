@@ -6,33 +6,11 @@ import { publicApi } from '../../auth/services/authService';
 import ReportList, { type Report } from '../../../components/ui/ReportList';
 import { MapPin, Eye } from 'lucide-react';
 
-/**
- * Calculates straight-line distance between two geo-points in Kilometers using Haversine formula
- */
-const calculateHaversineDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number => {
-  const R = 6371; // Earth radius in kilometers
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c; // Distance in kilometers
-};
-
 const LocalReports: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  // 1. Get user coordinates using a query 
+  // 1. Get user coordinates using React Query
   const { data: coords, error: geoError, isLoading: isGeoLoading } = useQuery({
     queryKey: ['user-coordinates'],
     queryFn: () =>
@@ -59,53 +37,26 @@ const LocalReports: React.FC = () => {
     retry: false,
   });
 
-  // 2. Query local issues using Haversine radius filtering
+  // 2. Query nearby local issues directly using backend's expected parameter keys (lat & lng)
   const { data: localReports = [], isLoading: isReportsLoading, error: fetchError } = useQuery<Report[], Error, Report[]>({
     queryKey: ['local-reports', coords?.latitude, coords?.longitude],
     queryFn: async () => {
-      const response = await publicApi.get('/issues/');
+      const response = await publicApi.get('/issues/nearby/', {
+        params: {
+          lat: coords?.latitude,
+          lng: coords?.longitude,
+        },
+      });
       return Array.isArray(response.data) ? response.data : (response.data.results ?? []);
     },
-    enabled: !!coords?.latitude && !!coords?.longitude, // Only fetch when we have coordinates
-    staleTime: 1000 * 60 * 5, // Keep local cached data fresh for 5 minutes
+    enabled: !!coords?.latitude && !!coords?.longitude, // Only fetch when coordinates are ready
+    staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
     select: (data: Report[]) => {
-      const activeReports = data.filter((report: Report) => report.status?.toLowerCase() !== 'rejected');
-      
-      const globallySorted = [...activeReports].sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-
-      // Apply Haversine proximity targeting (default radius set to 25 km)
-      if (coords?.latitude && coords?.longitude) {
-        const MAX_RADIUS_KM = 25; // Change this radius up/down as needed for testing
-
-        return globallySorted.filter((report) => {
-          const rptAny = report as any;
-          
-          // Fallback checks for different API payload key variants
-          const rawLat = rptAny.latitude ?? rptAny.lat ?? rptAny.location?.latitude;
-          const rawLon = rptAny.longitude ?? rptAny.lng ?? rptAny.lon ?? rptAny.location?.longitude;
-
-          if (rawLat == null || rawLon == null) return false;
-
-          const rptLat = parseFloat(rawLat);
-          const rptLon = parseFloat(rawLon);
-
-          if (isNaN(rptLat) || isNaN(rptLon)) return false;
-
-          const distanceInKm = calculateHaversineDistance(
-            coords.latitude,
-            coords.longitude,
-            rptLat,
-            rptLon
-          );
-
-          return distanceInKm <= MAX_RADIUS_KM;
-        });
-      }
-
-      return [];
+      // Filter out rejected reports and sort newest first
+      return data
+        .filter((report: Report) => report.status?.toLowerCase() !== 'rejected')
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
   });
 
@@ -126,7 +77,7 @@ const LocalReports: React.FC = () => {
     <div className="flex flex-col h-full w-full p-3 md:p-12 min-h-screen bg-gray-50/30">
       <div className="max-w-5xl mx-auto w-full">
         
-        {/* Header section matching AllReportsPage */}
+        {/* Header section with View All Reports button */}
         <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 className="text-base md:text-xl font-semibold text-secondary flex items-center gap-2">
@@ -138,8 +89,8 @@ const LocalReports: React.FC = () => {
             </p>
           </div>
           <button
-            onClick={() => navigate('/all-reports')}
-            className="flex items-center justify-center gap-2 px-4 py-2 border border-secondary/20 rounded-full text-xs font-bold text-white bg-secondary/90 hover:bg-secondary transition-colors self-start md:self-auto"
+            onClick={() => navigate('/reports')}
+            className="flex items-center justify-center gap-2 px-4 py-2 border border-secondary/20 rounded-full text-xs font-bold text-white bg-secondary/90 hover:bg-secondary transition-colors self-start md:self-auto cursor-pointer"
           >
             <Eye size={14} />
             View All Reports
@@ -148,7 +99,6 @@ const LocalReports: React.FC = () => {
 
         {/* Content handling */}
         {loading ? (
-          // Skeleton loader matched to ReportList layout
           <div className="space-y-4">
             <div className="h-6 w-1/3 bg-gray-200 animate-pulse rounded" />
             <div className="bg-white rounded-3xl border border-secondary/5 shadow-sm p-6 space-y-4">
@@ -158,7 +108,6 @@ const LocalReports: React.FC = () => {
             </div>
           </div>
         ) : displayError ? (
-          // Geolocation or network fetch issue state
           <div className="flex flex-col items-center justify-center py-16 bg-white rounded-[2.5rem] border border-secondary/5 shadow-sm p-8 text-center space-y-4">
             <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
               <MapPin size={24} />
@@ -168,13 +117,12 @@ const LocalReports: React.FC = () => {
             </p>
             <button
               onClick={() => navigate('/reports')}
-              className="bg-secondary/90 text-white px-6 py-2.5 rounded-full text-xs font-bold hover:bg-secondary transition-all shadow-sm"
+              className="bg-secondary/90 text-white px-6 py-2.5 rounded-full text-xs font-bold hover:bg-secondary transition-all shadow-sm cursor-pointer"
             >
               See All Reports
             </button>
           </div>
         ) : localReports.length === 0 ? (
-          // No reports near user's location state
           <div className="flex flex-col items-center justify-center py-16 bg-white rounded-[2.5rem] border border-secondary/5 shadow-sm p-8 text-center space-y-4">
             <div className="w-12 h-12 rounded-full bg-neutral-50 flex items-center justify-center text-secondary/40">
               <MapPin size={24} />
@@ -187,13 +135,12 @@ const LocalReports: React.FC = () => {
             </p>
             <button
               onClick={() => navigate('/reports')}
-              className="bg-secondary/90 text-white px-6 py-2.5 rounded-full text-xs font-bold hover:bg-secondary transition-all shadow-sm"
+              className="bg-secondary/90 text-white px-6 py-2.5 rounded-full text-xs font-bold hover:bg-secondary transition-all shadow-sm cursor-pointer"
             >
               See All Reports
             </button>
           </div>
         ) : (
-          // Render matching ReportList when reports exist
           <ReportList
             reports={localReports}
             loading={false}

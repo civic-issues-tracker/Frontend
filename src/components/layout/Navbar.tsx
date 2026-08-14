@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import LogoIcon from '../../assets/icons/logoIcon';
 import { HashLink as Link } from 'react-router-hash-link';
+import { useLocation } from 'react-router-dom';
 import { User, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
@@ -8,7 +9,11 @@ import { useTranslation } from 'react-i18next';
 
 const Navbar: React.FC = () => {
   const { t } = useTranslation();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const { isAuthenticated: isLoggedIn, user, logout } = useAuth();
@@ -18,8 +23,36 @@ const Navbar: React.FC = () => {
     document.body.style.overflow = isOpen ? 'hidden' : 'unset';
   }, [isOpen]);
 
+  // Handle outside clicks to close profile dropdown on tablet/touch devices
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleLogout = () => {
-    logout(); 
+    logout();
+    setIsProfileOpen(false);
+  };
+
+  // Helper for active link highlighting
+  const getLinkClass = (path: string, isHash = false) => {
+    const isActive = isHash
+      ? location.hash === path
+      : location.pathname === path && !location.hash;
+
+    return `transition-all ${
+      isActive
+        ? 'opacity-100 font-bold border-b-2 border-primary pb-0.5'
+        : 'opacity-70 hover:opacity-100'
+    }`;
   };
 
   return (
@@ -59,29 +92,43 @@ const Navbar: React.FC = () => {
         <div className="hidden md:flex items-center gap-4 lg:gap-6 text-[10px] lg:text-[12px] font-header uppercase tracking-widest">
           <LanguageSwitcher />
           
-          <Link smooth to="#how-to-report" className="hover:opacity-60 transition-opacity">{t('navbar.links.howTo')}</Link>
-          <Link to="/report" className="hover:opacity-60 transition-opacity">{t('navbar.links.report')}</Link>
-          <Link to="/local-reports" className="hover:opacity-60 transition-opacity">{t('navbar.links.local')}</Link>
+          <Link smooth to="#how-to-report" className={getLinkClass('#how-to-report', true)}>{t('navbar.links.howTo')}</Link>
+          <Link to="/report" className={getLinkClass('/report')}>{t('navbar.links.report')}</Link>
+          <Link to="/local-reports" className={getLinkClass('/local-reports')}>{t('navbar.links.local')}</Link>
           
           {isLoggedIn ? (
-            <div className="relative group py-4">
-              <button className="flex items-center gap-2 bg-primary/5 px-4 py-2 rounded-full border border-primary/10 transition-all group-hover:bg-primary group-hover:text-secondary">
+            <div 
+              ref={profileDropdownRef}
+              className="relative py-4"
+              onMouseEnter={() => setIsProfileOpen(true)}
+              onMouseLeave={() => setIsProfileOpen(false)}
+            >
+              <button 
+                type="button"
+                onClick={() => setIsProfileOpen((prev) => !prev)}
+                className="flex items-center gap-2 bg-primary/5 px-4 py-2 rounded-full border border-primary/10 transition-all hover:bg-primary hover:text-secondary cursor-pointer"
+              >
                 <User size={14} />
                 <span className="font-bold tracking-widest">{userName.split(' ')[0]}</span>
-                <ChevronDown size={12} className="group-hover:rotate-180 transition-transform" />
+                <ChevronDown size={12} className={`transition-transform duration-200 ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              <div className="absolute right-0 top-full pt-2 opacity-0 translate-y-2 pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto transition-all duration-300">
+              <div className={`absolute right-0 top-full pt-2 transition-all duration-300 ${
+                isProfileOpen
+                  ? 'opacity-100 translate-y-0 pointer-events-auto'
+                  : 'opacity-0 translate-y-2 pointer-events-none'
+              }`}>
                 <div className="bg-secondary border border-primary/10 rounded-2xl p-6 shadow-2xl min-w-50 backdrop-blur-2xl bg-opacity-95">
                   <p className="text-[9px] text-primary/40 mb-1 uppercase tracking-[0.2em]">{t('navbar.authStatus')}</p>
                   <p className="text-sm font-bold normal-case text-primary truncate mb-4">{userName}</p>
                   <div className="h-px bg-primary/5 w-full mb-4" />
                   <Link 
                     to="/profile"
-                    className="flex items-center gap-3  mb-1 pb-4 text-primary transition-colors group/profile"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="flex items-center gap-3 mb-1 pb-4 text-primary transition-colors group/profile"
                   >
                     <User size={14} />
-                    <span className="font-black  text-[10px] uppercase tracking-widest">{t('navbar.profile.settings')}</span>
+                    <span className="font-black text-[10px] uppercase tracking-widest">{t('navbar.profile.settings')}</span>
                   </Link>
                   <button 
                     onClick={handleLogout}
@@ -110,13 +157,13 @@ const Navbar: React.FC = () => {
           <div className="flex flex-col items-center gap-5">
             <LanguageSwitcher />
 
-            <Link to="#how-to-report" onClick={toggleMenu} className="text-primary text-xs font-black tracking-widest uppercase">
+            <Link to="#how-to-report" onClick={toggleMenu} className={`text-xs font-black tracking-widest uppercase ${getLinkClass('#how-to-report', true)}`}>
               {t('navbar.links.howTo')}
             </Link>
-            <Link to="/report" onClick={toggleMenu} className="text-primary text-xs font-black tracking-widest uppercase">
+            <Link to="/report" onClick={toggleMenu} className={`text-xs font-black tracking-widest uppercase ${getLinkClass('/report')}`}>
               {t('navbar.links.report')}
             </Link>
-            <Link to="/local-reports" onClick={toggleMenu} className="text-primary text-xs font-black tracking-widest uppercase">
+            <Link to="/local-reports" onClick={toggleMenu} className={`text-xs font-black tracking-widest uppercase ${getLinkClass('/local-reports')}`}>
               {t('navbar.links.local')}
             </Link>
           </div>
