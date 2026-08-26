@@ -17,15 +17,13 @@ export const privateApi = axios.create({
   withCredentials: true,
 });
 
-// Global variable to keep track of the in-memory access token
-let accessTokenInMemory: string | null = null;
-
-// Helper to update the authorization header
+// Helper to update authorization header and tab-scoped sessionStorage
 export const setAuthHeader = (token: string | null) => {
-  accessTokenInMemory = token;
   if (token) {
+    sessionStorage.setItem('access_token', token);
     privateApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   } else {
+    sessionStorage.removeItem('access_token');
     delete privateApi.defaults.headers.common['Authorization'];
   }
 };
@@ -45,11 +43,12 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// Request Interceptor: Make sure the memory token is always attached
+// Request Interceptor: Always fetch token scoped to this tab's sessionStorage
 privateApi.interceptors.request.use(
   (config) => {
-    if (accessTokenInMemory && !config.headers['Authorization']) {
-      config.headers['Authorization'] = `Bearer ${accessTokenInMemory}`;
+    const token = sessionStorage.getItem('access_token');
+    if (token && !config.headers['Authorization']) {
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
@@ -67,7 +66,7 @@ privateApi.interceptors.response.use(
       
       // If the request that failed is the actual refresh request, DO NOT loop. Log out.
       if (originalRequest.url?.includes('/auth/refresh-token/')) {
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
         setAuthHeader(null);
         window.location.href = '/login';
         return Promise.reject(error);
@@ -97,7 +96,7 @@ privateApi.interceptors.response.use(
         // Extract the new access token from the backend response
         const newAccessToken = res.data.access; 
         
-        // Save the new token in memory & update headers
+        // Save the new token in sessionStorage & update headers
         setAuthHeader(newAccessToken);
         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
 
@@ -110,7 +109,7 @@ privateApi.interceptors.response.use(
         isRefreshing = false;
         
         // Only kick them out if we are absolutely sure the refresh token is dead/expired
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
         setAuthHeader(null);
         window.location.href = '/login';
         return Promise.reject(err);
@@ -185,31 +184,35 @@ export const authService = {
   login: async (credentials: LoginCredentials) => {
     const response = await publicApi.post('/auth/login/', credentials);
 
-    console.log("Login response:", response);
-    console.log("Document cookies:", document.cookie);
+    // Save token to sessionStorage if returned directly in login response
+    if (response.data?.access) {
+      setAuthHeader(response.data.access);
+    }
     
     return response.data;
   },
 
   loginWithGoogle: async (googleCode: string) => {
-  try{
-    await privateApi.post('/auth/google-login/', { code: googleCode });
-  }
-  catch (error) {
-    toast.error('Error logging in with Google');
-  }
-  finally {
-    window.location.href = '/';
-  }
+    try {
+      await privateApi.post('/auth/google-login/', { code: googleCode });
+    }
+    catch (error) {
+      toast.error('Error logging in with Google');
+    }
+    finally {
+      window.location.href = '/';
+    }
   },
 
   logout: async () => {
-  try {
-    await privateApi.post('/auth/logout/');
-  } finally {
-    window.location.href = '/'; 
-  }
-},
+    try {
+      await privateApi.post('/auth/logout/');
+    } finally {
+      sessionStorage.removeItem('user');
+      setAuthHeader(null);
+      window.location.href = '/'; 
+    }
+  },
 
   // Forgot Password
   forgotPassword: async (data: { email?: string; phone?: string }) => {
@@ -232,8 +235,13 @@ export const authService = {
   refreshToken: async () => {
     const response = await publicApi.post('/auth/refresh-token/',
       {},
-    { withCredentials: true }
+      { withCredentials: true }
     );
+
+    if (response.data?.access) {
+      setAuthHeader(response.data.access);
+    }
+
     return response.data;
   },
 

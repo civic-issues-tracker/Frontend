@@ -12,6 +12,17 @@ import { authService } from '../../../features/auth/services/authService';
 import { isOrganizationAdminRole } from '../../../lib/roleUtils';
 // import { useGoogleLogin } from '@react-oauth/google';
 
+const formatEthiopianPhone = (phone: string): string => {
+  const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+  if (cleaned.startsWith('0')) {
+    return `+251${cleaned.slice(1)}`;
+  }
+  if (cleaned.startsWith('251')) {
+    return `+${cleaned}`;
+  }
+  return cleaned;
+};
+
 const loginSchema = z.object({
   identifier: z.string().min(1, "Phone or Email is required"),
   password: z.string().min(1, "Password is required"),
@@ -49,9 +60,13 @@ const LoginForm: React.FC = () => {
 
     setLoading(true);
     try {
+      const formattedForgotId = forgotMethod === 'sms' 
+        ? formatEthiopianPhone(forgotIdentifier) 
+        : forgotIdentifier;
+
       const payload = forgotMethod === 'email' 
-        ? { email: forgotIdentifier } 
-        : { phone: forgotIdentifier };
+        ? { email: formattedForgotId } 
+        : { phone: formattedForgotId };
 
       const result = await authService.forgotPassword(payload); 
       
@@ -66,7 +81,7 @@ const LoginForm: React.FC = () => {
           showToast("Reset session not returned by server. Try again.", "error");
           return;
         }
-        setTimeout(() => navigate(`/reset-password?temp_id=${result.temp_id}&phone=${forgotIdentifier}`), 2000);
+        setTimeout(() => navigate(`/reset-password?temp_id=${result.temp_id}&phone=${formattedForgotId}`), 2000);
       }
     } catch  {
       showToast("User not found or request failed.", "error");
@@ -80,9 +95,11 @@ const LoginForm: React.FC = () => {
     setServerError(null);
     
     const isEmail = data.identifier.includes('@');
+    const formattedIdentifier = isEmail ? data.identifier : formatEthiopianPhone(data.identifier);
+
     const payload = isEmail 
-      ? { email: data.identifier, password: data.password }
-      : { phone: data.identifier, password: data.password };
+      ? { email: formattedIdentifier, password: data.password }
+      : { phone: formattedIdentifier, password: data.password };
 
     try {
       const result = await authService.login(payload);
@@ -124,8 +141,6 @@ const LoginForm: React.FC = () => {
       setLoading(false);
     }
   };
-
-
 
 //   const handleGoogleLogin = useGoogleLogin({
 //   flow: 'auth-code',

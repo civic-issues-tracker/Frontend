@@ -1,5 +1,5 @@
 import React, { createContext, useState, useCallback, useRef, useEffect } from 'react';
-import { authService } from '../features/auth/services/authService';
+import { authService, setAuthHeader } from '../features/auth/services/authService';
 import Toast, { type ToastType } from '../components/ui/Toast'; 
 
 export interface User {
@@ -31,7 +31,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUserState] = useState<User | null>(() => {
     try {
-      const savedUser = localStorage.getItem('user');
+      const savedUser = sessionStorage.getItem('user');
       return savedUser ? JSON.parse(savedUser) : null;
     } catch {
       return null;
@@ -49,13 +49,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 5000);
   }, []);
 
-  // Correct wrapped setUser to keep localStorage and React state in sync
+  // Correct wrapped setUser to keep sessionStorage and React state in sync
   const setUser = useCallback((newUser: User | null) => {
     setUserState(newUser);
     if (newUser) {
-      localStorage.setItem('user', JSON.stringify(newUser));
+      sessionStorage.setItem('user', JSON.stringify(newUser));
     } else {
-      localStorage.removeItem('user');
+      sessionStorage.removeItem('user');
+      setAuthHeader(null);
     }
   }, []);
 
