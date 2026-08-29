@@ -161,12 +161,11 @@ const IssueMapPicker: React.FC<MapProps> = ({
         scrollWheelZoom={true}
       >
         <TileLayer
-          url={
-            import.meta.env.VITE_MAP_TILE_URL ||
-            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-          }
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url= {import.meta.env.VITE_MAP_TILE_URL}
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; OpenStreetMap France'
+          maxZoom={20}
         />
+        
 
         <MapEvents onLocationSelect={onLocationSelect} />
         <MapRecenter location={selectedLocation ?? null} />
