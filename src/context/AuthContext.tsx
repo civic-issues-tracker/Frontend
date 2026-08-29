@@ -1,4 +1,5 @@
 import React, { createContext, useState, useCallback, useRef, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { authService, setAuthHeader } from '../features/auth/services/authService';
 import Toast, { type ToastType } from '../components/ui/Toast'; 
 
@@ -29,9 +30,11 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const queryClient = useQueryClient();
+
   const [user, setUserState] = useState<User | null>(() => {
     try {
-      const savedUser = sessionStorage.getItem('user');
+      const savedUser = localStorage.getItem('user');
       return savedUser ? JSON.parse(savedUser) : null;
     } catch {
       return null;
@@ -49,26 +52,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 5000);
   }, []);
 
-  // Correct wrapped setUser to keep sessionStorage and React state in sync
+  // Listen for changes in other tabs to force cache clearance and reload
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'user' || event.key === 'token' || event.key === null) {
+        queryClient.clear();
+        window.location.reload(); 
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [queryClient]);
+
+  // Keep localStorage and React state in sync
   const setUser = useCallback((newUser: User | null) => {
     setUserState(newUser);
     if (newUser) {
-      sessionStorage.setItem('user', JSON.stringify(newUser));
+      localStorage.setItem('user', JSON.stringify(newUser));
     } else {
-      sessionStorage.removeItem('user');
+      localStorage.removeItem('user');
       setAuthHeader(null);
     }
   }, []);
 
   const login = useCallback((userData: User) => {
+    queryClient.clear();
     setUser(userData);
     setIsLoading(false);
-  }, [setUser]);
+  }, [setUser, queryClient]);
 
   const logout = useCallback(async () => {
     if (isLoggingOut.current) return;
     isLoggingOut.current = true;
 
+    queryClient.clear();
     setUser(null);
     try {
       await authService.logout();
@@ -78,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoggingOut.current = false;
       window.location.href = '/';
     }
-  }, [setUser]);
+  }, [setUser, queryClient]);
 
   // Handle visibility changes on mobile (e.g. user unlocks phone or returns to app tab)
   useEffect(() => {
@@ -123,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoading, 
       login, 
       logout,
-      setUser, // Passed wrapped method instead of raw setUserState
+      setUser, 
       showToast
     }}>
       {children}

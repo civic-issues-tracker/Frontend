@@ -20,7 +20,7 @@ const reportSchema = z.object({
   location_long: z.number().refine(val => val !== 0, "report.errors.validLocation"),
   category: z.string().min(1, "report.errors.categoryRequired"),
   subcategory: z.string().optional(),
-  images: z.array(z.any()).min(1, "report.toasts.photoProofRequired"),
+  images: z.array(z.any()).optional().default([]),
 });
 
 type ReportFormData = z.infer<typeof reportSchema>;
@@ -354,7 +354,7 @@ const ReportPage: React.FC = () => {
             )}
 
             {showDropdown && suggestions.length > 0 && (
-              <ul className="absolute top-full left-0 w-full bg-tertiary border border-secondary/10 rounded-2xl mt-2 overflow-hidden z-[999] shadow-2xl">
+              <ul className="absolute top-full left-0 w-full bg-tertiary border border-secondary/10 rounded-2xl mt-2 overflow-hidden z-999 shadow-2xl">
                 {suggestions.map((item) => (
                   <li key={item.place_id} onMouseDown={(e) => {
                     e.preventDefault();
@@ -408,7 +408,7 @@ const ReportPage: React.FC = () => {
         </form>
       </div>
 
-      <div className="w-full lg:w-1/2 flex-1 min-h-[400px] md:min-h-[500px] lg:min-h-full bg-secondary/5 rounded-[2.5rem] overflow-hidden border border-secondary/5 relative shadow-inner">
+      <div className="w-full lg:w-1/2 flex-1 min-h-100 md:min-h-125 lg:min-h-full bg-secondary/5 rounded-[2.5rem] overflow-hidden border border-secondary/5 relative shadow-inner">
         <div className="absolute top-8 left-8 z-50 bg-tertiary/80 backdrop-blur-xl px-5 py-3 rounded-full border border-secondary/5">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />

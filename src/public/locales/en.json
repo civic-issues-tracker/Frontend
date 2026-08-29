@@ -89,10 +89,12 @@
   "reports": {
     "status": {
       "submitted": "SUBMITTED",
-      "resolved": "RESOLVED",
-      "under_review": "UNDER REVIEW",
       "in_progress": "IN PROGRESS",
-      "rejected": "REJECTED"
+      "resolved": "RESOLVED",
+      "rejected": "REJECTED",
+      "pending_admin": "PENDING ADMIN",
+      "escalated": "ESCALATED",
+      "under_review": "UNDER REVIEW"
     },
     "items": {
       "waterLeakage": "Water Leakage",
@@ -197,7 +199,6 @@
       "pleaseCorrectErrors": "Please correct the errors before submitting."
     }
   },
-
   "profilePage": {
     "title": "Your Profile",
     "subtitle": "Update your account details and stay connected.",
@@ -206,17 +207,17 @@
     "labels": {
       "fullName": "Full Name",
       "email": "Email Address",
-      "phone": "Phone Number"
-      ,"currentPassword": "Current Password"
-      ,"newPassword": "New Password"
-      ,"confirmPassword": "Confirm Password"
+      "phone": "Phone Number",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password"
     },
     "placeholders": {
       "fullName": "Enter your full name",
-      "email": "Enter your email address"
-      ,"currentPassword": "Enter your current password"
-      ,"newPassword": "Enter a new password"
-      ,"confirmPassword": "Confirm the new password"
+      "email": "Enter your email address",
+      "currentPassword": "Enter your current password",
+      "newPassword": "Enter a new password",
+      "confirmPassword": "Confirm the new password"
     },
     "phoneLockTitle": "Phone number cannot be changed",
     "buttons": {
@@ -241,9 +242,9 @@
     }
   },
   "reportsPage": {
-    "pageTitle": " Reports",
+    "pageTitle": "My Reports",
     "pageSubtitle": "Track the status and history of issues you've reported.",
-    "searchPlaceholder": "Search your reports...",
+    "searchPlaceholder": "Search by category, subcategory, or location...",
     "allCategories": "All Categories",
     "allLocations": "All Locations",
     "filterButton": "Filter",
@@ -290,5 +291,24 @@
       "settings": "Settings"
     },
     "logout": "Logout Account"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "Stay updated with issue progress and status changes.",
+    "total": "Total",
+    "rejectedCount": "rejected",
+    "emptyTitle": "No notifications yet",
+    "emptySubtitle": "Issue updates will appear here.",
+    "statusRead": "Read",
+    "statusNew": "New",
+    "status": "Status",
+    "unknown": "Unknown",
+    "rejectionReason": "Rejection reason",
+    "rejectionDetails": "Rejection details",
+    "sent": "Sent",
+    "modalMessage": "Message",
+    "statusTransition": "Status Transition",
+    "close": "Close",
+    "errorFallback": "Unable to load notifications."
   }
 }

@@ -83,7 +83,6 @@ const ProfilePage = () => {
       if (setUser && contextUser) {
         const newUserData = { ...contextUser, ...updatedProfile };
         setUser(newUserData);
-        sessionStorage.setItem('user', JSON.stringify(newUserData));
       }
 
       setIsEditing(false);

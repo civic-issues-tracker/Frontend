@@ -1,7 +1,7 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import App from './App.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
 import { LocationProvider } from './context/LocationContext.tsx';
 import '../src/public/locales/i18n.ts';
@@ -41,14 +41,14 @@ persistQueryClient({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <LocationProvider>
           <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-            <QueryClientProvider client={queryClient}>
-              <App />
-            </QueryClientProvider>
+            <App />
           </GoogleOAuthProvider>
         </LocationProvider>
       </AuthProvider>
+    </QueryClientProvider>
   </StrictMode>,
-)
+);

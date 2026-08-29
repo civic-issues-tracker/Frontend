@@ -17,6 +17,8 @@ const Navbar: React.FC = () => {
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const { isAuthenticated: isLoggedIn, user, logout } = useAuth();
+  
+  // Reactively resolve user display name directly from auth context
   const userName = user?.full_name || 'User';
 
   useEffect(() => {
@@ -176,7 +178,7 @@ const Navbar: React.FC = () => {
                     <User size={18} className="text-primary" />
                   </div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-primary truncate">
-                    {userName || "User"}
+                    {userName}
                   </p>
                 </div>
                 <Link 

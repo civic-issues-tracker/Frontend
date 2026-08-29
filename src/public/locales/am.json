@@ -9,7 +9,7 @@
       "local": "የአካባቢ ሪፖርቶች"
     },
     "profile": {
-      "settings": "الመገለጫ ቅንብሮች",
+      "settings": "የመገለጫ ቅንብሮች",
       "logout": "ውጣ",
       "signOut": "ውጣ",
       "signIn": "ግባ"
@@ -73,7 +73,7 @@
     "subtitle": "ከአዲስ አበባ ጎዳናዎች የተገኙ የቀጥታ መረጃዎች።",
     "viewAll": "ሁሉንም ሪፖርቶች ይመልከቱ",
     "viewDetailsAria": "ዝርዝሩን ይመልከቱ",
-    "loading": "የቅርብ ጊዜ ሪፖርቶችን እንጫናለን...",
+    "loading": "የቅርብ ጊዜ ሪፖርቶችን በመጫን ላይ...",
     "error": "የቅርብ ጊዜ ሪፖርቶችን ማግኘት አልተቻለም።",
     "noReports": "ሪፖርቶች አልተገኙም።",
     "dayAgo": "ከ{{count}} ቀን በፊት",
@@ -82,7 +82,7 @@
     "hoursAgo": "ከ{{count}} ሰዓታት በፊት",
     "minuteAgo": "ከ{{count}} ደቂቃ በፊት",
     "minutesAgo": "ከ{{count}} ደቂቃዎች በፊት",
-    "justNow": "አሁን።",
+    "justNow": "አሁን",
     "near": "አቅራቢያ",
     "viewDetails": "ዝርዝሩን ይመልከቱ"
   },
@@ -161,7 +161,7 @@
   "hero_footer_variant": {
     "title": "የመሠረተ ልማት ችግሮችን ሪፖርት ያድርጉ እና ይጠግኑ",
     "titleHighlight": "በጋራ",
-    "description": "የተሻለ ሰፈር ለመገንባት የበኩሎን አስተዋጽኦ ያድርጉ。",
+    "description": "የተሻለ ሰፈር ለመገንባት የበኩሎን አስተዋጽኦ ያድርጉ።",
     "buttons": {
       "report": "ሪፖርት አቅርብ",
       "locating": "አካባቢ በመፈለግ ላይ...",
@@ -174,10 +174,10 @@
     "fetchingAddress": "አድራሻ በመፈለግ ላይ...",
     "mapHint": "አካባቢውን ምልክት ለማድረግ ካርታውን ይጫኑ",
     "labels": {
-      "title": "የችግሩ ርዕስ (Issue Title)",
-      "category": "ዋና ክፍል (Category)",
-      "subcategory": "ንዑስ ክፍል (Sub Category)",
-      "location": "አካባቢ (Location)",
+      "title": "የችግሩ ርዕስ",
+      "category": "ዋና ክፍል",
+      "subcategory": "ንዑስ ክፍል",
+      "location": "አካባቢ",
       "description": "ዝርዝር መግለጫ",
       "photoProof": "የፎቶ ማስረጃ"
     },
@@ -198,8 +198,8 @@
       "submitFailed": "ሪፖርቱን መላክ አልተቻለም። እባክዎ እንደገና ይሞክሩ።"
     },
     "errors": {
-      "titleMin": "ርዕስ መምረጥ ግዴታ ነው እና ቢያንስ ከ5 ፊደላት በላይ መሆን አለበት",
-      "descriptionMin": "መግለጫ መምረጥ ግዴታ ነው እና ቢያንስ ከ10 ፊደላት በላይ መሆን አለበት",
+      "titleMin": "ርዕስ መምረጥ ግዴታ ነው እና ቢያንስ 5 ፊደላት መሆን አለበት",
+      "descriptionMin": "መግለጫ መጻፍ ግዴታ ነው እና ቢያንስ 10 ፊደላት መሆን አለበት",
       "locationRequired": "የችግሩ አካባቢ መሞላት አለበት",
       "validLocation": "እባክዎ ትክክለኛ አካባቢ ይምረጡ",
       "categoryRequired": "ዋና ክፍል መምረጥ ግዴታ ነው",
@@ -209,9 +209,9 @@
   },
   "profilePage": {
     "title": "መገለጫዎ",
-    "subtitle": "የመገለጫ መረጃዎን ያዘምኑ እና ይገናኙ.",
+    "subtitle": "የመገለጫ መረጃዎን ያዘምኑ።",
     "sectionTitle": "የመገለጫ ዝርዝሮች",
-    "sectionDescription": "ለህጋዊ ማሳወቂያዎች እና ሪፖርት እይታ የሚያስፈልጉ የእርስዎን የማውጫ መረጃ ያስተካክሉ.",
+    "sectionDescription": "ለማሳወቂያዎች እና ሪፖርት እይታ የሚያስፈልጉ የእርስዎን መረጃዎች ያስተካክሉ።",
     "labels": {
       "fullName": "ሙሉ ስም",
       "email": "የኢሜይል አድራሻ",
@@ -230,36 +230,36 @@
     "phoneLockTitle": "የስልክ ቁጥር ማቀየር አይቻልም",
     "buttons": {
       "editProfile": "መገለጫ አርትዕ",
-      "cancel": "ሰርዝ", 
+      "cancel": "ሰርዝ",
       "saveUpdates": "ማሻሻያዎችን አስቀምጥ",
-      "saving": "በማስቀመጥ..."
+      "saving": "በማስቀመጥ ላይ..."
     },
     "messages": {
       "updateSuccess": "መገለጫዎ በተሳካ ሁኔታ ተዘምኗል!",
-      "updateError": "መገለጫዎን ማሻሻል አልተቻለም። እባክዎ ደግመው ይሞክሩ.",
-      "currentPasswordRequired": "የይለፍ ቃሉን ለመቀየር የአሁኑ የይለፍ ቃል ይያዙ።",
-      "passwordMismatch": "አዲሱ የይለፍ ቃል ይዛግሩ አይመሳሰሉም።",
-      "noChanges": "ማንኛውንም መረጃ ማስተካከል አልተፈጠረም። እባክዎ ከዚያ በኋላ ይሙከሩ.",
-      "emailVerifyLinkTitle": "የኢሜይል ማረጋገጫ አገናኝ ተመክሯል:",
-      "emailUpdateNote": "ኢሜይል ለውጥ ወደ አዲሱ አድራሻ የማረጋገጫ አገናኝ ይላካል.",
-      "emailUpdateDisabled": "ኢሜይል ለውጦች አሁን ጊዜ ማድረግ አይቻልም። እባክዎ ከኋላ ደግመው ይሞክሩ."
+      "updateError": "መገለጫዎን ማሻሻል አልተቻለም። እባክዎ ደግመው ይሞክሩ።",
+      "currentPasswordRequired": "የይለፍ ቃሉን ለመቀየር የአሁኑን የይለፍ ቃል ያስገቡ።",
+      "passwordMismatch": "የያስገቡት አዲስ የይለፍ ቃላት አይመሳሰሉም።",
+      "noChanges": "ምንም የተቀየረ መረጃ የለም። እባክዎ በኋላ ደግመው ይሞክሩ።",
+      "emailVerifyLinkTitle": "የኢሜይል ማረጋገጫ አገናኝ ተላክቷል:",
+      "emailUpdateNote": "ኢሜይል ሲቀይሩ ወደ አዲሱ አድራሻ የማረጋገጫ አገናኝ ይላካል።",
+      "emailUpdateDisabled": "በአሁኑ ሰዓት ኢሜይል መቀየር አይቻልም። እባክዎ በኋላ ደግመው ይሞክሩ።"
     },
     "loading": {
-      "title": "መገለጫዎን እንሰቅላለን...",
-      "subtitle": "የአካውንት ዝርዝሮችዎን ሲወስድ እባክዎን ይጠብቁ."
+      "title": "መገለጫዎን በመጫን ላይ...",
+      "subtitle": "የአካውንት ዝርዝሮችዎን እስኪወስድ እባክዎን ይጠብቁ።"
     }
   },
   "reportsPage": {
-    "pageTitle": " ሪፖርቶች",
-    "pageSubtitle": "የሪፖርትዎን ሁኔታ እና ታሪክ ይከታተሉ.",
-    "searchPlaceholder": "የሪፖርቶችን ይፈልጉ...",
+    "pageTitle": "ሪፖርቶች",
+    "pageSubtitle": "የሪፖርትዎን ሁኔታ እና ታሪክ ይከታተሉ።",
+    "searchPlaceholder": "ሪፖርቶችን ይፈልጉ...",
     "allCategories": "ሁሉንም ምድቦች",
     "allLocations": "ሁሉንም ቦታዎች",
     "filterButton": "አጣራ",
-    "loading": "ሪፖርቶችን እንጫናለን...",
-    "noReports": "ሪፖርት አልተገኙም።",
-    "errorFallback": "ሪፖርቶችን ማንበብ አልተቻለም። እባክዎን ደግመው ይሞክሩ.",
-    "scrollRight": "ሰንጠረዡን ወደ ቀኝ ይመለሱ",
+    "loading": "ሪፖርቶችን በመጫን ላይ...",
+    "noReports": "ሪፖርቶች አልተገኙም።",
+    "errorFallback": "ሪፖርቶችን ማንበብ አልተቻለም። እባክዎን ደግመው ይሞክሩ።",
+    "scrollRight": "ሰንጠረዡን ወደ ቀኝ ያሸብልሉ",
     "tableHeaders": {
       "issueId": "የችግር ቁጥር",
       "category": "ምድብ",
@@ -275,21 +275,21 @@
     "category": "ምድብ",
     "priority": "ቅድሚያ",
     "status": "ሁኔታ",
-    "submitted": "የተገለጸ",
+    "submitted": "የቀረበበት ቀን",
     "description": "መግለጫ",
     "statusTimeline": "የሁኔታ ታሪክ",
     "statusTimelineSubtitle": "የሪፖርትዎን እድገት ይከታተሉ",
     "noTimeline": "የታሪክ መረጃ አልተገኘም።",
     "issuePhoto": "የችግር ፎቶ",
     "issuePhotoAlt": "የችግር ፎቶ",
-    "reopenIssue": "ችግሩን ደግመው ክፈት",
+    "reopenIssue": "ችግሩን እንደገና ክፈት",
     "noDescription": "መግለጫ አልተገኘም።",
     "loading": "የችግር ዝርዝር እየጫነ ይገኛል...",
-    "errorFallback": "የችግር ዝርዝር ማግኘት አልተቻለም። እባክዎን ደግመው ይሞክሩ.",
+    "errorFallback": "የችግር ዝርዝር ማግኘት አልተቻለም። እባክዎን ደግመው ይሞክሩ።",
     "notFound": "ችግሩ አልተገኘም።"
   },
   "dashboardCitizen": {
-    "portalTitle": "የነጋዴ መዳረሻ",
+    "portalTitle": "የዜጋ መዳረሻ",
     "officialAccess": "የአገልግሎት መታወቂያ",
     "userFallbackName": "የህዝብ ተጠቃሚ",
     "userFallbackEmail": "user@example.com",
@@ -299,6 +299,24 @@
       "settings": "ቅንብሮች"
     },
     "logout": "ውጣ"
+  },
+  "notifications": {
+    "title": "ማስታወቂያዎች",
+    "subtitle": "የጉዳይዎን ሂደት እና የሁኔታ ለውጦች እዚህ ይከታተሉ።",
+    "total": "ጠቅላላ",
+    "rejectedCount": "ውድቅ ተደርጓል",
+    "emptyTitle": "ምንም ማስታወቂያ የለም",
+    "emptySubtitle": "የጉዳይ ማሻሻያዎች እዚህ ይታያሉ።",
+    "statusRead": "ተነቧል",
+    "statusNew": "አዲስ",
+    "status": "ሁኔታ",
+    "unknown": "አልተገለጸም",
+    "rejectionReason": "የውድቅ የተደረገበት ምክንያት",
+    "rejectionDetails": "የውድቅ ዝርዝር መረጃ",
+    "sent": "ተልኳል",
+    "modalMessage": "መልዕክት",
+    "statusTransition": "የሁኔታ ለውጥ",
+    "close": "ዝጋ",
+    "errorFallback": "ማስታወቂያዎችን መጫን አልተቻለም።"
   }
 }
-
