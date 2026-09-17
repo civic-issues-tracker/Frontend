@@ -33,8 +33,15 @@ const signupSchema = z.object({
     .refine((val) => /^(?:\+251|251|0)?[97]\d{8}$/.test(val.replace(/[\s-]/g, '')), "Use a valid Ethiopian number (e.g. 09XXXXXXXX or +2519XXXXXXXX)"),
   email: z.string()
     .email("Invalid email address"),
-  password: z.string()
-    .min(8, "Security requires at least 8 characters"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/\d/, "Password must contain at least one number")
+    .regex(/[a-zA-Z]/, "Password must contain at least one letter"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
 type SignupData = z.infer<typeof signupSchema>;
@@ -44,7 +51,8 @@ const SignupForm: React.FC = () => {
   const [tempId, setTempId] = useState<string | null>(null);
   const [otpCode, setOtpCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { login, showToast } = useAuth();
 
@@ -54,7 +62,7 @@ const SignupForm: React.FC = () => {
   });
 
   const handleContinue = async () => {
-    const isStepValid = await trigger(["full_name", "phone", "password", "email"]);
+    const isStepValid = await trigger(["full_name", "phone", "password", "confirmPassword", "email"]);
     if (isStepValid) setStep(2);
   };
 
@@ -69,7 +77,7 @@ const SignupForm: React.FC = () => {
         full_name: data.full_name, 
         phone: normalizedPhone,
         password: data.password,
-        confirm_password: data.password, 
+        confirm_password: data.confirmPassword, 
         verification_method: method
       });
 
@@ -114,7 +122,7 @@ const SignupForm: React.FC = () => {
         otp_code: otpCode
       });
 
-        if ( result.user) {
+      if (result.user) {
         showToast("Identity verified! Access granted.", "success");
         
         setTimeout(() => {
@@ -181,6 +189,24 @@ const SignupForm: React.FC = () => {
                   className="absolute right-4 top-10 text-secondary/30 hover:text-secondary transition-colors"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              <div className="relative">
+                <Input 
+                  label="Confirm Password" 
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  {...register("confirmPassword")}
+                  error={errors.confirmPassword?.message}
+                  autoComplete='new-password'
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-10 text-secondary/30 hover:text-secondary transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>

@@ -240,7 +240,7 @@ const LoginForm: React.FC = () => {
             onClick={() => navigate('/signup')}
             className="text-[9px] font-black uppercase tracking-[0.3em] text-secondary hover:text-secondary transition-colors text-left"
           >
-            New here? <span className="text-secondary border-b border-secondary/20 ml-1">Create Account</span>
+            New here? <span className="text-secondary border-b border-secondary/20 ml-1 cursor-pointer hover:animate-pulse hover:text-black">Create Account</span>
           </button>
         </motion.form>
       ) : (

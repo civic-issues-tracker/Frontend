@@ -242,7 +242,7 @@
     }
   },
   "reportsPage": {
-    "pageTitle": "My Reports",
+    "pageTitle": "All Reports",
     "pageSubtitle": "Track the status and history of issues you've reported.",
     "searchPlaceholder": "Search by category, subcategory, or location...",
     "allCategories": "All Categories",

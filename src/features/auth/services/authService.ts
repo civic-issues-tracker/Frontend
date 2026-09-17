@@ -217,7 +217,7 @@ export const authService = {
   // Forgot Password
   forgotPassword: async (data: { email?: string; phone?: string }) => {
     const response = await publicApi.post('/auth/forgot-password/', data);
-    return response.data;
+    return response.data; // Returns { temp_id: "..." } for SMS, or email sent msg
   },
 
   // Reset via Email Link
@@ -227,9 +227,9 @@ export const authService = {
   },
 
   // SMS reset flow: confirm OTP and set a new password
-  verifyResetOTP: async (data: { temp_id: string; otp_code: string; new_password: string; confirm_password: string }) => {
+  verifyResetOTP: async (data: { temp_id: string; otp_code: string }) => {
     const response = await publicApi.post('/auth/verify-reset-otp/', data);
-    return response.data;
+    return response.data; // Returns { token: "..." }
   },
 
   refreshToken: async () => {

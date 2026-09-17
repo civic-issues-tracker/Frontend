@@ -9,82 +9,90 @@ import { authService } from '../../../features/auth/services/authService';
 import { useAuth } from '../../../hooks/useAuth';
 import Input from '../../../components/ui/Input';
 
-const resetSchema = z.object({
-  otp_code: z.string().optional(),
-  phone: z.string().optional(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-type ResetData = z.infer<typeof resetSchema>;
+const createResetSchema = (flow: 'email' | 'sms') => 
+  z.object({
+    otp_code: flow === 'sms' 
+      ? z.string().min(4, "OTP code is required") 
+      : z.string().optional(),
+    phone: z.string().optional(),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .regex(/.*[0-9].*/, "Password must contain at least one number"),
+    confirmPassword: z.string(),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 const ResetPasswordPage: React.FC = () => {
   const { token: urlToken } = useParams<{ token: string }>(); 
   const [searchParams] = useSearchParams();
+  
   const tokenFromQuery = searchParams.get('token');
   const tempIdFromQuery = searchParams.get('temp_id');
   const phoneFromQuery = searchParams.get('phone');
   
-  // Final token check (from URL path or Query string)
   const activeToken = urlToken || tokenFromQuery;
 
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Flow State: Default to SMS if no token is present
+  // Initialize flow based on token availability
   const [flow, setFlow] = useState<'email' | 'sms'>(activeToken ? 'email' : 'sms');
-
   const { showToast } = useAuth();
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<ResetData>({
-    resolver: zodResolver(resetSchema),
+  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+    resolver: zodResolver(createResetSchema(flow)),
   });
 
-  // Switch flow helper
   const toggleFlow = () => {
-    const newFlow = flow === 'email' ? 'sms' : 'email';
-    setFlow(newFlow);
-    reset(); // Clear form errors/values when switching
+    const nextFlow = flow === 'email' ? 'sms' : 'email';
+    setFlow(nextFlow);
+    reset();
   };
 
-  const onResetSubmit = async (data: ResetData) => {
+  const onResetSubmit = async (data: any) => {
     setLoading(true);
     try {
-      if (flow === 'email') {
-        if (!activeToken) {
-          showToast("Missing reset token. Please check your email link.", "error");
-          setLoading(false);
-          return;
-        }
-        await authService.resetPasswordConfirm({
-          token: activeToken,
-          password: data.password,
-          confirm_password: data.confirmPassword
-        });
-      } else {
+      let resetToken = activeToken;
+
+      if (flow === 'sms') {
         if (!tempIdFromQuery || !data.otp_code) {
           showToast("Missing reset session or OTP code. Start forgot password again.", "error");
           setLoading(false);
           return;
         }
-        await authService.verifyResetOTP({
+
+        // Step 1 for SMS: Verify OTP to get reset token
+        const otpRes = await authService.verifyResetOTP({
           temp_id: tempIdFromQuery,
           otp_code: data.otp_code,
-          new_password: data.password,
-          confirm_password: data.confirmPassword
         });
+
+        resetToken = otpRes?.token || otpRes?.reset_token;
       }
+
+      if (!resetToken) {
+        showToast("Missing reset token. Please restart the reset process.", "error");
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Call resetPasswordConfirm with token and passwords matching ResetPasswordSerializer
+      await authService.resetPasswordConfirm({
+        token: resetToken,
+        password: data.password,
+        confirm_password: data.confirmPassword,
+      });
 
       setSuccess(true);
       showToast("Password updated successfully!", "success");
       setTimeout(() => navigate('/login'), 3000);
-    } catch  {
-      const errorMsg = "Request failed. Check your data and try again.";
-      showToast(errorMsg, "error");
+    } catch (err: any) {
+      const serverMessage = err.response?.data?.error || err.response?.data?.detail || err.response?.data?.password?.[0];
+      showToast(serverMessage || "Request failed. Check your inputs.", "error");
     } finally {
       setLoading(false);
     }
@@ -97,10 +105,10 @@ const ResetPasswordPage: React.FC = () => {
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-md bg-tertiary p-10 rounded-[3rem] border border-secondary/5 shadow-2xl"
       >
-        {/* Flow Toggle Switch */}
         {!success && (
           <div className="flex justify-end mb-4">
             <button 
+              type="button"
               onClick={toggleFlow}
               className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-secondary/40 hover:text-secondary transition-colors"
             >
@@ -146,15 +154,16 @@ const ResetPasswordPage: React.FC = () => {
                     type="text" 
                     placeholder="+251..."
                     {...register("phone")} 
-                    error={errors.phone?.message} 
+                    error={errors.phone?.message as string} 
                     defaultValue={phoneFromQuery ?? ''}
+                    readOnly={!!phoneFromQuery}
                   />
                   <Input 
                     label="OTP Code" 
                     type="text" 
                     placeholder="123456"
                     {...register("otp_code")} 
-                    error={errors.otp_code?.message} 
+                    error={errors.otp_code?.message as string} 
                   />
                 </>
               )}
@@ -164,14 +173,14 @@ const ResetPasswordPage: React.FC = () => {
                 type="password" 
                 placeholder="••••••••"
                 {...register("password")} 
-                error={errors.password?.message} 
+                error={errors.password?.message as string} 
               />
               <Input 
                 label="Confirm New Password" 
                 type="password" 
                 placeholder="••••••••"
                 {...register("confirmPassword")} 
-                error={errors.confirmPassword?.message} 
+                error={errors.confirmPassword?.message as string} 
               />
             </div>
 
