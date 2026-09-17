@@ -23,6 +23,12 @@ const formatEthiopianPhone = (phone: string): string => {
   return cleaned;
 };
 
+const getResetErrorMessage = (error: unknown) => {
+  if (!axios.isAxiosError(error)) return 'Unable to send reset instructions. Check your connection and try again.';
+  const data = error.response?.data as { error?: string; detail?: string } | undefined;
+  return data?.error || data?.detail || 'Unable to send reset instructions. Please try again.';
+};
+
 const loginSchema = z.object({
   identifier: z.string().min(1, "Phone or Email is required"),
   password: z.string().min(1, "Password is required"),
@@ -71,7 +77,7 @@ const LoginForm: React.FC = () => {
       const result = await authService.forgotPassword(payload); 
       
       const successMsg = forgotMethod === 'email' 
-        ? "Reset link sent to your email!" 
+        ? "If an account matches this email, reset instructions will be sent."
         : "OTP code sent to your phone!";
       
       showToast(successMsg, "success");
@@ -81,10 +87,10 @@ const LoginForm: React.FC = () => {
           showToast("Reset session not returned by server. Try again.", "error");
           return;
         }
-        setTimeout(() => navigate(`/reset-password?temp_id=${result.temp_id}&phone=${formattedForgotId}`), 2000);
+        setTimeout(() => navigate(`/reset-password?temp_id=${result.temp_id}`), 2000);
       }
-    } catch  {
-      showToast("User not found or request failed.", "error");
+    } catch (error: unknown) {
+      showToast(getResetErrorMessage(error), "error");
     } finally {
       setLoading(false);
     }
