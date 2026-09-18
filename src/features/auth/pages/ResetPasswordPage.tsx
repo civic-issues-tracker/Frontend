@@ -3,96 +3,83 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { motion, AnimatePresence } from 'framer-motion';
-import { KeyRound, Loader2, CheckCircle2, Smartphone, Mail, ArrowLeftRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { KeyRound, Loader2, CheckCircle2, Smartphone, Mail } from 'lucide-react';
+import axios from 'axios';
 import { authService } from '../../../features/auth/services/authService';
 import { useAuth } from '../../../hooks/useAuth';
 import Input from '../../../components/ui/Input';
 
-const createResetSchema = (flow: 'email' | 'sms') => 
-  z.object({
-    otp_code: flow === 'sms' 
-      ? z.string().min(4, "OTP code is required") 
-      : z.string().optional(),
-    phone: z.string().optional(),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/.*[0-9].*/, "Password must contain at least one number"),
-    confirmPassword: z.string(),
-  }).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+const resetSchema = z.object({
+  otp_code: z.string().trim().min(1, "OTP code is required").optional(),
+  password: z.string().min(8, "Password must be at least 8 characters").refine((value) => /\d/.test(value), "Password must contain at least one number"),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type ResetData = z.infer<typeof resetSchema>;
+
+const getResetErrorMessage = (error: unknown) => {
+  if (!axios.isAxiosError(error)) return 'Unable to reset your password. Check your connection and try again.';
+  const data = error.response?.data as { error?: string; detail?: string } | undefined;
+  return data?.error || data?.detail || 'Unable to reset your password. Please try again.';
+};
 
 const ResetPasswordPage: React.FC = () => {
   const { token: urlToken } = useParams<{ token: string }>(); 
   const [searchParams] = useSearchParams();
-  
   const tokenFromQuery = searchParams.get('token');
   const tempIdFromQuery = searchParams.get('temp_id');
-  const phoneFromQuery = searchParams.get('phone');
   
+  // Final token check (from URL path or Query string)
   const activeToken = urlToken || tokenFromQuery;
+  const resetMethod = activeToken ? 'email' : tempIdFromQuery ? 'sms' : null;
 
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Initialize flow based on token availability
-  const [flow, setFlow] = useState<'email' | 'sms'>(activeToken ? 'email' : 'sms');
   const { showToast } = useAuth();
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
-    resolver: zodResolver(createResetSchema(flow)),
+  const { register, handleSubmit, formState: { errors } } = useForm<ResetData>({
+    resolver: zodResolver(resetSchema),
   });
 
-  const toggleFlow = () => {
-    const nextFlow = flow === 'email' ? 'sms' : 'email';
-    setFlow(nextFlow);
-    reset();
-  };
-
-  const onResetSubmit = async (data: any) => {
+  const onResetSubmit = async (data: ResetData) => {
     setLoading(true);
     try {
-      let resetToken = activeToken;
-
-      if (flow === 'sms') {
+      if (resetMethod === 'email') {
+        if (!activeToken) {
+          showToast("Missing reset token. Please check your email link.", "error");
+          setLoading(false);
+          return;
+        }
+        await authService.resetPasswordConfirm({
+          token: activeToken,
+          password: data.password,
+          confirm_password: data.confirmPassword
+        });
+      } else {
         if (!tempIdFromQuery || !data.otp_code) {
           showToast("Missing reset session or OTP code. Start forgot password again.", "error");
           setLoading(false);
           return;
         }
-
-        // Step 1 for SMS: Verify OTP to get reset token
-        const otpRes = await authService.verifyResetOTP({
+        await authService.verifyResetOTP({
           temp_id: tempIdFromQuery,
           otp_code: data.otp_code,
+          new_password: data.password,
+          confirm_password: data.confirmPassword
         });
-
-        resetToken = otpRes?.token || otpRes?.reset_token;
       }
-
-      if (!resetToken) {
-        showToast("Missing reset token. Please restart the reset process.", "error");
-        setLoading(false);
-        return;
-      }
-
-      // Step 2: Call resetPasswordConfirm with token and passwords matching ResetPasswordSerializer
-      await authService.resetPasswordConfirm({
-        token: resetToken,
-        password: data.password,
-        confirm_password: data.confirmPassword,
-      });
 
       setSuccess(true);
       showToast("Password updated successfully!", "success");
       setTimeout(() => navigate('/login'), 3000);
-    } catch (err: any) {
-      const serverMessage = err.response?.data?.error || err.response?.data?.detail || err.response?.data?.password?.[0];
-      showToast(serverMessage || "Request failed. Check your inputs.", "error");
+    } catch (error: unknown) {
+      showToast(getResetErrorMessage(error), "error");
     } finally {
       setLoading(false);
     }
@@ -105,36 +92,15 @@ const ResetPasswordPage: React.FC = () => {
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-md bg-tertiary p-10 rounded-[3rem] border border-secondary/5 shadow-2xl"
       >
-        {!success && (
-          <div className="flex justify-end mb-4">
-            <button 
-              type="button"
-              onClick={toggleFlow}
-              className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-secondary/40 hover:text-secondary transition-colors"
-            >
-              Switch to {flow === 'email' ? 'SMS' : 'Email'} <ArrowLeftRight size={12} />
-            </button>
-          </div>
-        )}
-
         <header className="mb-10 text-center">
           <div className="flex justify-center mb-4">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={flow}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                {flow === 'sms' ? <Smartphone className="text-secondary/20" size={32}/> : <Mail className="text-secondary/20" size={32}/>}
-              </motion.div>
-            </AnimatePresence>
+            {resetMethod === 'sms' ? <Smartphone className="text-secondary/20" size={32}/> : <Mail className="text-secondary/20" size={32}/>}
           </div>
           <h1 className="font-header text-3xl font-black text-secondary tracking-tighter uppercase">
-            {flow === 'sms' ? "Verify" : "New"} <span className="font-light">Password</span>
+            {resetMethod === 'sms' ? "Verify" : "New"} <span className="font-light">Password</span>
           </h1>
           <p className="text-[10px] text-secondary/40 uppercase tracking-[0.3em] mt-3 font-bold">
-            {flow === 'sms' ? "Enter the OTP sent to your phone" : "Secure your account credentials"}
+            {resetMethod === 'sms' ? "Enter the OTP sent to your phone" : "Secure your account credentials"}
           </p>
         </header>
 
@@ -144,26 +110,23 @@ const ResetPasswordPage: React.FC = () => {
             <p className="text-xs font-black uppercase tracking-widest text-secondary">Success!</p>
             <p className="text-[10px] text-secondary/50 uppercase">Redirecting to login...</p>
           </div>
+        ) : !resetMethod ? (
+          <div className="space-y-4 text-center">
+            <p className="text-sm text-red-600">This reset link is missing or invalid. Please start again from Forgot Password.</p>
+            <button type="button" onClick={() => navigate('/login')} className="text-xs font-bold text-secondary underline">Back to login</button>
+          </div>
         ) : (
           <form onSubmit={handleSubmit(onResetSubmit)} className="space-y-6">
             <div className="space-y-4">
-              {flow === 'sms' && (
+              {resetMethod === 'sms' && (
                 <>
-                  <Input 
-                    label="Phone Number" 
-                    type="text" 
-                    placeholder="+251..."
-                    {...register("phone")} 
-                    error={errors.phone?.message as string} 
-                    defaultValue={phoneFromQuery ?? ''}
-                    readOnly={!!phoneFromQuery}
-                  />
                   <Input 
                     label="OTP Code" 
                     type="text" 
                     placeholder="123456"
                     {...register("otp_code")} 
-                    error={errors.otp_code?.message as string} 
+                    error={errors.otp_code?.message} 
+                    autoComplete="one-time-code"
                   />
                 </>
               )}
@@ -173,14 +136,16 @@ const ResetPasswordPage: React.FC = () => {
                 type="password" 
                 placeholder="••••••••"
                 {...register("password")} 
-                error={errors.password?.message as string} 
+                error={errors.password?.message} 
+                autoComplete="new-password"
               />
               <Input 
                 label="Confirm New Password" 
                 type="password" 
                 placeholder="••••••••"
                 {...register("confirmPassword")} 
-                error={errors.confirmPassword?.message as string} 
+                error={errors.confirmPassword?.message} 
+                autoComplete="new-password"
               />
             </div>
 
