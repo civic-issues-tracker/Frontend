@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom'; 
 import { useTranslation } from 'react-i18next';
-import { Bell, FileText, LogOut, CircleUser, Menu, X } from 'lucide-react';
+import { Bell, FileText, LogOut, CircleUser, Menu, X, ArrowLeft } from 'lucide-react';
 import LogoIcon from '../../assets/icons/logoIcon';
 import { useAuth } from '../../hooks/useAuth';
 import { privateApi } from '../auth/services/authService';
@@ -43,10 +43,10 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
   return (
     <div className="flex h-screen bg-[#FCFBF9] text-gray-800 overflow-hidden antialiased">
       
-      {/* --- MOBILE HEADER (GLASSMORPHISM WITH ENHANCED BLUR) --- */}
+      {/* --- MOBILE HEADER --- */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/75 backdrop-blur-lg border-b border-gray-200/50 flex items-center justify-between px-6 z-50 transition-all duration-300">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4A3728] to-[#2A1E17] flex items-center justify-center shadow-md shadow-amber-950/10">
+          <div className="w-9 h-9 rounded-xl bg-linear-to-br from-[#4A3728] to-[#2A1E17] flex items-center justify-center shadow-md shadow-amber-950/10">
             <CircleUser size={18} className="text-white" />
           </div>
           <span className="font-bold text-sm tracking-tight text-primary">{t('navbar.brandName')}</span>
@@ -76,19 +76,30 @@ const CitizenDashboardLayout = ({ children }: { children: React.ReactNode }) => 
         ${isSidebarOpen ? 'translate-x-0 shadow-2xl shadow-black/20' : '-translate-x-full'}
       `}>
         
-        {/* Brand/Identity Header for Large Screens */}
-        <Link
-          to="/"
-          className="hidden lg:flex text-primary  items-center gap-2.5 px-3 mb-8 rounded-xl hover:bg-white/10 active:scale-[0.99] transition-all duration-200 py-2.5 group"
-        >
-          <LogoIcon size={34} color="var(--primary)" />
-          <span className="font-black  text-3xl tracking-tight uppercase text-primary group-hover:text-[#2A1E17] transition-colors duration-200">
-            {t('navbar.brandName')}<span className="font-light opacity-80"> Fix</span>
-          </span>
-        </Link>
+        {/* Brand/Identity Header with Back Arrow for Mobile View */}
+        <div className="flex items-center justify-between gap-2 mb-8">
+          <Link
+            to="/"
+            onClick={closeSidebar}
+            className="text-primary flex items-center gap-2.5 px-3 rounded-xl hover:bg-white/10 active:scale-[0.99] transition-all duration-200 py-2.5 group flex-1"
+          >
+            <LogoIcon size={34} color="var(--primary)" />
+            <span className="font-black text-3xl tracking-tight uppercase text-primary group-hover:text-[#2A1E17] transition-colors duration-200">
+              {t('navbar.brandName')}<span className="font-light opacity-80"> Fix</span>
+            </span>
+          </Link>
+
+          <button
+            onClick={closeSidebar}
+            className="lg:hidden p-2 rounded-xl text-primary hover:text-[#2A1E17] hover:bg-white/10 transition-all duration-200"
+            aria-label="Close sidebar"
+          >
+            <ArrowLeft size={20} />
+          </button>
+        </div>
 
         {/* User Badge Profile Section */}
-          <div className="bg-white/30 backdrop-blur-md border border-white/40 rounded-2xl p-4 flex flex-col items-center mb-6 text-center shadow-xs group transition-all duration-300 hover:bg-white/40">
+        <div className="bg-white/30 backdrop-blur-md border border-white/40 rounded-2xl p-4 flex flex-col items-center mb-6 text-center shadow-xs group transition-all duration-300 hover:bg-white/40">
           <div className="relative mb-2.5">
             <div className="w-14 h-14 rounded-full border border-white/60 bg-[#FAF7F2] flex items-center justify-center shadow-xs transition-transform duration-300 group-hover:scale-105">
               <CircleUser size={38} strokeWidth={1} className="text-[#4A3728]" />
