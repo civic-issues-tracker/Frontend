@@ -1,18 +1,84 @@
 import React, { useState, useEffect, useRef } from 'react';
 import LogoIcon from '../../assets/icons/logoIcon';
 import { HashLink as Link } from 'react-router-hash-link';
-import { useLocation } from 'react-router-dom';
-import { User, ChevronDown, LogOut } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { User, ChevronDown, LogOut, Loader2, Search, MapPin } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import { publicApi } from '../../features/auth/services/authService';
+
+// Interface for Report Search Results supporting locations, categories, and titles
+export interface SearchReport {
+  id: string;
+  issue_number?: string;
+  title?: string;
+  category_name?: string;
+  category?: string;
+  description?: string;
+  location_address?: string;
+  location?: string;
+  city?: string;
+  status: string;
+  created_at: string;
+}
+
+// Custom hook to debounce fast input changes
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// Fetch handler searching across title, category, or location
+const fetchSearchResults = async (query: string): Promise<SearchReport[]> => {
+  if (!query.trim()) return [];
+  const response = await publicApi.get(`/issues/?search=${encodeURIComponent(query)}`);
+
+  const data = response.data;
+  return Array.isArray(data) ? data : data.results || data.data || [];
+};
 
 const Navbar: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Navigation & Profile UI State
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Search UI & Query State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Debounce search input by 300ms to reduce unnecessary requests
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // TanStack Query integration for caching, loading & error management
+  const {
+    data: searchResults = [],
+    isLoading: isSearching,
+    isError,
+  } = useQuery({
+    queryKey: ['reports-search', debouncedSearchQuery],
+    queryFn: () => fetchSearchResults(debouncedSearchQuery),
+    enabled: debouncedSearchQuery.trim().length > 0,
+    staleTime: 1000 * 60 * 5,
+  });
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -25,16 +91,20 @@ const Navbar: React.FC = () => {
     document.body.style.overflow = isOpen ? 'hidden' : 'unset';
   }, [isOpen]);
 
-  // Handle outside clicks to close profile dropdown on tablet/touch devices
+  // Outside click listener for search and profile dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        profileDropdownRef.current &&
-        !profileDropdownRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(target)) {
         setIsProfileOpen(false);
       }
+
+      if (searchRef.current && !searchRef.current.contains(target)) {
+        setIsSearchOpen(false);
+      }
     };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -42,6 +112,12 @@ const Navbar: React.FC = () => {
   const handleLogout = () => {
     logout();
     setIsProfileOpen(false);
+  };
+
+  const handleSelectReport = (reportId: string | number) => {
+    setIsSearchOpen(false);
+    setSearchQuery('');
+    navigate(`/reports/${reportId}`);
   };
 
   // Helper for active link highlighting
@@ -61,6 +137,7 @@ const Navbar: React.FC = () => {
     <nav className="sticky top-0 z-100 w-[98%] mx-auto mt-2 rounded-full bg-secondary backdrop-blur-xl border-b border-primary/5 transition-all shadow-lg shadow-black/20">
       <div className="max-w-full mx-auto px-4 md:px-6 lg:px-20 h-16 md:h-18 flex justify-between items-center text-primary relative">
         
+        {/* Logo */}
         <Link to="/" className="flex items-center gap-2 md:gap-3 shrink-0 z-110">
           <LogoIcon size={35} color="var(--color-primary)" />
           <span className="font-black text-2xl md:text-4xl lg:text-5xl tracking-tighter uppercase">
@@ -68,16 +145,105 @@ const Navbar: React.FC = () => {
           </span>
         </Link>
 
+        {/* Search Bar with Location-Enabled Dropdown */}
         <div className="hidden md:flex flex-1 justify-center px-4">
-          <div className="w-full max-w-xs relative group">
+          <div ref={searchRef} className="w-full max-w-xs relative group">
             <input 
-              className="w-full bg-primary/10 border border-primary/20 rounded-full py-2 px-10 text-xs focus:bg-primary focus:text-secondary transition-all outline-none" 
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (!isSearchOpen) setIsSearchOpen(true);
+              }}
+              onFocus={() => {
+                if (searchQuery.trim().length > 0) setIsSearchOpen(true);
+              }}
+              className="w-full bg-primary/10 border border-primary/20 rounded-full py-2 pl-10 pr-4 text-xs focus:bg-primary focus:text-secondary transition-all outline-none" 
               placeholder={t('navbar.searchPlaceholder')}
             />
-            <svg className="absolute left-3.5 top-2.5 w-4 h-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            
+            <div className="absolute left-3.5 top-2.5 opacity-40">
+              {isSearching ? (
+                <Loader2 size={16} className="animate-spin text-primary" />
+              ) : (
+                <Search size={16} className="text-primary" />
+              )}
+            </div>
+
+            {/* Floating Search Dropdown Overlay */}
+            {isSearchOpen && debouncedSearchQuery.trim().length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-secondary border border-primary/10 rounded-2xl shadow-2xl overflow-hidden z-50 backdrop-blur-2xl bg-opacity-95">
+                {isSearching ? (
+                  <div className="p-4 text-xs text-primary/60 text-center flex items-center justify-center gap-2">
+                    <Loader2 size={14} className="animate-spin" />
+                    Searching reports...
+                  </div>
+                ) : isError ? (
+                  <div className="p-4 text-xs text-red-400 text-center">
+                    Failed to fetch search results.
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <ul className="max-h-60 overflow-y-auto divide-y divide-primary/5">
+                {searchResults.map((report) => {
+                  // Extract values with fallbacks to handle backend field variations
+                  const displayLocation = report.location_address || report.location || report.city || "Unknown Location";
+                  const displayCategory = report.category_name || report.category || "General";
+                  
+                  // Format date string safely (e.g. "May 16, 2026")
+                  const formattedDate = report.created_at 
+                    ? new Date(report.created_at).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })
+                    : '';
+
+                  return (
+                    <li 
+                      key={report.id}
+                      onClick={() => handleSelectReport(report.id)}
+                      className="p-3 hover:bg-primary/5 cursor-pointer transition-colors"
+                    >
+                      {/* Top Row: Location Address & Status Badge */}
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex items-start gap-1.5 min-w-0">
+                          <MapPin size={13} className="text-primary/70 shrink-0 mt-0.5" />
+                          <p className="text-xs font-bold text-primary truncate">
+                            {displayLocation}
+                          </p>
+                        </div>
+
+                        <span className={`text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider font-bold shrink-0 ${
+                          report.status?.toLowerCase() === 'resolved' 
+                            ? 'bg-green-500/10 text-green-600'
+                            : report.status?.toLowerCase() === 'rejected'
+                            ? 'bg-red-500/10 text-red-500'
+                            : 'bg-amber-500/10 text-amber-600'
+                        }`}>
+                          {report.status}
+                        </span>
+                      </div>
+
+                      {/* Bottom Row: Category & Created Date */}
+                      <div className="flex justify-between items-center text-[10px] text-primary/50 mt-1.5">
+                        <span className="uppercase font-medium tracking-wider">{displayCategory}</span>
+                        {formattedDate && <span>{formattedDate}</span>}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+                ) : (
+                  <div className="p-4 text-xs text-primary/60 text-center">
+                    No reports found for "{debouncedSearchQuery}"
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Mobile Menu Toggle */}
         <button 
           onClick={toggleMenu}
           className="md:hidden z-110 p-2 text-primary active:scale-90 transition-transform"
@@ -148,7 +314,7 @@ const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* MOBILE MENU OVERLAY */}
+      {/* Mobile Menu Overlay */}
       <div className={`
         md:hidden fixed top-0 left-0 w-full z-105 bg-secondary/85 shadow-2xl rounded-b-[2.5rem] border-b border-primary/10
         transition-all duration-500 ease-in-out transform
